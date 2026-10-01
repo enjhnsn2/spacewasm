@@ -163,12 +163,14 @@ impl<T: Clone, A: Allocator + Clone> Clone for Box<[T], A> {
 
 impl<T: ?Sized, A: Allocator> Deref for Box<T, A> {
     type Target = T;
+    #[flux_rs::spec(fn(&Self[@v]) -> &T)]
     fn deref(&self) -> &T {
         unsafe { &*self.ptr }
     }
 }
 
 impl<T: ?Sized, A: Allocator> DerefMut for Box<T, A> {
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut T)]
     fn deref_mut(&mut self) -> &mut T {
         unsafe { &mut *self.ptr }
     }

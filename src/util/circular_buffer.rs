@@ -34,28 +34,33 @@ impl<T, const N: usize> CircularBuffer<T, N> {
     }
 
     /// Returns the number of elements in the buffer.
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.size])]
     pub const fn len(&self) -> usize {
         self.size
     }
 
     /// Returns `true` if the buffer contains no elements.
+    #[flux_rs::spec(fn(&Self[@v]) -> bool[v.size == 0])]
     pub const fn is_empty(&self) -> bool {
         self.size == 0
     }
 
     /// Returns `true` if the buffer is full.
+    #[flux_rs::spec(fn(&Self[@v]) -> bool[v.size == N])]
     pub const fn is_full(&self) -> bool {
         self.size == N
     }
 
     /// Returns the capacity of the buffer.
+    #[flux_rs::spec(fn(&Self) -> usize[N])]
     pub const fn capacity(&self) -> usize {
         N
     }
 
     /// Pushes an element to the back of the buffer.
     /// If the buffer is full, the oldest element is overwritten.
-    #[flux_rs::spec(fn(self: &strg Self, value: T) requires N > 0 ensures self: Self)]
+    #[flux_rs::spec(fn(self: &strg Self[@v], value: T) requires N > 0
+        ensures self: Self[if v.size < N { v.size + 1 } else { v.size }, if v.size < N { v.start } else { (v.start + 1) % N }])]
     pub fn push(&mut self, value: T) {
         if self.size < N {
             let index = (self.start + self.size) % N;

@@ -76,3 +76,5 @@ nm-artifact_*.txt
 /log/*.err
 /log/*.out
 /log/checker
+/log/*.smt2
+/log/*.fluxc

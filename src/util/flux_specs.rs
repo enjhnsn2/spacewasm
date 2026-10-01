@@ -30,3 +30,4 @@ impl<T> DerefMut for ManuallyDrop<T> {
     #[flux_rs::spec(fn(self: &mut ManuallyDrop<T>[@v]) -> &mut T[v])]
     fn deref_mut(&mut self) -> &mut T;
 }
+
