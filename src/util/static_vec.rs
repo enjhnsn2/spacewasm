@@ -106,8 +106,10 @@ impl<T: core::fmt::Debug, const N: usize> core::fmt::Debug for StaticVec<T, N> {
     }
 }
 
+#[flux_rs::trusted_impl(reason = "ICE")]
 impl<T, const N: usize> Deref for StaticVec<T, N> {
     type Target = [T];
+    #[flux_rs::trusted(reason = "panicked at crates/flux-middle/src/builtin_assoc_refts.rs:134:76")]
     fn deref(&self) -> &[T] {
         unsafe {
             // SAFETY: elements [0..len) are initialized
