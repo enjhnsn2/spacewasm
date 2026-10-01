@@ -234,6 +234,7 @@ impl Engine {
         }
     }
 
+    #[flux_rs::trusted(reason = "panicked at crates/flux-infer/src/infer.rs:1022:17")]
     pub fn call_host_fn(
         &mut self,
         module: HostModuleRef,
