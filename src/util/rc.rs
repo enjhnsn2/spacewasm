@@ -17,7 +17,13 @@ struct RcInner<T: ?Sized> {
     value: T,
 }
 
+// The index is the `RcInner` block the handle points at (shared by all clones); `ptr` is
+// non-null. (`addr >= base` is not establishable: `NonNull::from(&mut T)` has no
+// flux-core spec and its elided-lifetime impl header cannot be given an extern spec.)
+#[flux_rs::refined_by(base: int, addr: int, size: int)]
+#[flux_rs::invariant(addr != 0)]
 pub struct Rc<T: ?Sized, A: Allocator = GlobalAllocator> {
+    #[flux_rs::field(NonNull<RcInner<T>>[base, addr, size])]
     ptr: NonNull<RcInner<T>>,
     alloc: A,
 }
@@ -46,6 +52,8 @@ impl<T> Rc<T> {
 }
 
 impl<T, A: Allocator + Clone> Rc<T, A> {
+    // `A::size_of() >= 0` is what `Box::leak` needs (see `Box::into_raw_with_allocator`).
+    #[flux_rs::spec(fn(alloc: A, value: T) -> Result<Rc<T, A>, AllocError> requires A::size_of() >= 0)]
     pub fn new_in(alloc: A, value: T) -> Result<Rc<T, A>, AllocError> {
         unsafe {
             Ok(Self::from_inner_in(
@@ -65,6 +73,7 @@ impl<T, A: Allocator + Clone> Rc<T, A> {
 
 impl<T> Rc<[T]> {
     /// Creates a new `Rc<[T]>` by calling `init` for each element.
+    #[flux_rs::spec(fn(len: usize, init: F) -> Result<Rc<[T]>, AllocError> requires T::size_of() >= 0)]
     pub fn new_slice<F>(len: usize, init: F) -> Result<Rc<[T]>, AllocError>
     where
         F: FnMut(usize) -> T,
@@ -73,6 +82,7 @@ impl<T> Rc<[T]> {
     }
 
     /// Creates a new `Rc<[T]>` with `len` default-initialized elements.
+    #[flux_rs::spec(fn(len: usize) -> Result<Rc<[T]>, AllocError> requires T::size_of() >= 0)]
     pub fn new_slice_with_default(len: usize) -> Result<Rc<[T]>, AllocError>
     where
         T: Default,
@@ -87,6 +97,14 @@ impl<T, A: Allocator + Clone> Rc<[T], A> {
     ///
     /// # Safety
     /// Caller must initialize all `len` elements before using the Rc.
+    // The slice pointer is non-null, in bounds, aligned for `T`, and covers `len` values.
+    // `T::size_of() >= 0` has no axiom in flux, so it is a guard on every slice constructor
+    // (a constant for any concrete `T`).
+    #[flux_rs::spec(fn(alloc: A, len: usize)
+        -> Result<(*mut{p: p.addr > 0 && p.addr >= p.base && p.size >= 0
+                        && len * T::size_of() <= p.size && p.addr % T::align_of() == 0} T,
+                   Rc<[T], A>), AllocError>
+        requires T::size_of() >= 0)]
     unsafe fn new_uninit_slice_in(
         alloc: A,
         len: usize,
@@ -119,6 +137,8 @@ impl<T, A: Allocator + Clone> Rc<[T], A> {
     }
 
     /// Creates a new `Rc<[T]>` by calling `init` for each element.
+    #[flux_rs::spec(fn(alloc: A, len: usize, init: F) -> Result<Rc<[T], A>, AllocError>
+        requires T::size_of() >= 0)]
     pub fn new_slice_in<F>(alloc: A, len: usize, mut init: F) -> Result<Rc<[T], A>, AllocError>
     where
         F: FnMut(usize) -> T,
@@ -136,6 +156,10 @@ impl<T, A: Allocator + Clone> Rc<[T], A> {
     }
 
     /// Creates a new `Rc<[T]>` with `len` default-initialized elements.
+    #[flux_rs::spec(fn(alloc: A, len: usize) -> Result<Rc<[T], A>, AllocError>
+        requires T::size_of() >= 0)]
+    // cvc5 (crate default) exceeds the 30s budget on this one-line body; z3 is fast.
+    #[flux_rs::opts(solver = "z3")]
     pub fn new_slice_with_default_in(alloc: A, len: usize) -> Result<Rc<[T], A>, AllocError>
     where
         T: Default,
@@ -275,6 +299,7 @@ impl<T: ?Sized, A: Allocator> Rc<T, A> {
         unsafe { self.ptr.as_ref() }
     }
 
+    #[flux_rs::spec(fn(ptr: NonNull<RcInner<T>>[@p], alloc: A) -> Self[p.base, p.addr, p.size])]
     #[inline]
     unsafe fn from_inner_in(ptr: NonNull<RcInner<T>>, alloc: A) -> Self {
         Self { ptr, alloc }
