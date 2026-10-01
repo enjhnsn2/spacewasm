@@ -1,0 +1,228 @@
+   Compiling flux-attrs-impl v0.1.0 (https://github.com/flux-rs/flux?rev=a166721b15#a166721b)
+   Compiling flux-attrs v0.1.0 (https://github.com/flux-rs/flux?rev=a166721b15#a166721b)
+    Checking flux-core v0.1.0 (https://github.com/flux-rs/flux?rev=a166721b15#a166721b)
+    Checking flux-rs v0.1.0 (https://github.com/flux-rs/flux?rev=a166721b15#a166721b)
+summary. 60 functions processed: 2 checked; 58 trusted; 0 ignored. 0 constraints solved. Finished in 40.22ms
+summary. 0 functions processed: 0 checked; 0 trusted; 0 ignored. 0 constraints solved. Finished in 206.41ms
+    Checking flux-alloc v0.1.0 (https://github.com/flux-rs/flux?rev=a166721b15#a166721b)
+summary. 1 functions processed: 0 checked; 1 trusted; 0 ignored. 0 constraints solved. Finished in 57.14ms
+    Checking spacewasm v0.0.0 (/home/evan/research/flux-spacewasm/spacewasm)
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/box_.rs:148:20
+    |
+148 |             n.push(self[i].clone());
+    |                    ^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<[T], A>::try_clone'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/util/circular_buffer.rs:63:36
+   |
+63 |                 ptr::drop_in_place(self.items[index].as_mut_ptr());
+   |                                    ^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::push'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/util/circular_buffer.rs:76:30
+   |
+76 |         let value = unsafe { self.items[self.start].assume_init_read() };
+   |                              ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_front'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+  --> src/util/circular_buffer.rs:89:21
+   |
+89 |         let index = (self.start + self.size) % N;
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_back'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/util/circular_buffer.rs:90:23
+   |
+90 |         Some(unsafe { self.items[index].assume_init_read() })
+   |                       ^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_back'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/util/circular_buffer.rs:98:23
+   |
+98 |         Some(unsafe { self.items[self.start].assume_init_ref() })
+   |                       ^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::front'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:106:23
+    |
+106 |         Some(unsafe { self.items[self.start].assume_init_mut() })
+    |                       ^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::front_mut'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:115:23
+    |
+115 |         Some(unsafe { self.items[index].assume_init_ref() })
+    |                       ^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:114:21
+    |
+114 |         let index = (self.start + self.size - 1) % N;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:124:23
+    |
+124 |         Some(unsafe { self.items[index].assume_init_mut() })
+    |                       ^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:123:21
+    |
+123 |         let index = (self.start + self.size - 1) % N;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/circular_buffer.rs:123:21
+    |
+123 |         let index = (self.start + self.size - 1) % N;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:134:23
+    |
+134 |         Some(unsafe { self.items[actual_index].assume_init_ref() })
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:133:28
+    |
+133 |         let actual_index = (self.start + index) % N;
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:143:28
+    |
+143 |         let actual_index = (self.start + index) % N;
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get_mut'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:144:23
+    |
+144 |         Some(unsafe { self.items[actual_index].assume_init_mut() })
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get_mut'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/circular_buffer.rs:201:25
+    |
+201 |         let remaining = self.buffer.size - self.index;
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::Iter<'\''a, T, N> as core::iter::Iterator>::size_hint'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:219:32
+    |
+219 |             let actual_index = (self.buffer.start + self.index) % N;
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::next'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/circular_buffer.rs:223:33
+    |
+223 |             Some(unsafe { &mut *self.buffer.items[actual_index].as_mut_ptr() })
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::next'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/circular_buffer.rs:230:25
+    |
+230 |         let remaining = self.buffer.size - self.index;
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::size_hint'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/paging.rs:237:30
+    |
+237 |             layout.align() - start_address % layout.align()
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/paging.rs:237:13
+    |
+237 |             layout.align() - start_address % layout.align()
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/paging.rs:242:28
+    |
+242 |         let final_offset = (aligned_start - self.ptr as usize) + layout.size();
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/util/vec.rs:65:20
+   |
+65 |             n.push(self[i].clone());
+   |                    ^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::vec::Vec::<T, A>::try_clone'`
+
+error[E0999]: assertion might fail: possible division by zero
+   --> src/util/vec.rs:406:19
+    |
+406 |         let len = (self.end as usize - self.start as usize) / size_of::<T>();
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::Iterator>::size_hint'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/util/vec.rs:406:19
+    |
+406 |         let len = (self.end as usize - self.start as usize) / size_of::<T>();
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::Iterator>::size_hint'`
+
+error: internal compiler error: crates/flux-refineck/src/type_env/place_ty.rs:496:18: invalid deref of `(*mut { RcInner<{ T | * }> | * })[a2]`
+   --> src/util/rc.rs:222:33
+    |
+222 |             let value_ref: &T = &(*inner_ptr).value;
+    |                                 ^^^^^^^^^^^^^^^^^^^
+
+
+thread 'rustc' (784143) panicked at crates/flux-refineck/src/type_env/place_ty.rs:496:18:
+Box<dyn Any>
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: could not compile `spacewasm` (lib) due to 26 previous errors

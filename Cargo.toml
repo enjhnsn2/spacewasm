@@ -27,6 +27,10 @@ categories = ["wasm", "no-std", "embedded"]
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
+[package.metadata.flux]
+enabled = true
+cache = true
+
 [lib]
 name = "spacewasm"
 path = "src/lib.rs"
@@ -44,6 +48,9 @@ miri-soft-floats = ["libm/force-soft-floats"]
 
 [dependencies]
 libm = "=0.2.16"
+flux-rs = { git = "https://github.com/flux-rs/flux", rev = "a166721b15" }
+flux-core = { git = "https://github.com/flux-rs/flux", rev = "a166721b15" }
+flux-alloc = { git = "https://github.com/flux-rs/flux", rev = "a166721b15" }
 
 [dev-dependencies]
 serde = { version = "=1.0.228", features = ["derive"] }

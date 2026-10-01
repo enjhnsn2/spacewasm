@@ -691,6 +691,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "flux-alloc"
+version = "0.1.0"
+source = "git+https://github.com/flux-rs/flux?rev=a166721b15#a166721b1540fc1df876e4147d4b473f27d38aa0"
+dependencies = [
+ "flux-attrs",
+ "flux-core",
+]
+
+[[package]]
+name = "flux-attrs"
+version = "0.1.0"
+source = "git+https://github.com/flux-rs/flux?rev=a166721b15#a166721b1540fc1df876e4147d4b473f27d38aa0"
+dependencies = [
+ "flux-attrs-impl",
+]
+
+[[package]]
+name = "flux-attrs-impl"
+version = "0.1.0"
+source = "git+https://github.com/flux-rs/flux?rev=a166721b15#a166721b1540fc1df876e4147d4b473f27d38aa0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "flux-core"
+version = "0.1.0"
+source = "git+https://github.com/flux-rs/flux?rev=a166721b15#a166721b1540fc1df876e4147d4b473f27d38aa0"
+dependencies = [
+ "flux-attrs",
+]
+
+[[package]]
+name = "flux-rs"
+version = "0.1.0"
+source = "git+https://github.com/flux-rs/flux?rev=a166721b15#a166721b1540fc1df876e4147d4b473f27d38aa0"
+dependencies = [
+ "flux-attrs",
+]
+
+[[package]]
 name = "foldhash"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1719,6 +1762,9 @@ dependencies = [
 name = "spacewasm"
 version = "0.0.0"
 dependencies = [
+ "flux-alloc",
+ "flux-core",
+ "flux-rs",
  "libm",
  "serde",
  "serde_json",
