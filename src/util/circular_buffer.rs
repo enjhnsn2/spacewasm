@@ -13,8 +13,12 @@ use core::ptr;
 /// When the buffer is full, pushing new elements will overwrite the oldest elements.
 ///
 /// See the module-level documentation for more details and examples.
+#[flux_rs::refined_by(size: int, start: int)]
+#[flux_rs::invariant((size <= N && start < N) || (size == 0 && start == 0))]
 pub struct CircularBuffer<T, const N: usize> {
+    #[flux_rs::field(usize[size])]
     size: usize,
+    #[flux_rs::field(usize[start])]
     start: usize,
     items: [MaybeUninit<T>; N],
 }
@@ -51,6 +55,7 @@ impl<T, const N: usize> CircularBuffer<T, N> {
 
     /// Pushes an element to the back of the buffer.
     /// If the buffer is full, the oldest element is overwritten.
+    #[flux_rs::spec(fn(self: &strg Self, value: T) requires N > 0 ensures self: Self)]
     pub fn push(&mut self, value: T) {
         if self.size < N {
             let index = (self.start + self.size) % N;

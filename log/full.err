@@ -1,17 +1,190 @@
-    Checking flux-core v0.1.0 (https://github.com/flux-rs/flux?rev=a58a9332d4#a58a9332)
-    Checking flux-rs v0.1.0 (https://github.com/flux-rs/flux?rev=a58a9332d4#a58a9332)
-summary. 60 functions processed: 2 checked; 58 trusted; 0 ignored. 0 constraints solved. Finished in 41.52ms
 summary. 0 functions processed: 0 checked; 0 trusted; 0 ignored. 0 constraints solved. Finished in 243.58ms
-    Checking flux-alloc v0.1.0 (https://github.com/flux-rs/flux?rev=a58a9332d4#a58a9332)
 summary. 1 functions processed: 0 checked; 1 trusted; 0 ignored. 0 constraints solved. Finished in 49.66ms
+summary. 60 functions processed: 2 checked; 58 trusted; 0 ignored. 0 constraints solved. Finished in 41.52ms
     Checking spacewasm v0.0.0 (/home/evan/research/flux-spacewasm/spacewasm)
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/util/box_.rs:148:20
+error[E0999]: refinement type error
+  --> src/util/box_.rs:46:9
+   |
+46 |         self.try_clone().expect("Box::clone: allocation failed")
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+   |
+84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+   |                            ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::box_::Box<T, A> as core::clone::Clone>::clone'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:60:30
     |
-148 |             n.push(self[i].clone());
+ 60 |         let alloc = unsafe { ptr::read(&b.alloc) };
+    |                              ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::into_raw_with_allocator'`
+
+error[E0999]: refinement type error
+  --> src/util/box_.rs:99:16
+   |
+99 |             Ok(Box { ptr, alloc })
+   |                ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> src/util/box_.rs:14:35
+   |
+14 | #[flux_rs::invariant(addr != 0 && size >= 0)]
+   |                                   ^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::new_in'`
+
+error[E0999]: refinement type error
+  --> src/util/box_.rs:99:16
+   |
+99 |             Ok(Box { ptr, alloc })
+   |                ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> src/util/box_.rs:14:22
+   |
+14 | #[flux_rs::invariant(addr != 0 && size >= 0)]
+   |                      ^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::new_in'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:96:17
+    |
+ 96 |                 ptr::write(ptr, value);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:31
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::new_in'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:96:17
+    |
+ 96 |                 ptr::write(ptr, value);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:5
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::new_in'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:111:30
+    |
+111 |         let value = unsafe { ptr::read(ptr) };
+    |                              ^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::into_inner'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:111:30
+    |
+111 |         let value = unsafe { ptr::read(ptr) };
+    |                              ^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:31
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::into_inner'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:129:9
+    |
+129 |         Box { ptr, alloc }
+    |         ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> src/util/box_.rs:14:22
+    |
+ 14 | #[flux_rs::invariant(addr != 0 && size >= 0)]
+    |                      ^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::from_raw'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:129:9
+    |
+129 |         Box { ptr, alloc }
+    |         ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> src/util/box_.rs:14:35
+    |
+ 14 | #[flux_rs::invariant(addr != 0 && size >= 0)]
+    |                                   ^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<T, A>::from_raw'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/util/box_.rs:151:20
+    |
+151 |             n.push(self[i].clone());
     |                    ^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::box_::Box::<[T], A>::try_clone'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:160:9
+    |
+160 |         self.try_clone().expect("Box<T> clone failed")
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+    |
+ 84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::box_::Box<[T], A> as core::clone::Clone>::clone'`
+
+error[E0999]: refinement type error
+   --> src/util/box_.rs:172:5
+    |
+172 |     fn deref_mut(&mut self) -> &mut T {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/util/circular_buffer.rs:63:36
@@ -29,19 +202,19 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    |
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_front'`
 
-error[E0999]: assertion might fail: possible remainder with a divisor of zero
-  --> src/util/circular_buffer.rs:89:21
-   |
-89 |         let index = (self.start + self.size) % N;
-   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_back'`
-
 error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/util/circular_buffer.rs:90:23
    |
 90 |         Some(unsafe { self.items[index].assume_init_read() })
    |                       ^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_back'`
+
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+  --> src/util/circular_buffer.rs:89:21
+   |
+89 |         let index = (self.start + self.size) % N;
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::pop_back'`
 
@@ -61,6 +234,14 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::front_mut'`
 
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:114:21
+    |
+114 |         let index = (self.start + self.size - 1) % N;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back'`
+
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/util/circular_buffer.rs:115:23
     |
@@ -69,13 +250,13 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back'`
 
-error[E0999]: assertion might fail: possible remainder with a divisor of zero
-   --> src/util/circular_buffer.rs:114:21
+error[E0999]: arithmetic operation may underflow
+   --> src/util/circular_buffer.rs:123:21
     |
-114 |         let index = (self.start + self.size - 1) % N;
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+123 |         let index = (self.start + self.size - 1) % N;
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/util/circular_buffer.rs:124:23
@@ -93,27 +274,19 @@ error[E0999]: assertion might fail: possible remainder with a divisor of zero
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
 
-error[E0999]: arithmetic operation may underflow
-   --> src/util/circular_buffer.rs:123:21
+error[E0999]: assertion might fail: possible remainder with a divisor of zero
+   --> src/util/circular_buffer.rs:133:28
     |
-123 |         let index = (self.start + self.size - 1) % N;
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+133 |         let actual_index = (self.start + index) % N;
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::back_mut'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/util/circular_buffer.rs:134:23
     |
 134 |         Some(unsafe { self.items[actual_index].assume_init_ref() })
     |                       ^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get'`
-
-error[E0999]: assertion might fail: possible remainder with a divisor of zero
-   --> src/util/circular_buffer.rs:133:28
-    |
-133 |         let actual_index = (self.start + index) % N;
-    |                            ^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get'`
 
@@ -133,6 +306,14 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::circular_buffer::CircularBuffer::<T, N>::get_mut'`
 
+error[E0999]: internal flux error: crates/flux-infer/src/infer.rs:887:22
+   --> src/util/circular_buffer.rs:190:5
+    |
+190 |     fn next(&mut self) -> Option<Self::Item> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: incompatible types: `self: &'_ strg Iter<'_, T, N>[curr_s]` - `&'_ mut Iter<'_, T, N>`
+
 error[E0999]: arithmetic operation may underflow
    --> src/util/circular_buffer.rs:201:25
     |
@@ -141,21 +322,13 @@ error[E0999]: arithmetic operation may underflow
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::Iter<'\''a, T, N> as core::iter::Iterator>::size_hint'`
 
-error[E0999]: assertion might fail: possible remainder with a divisor of zero
-   --> src/util/circular_buffer.rs:219:32
+error[E0999]: internal flux error: crates/flux-infer/src/infer.rs:887:22
+   --> src/util/circular_buffer.rs:217:5
     |
-219 |             let actual_index = (self.buffer.start + self.index) % N;
-    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+217 |     fn next(&mut self) -> Option<Self::Item> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::next'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/util/circular_buffer.rs:223:33
-    |
-223 |             Some(unsafe { &mut *self.buffer.items[actual_index].as_mut_ptr() })
-    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::next'`
+    = note: incompatible types: `self: &'_ strg IterMut<'_, T, N>[curr_s]` - `&'_ mut IterMut<'_, T, N>`
 
 error[E0999]: arithmetic operation may underflow
    --> src/util/circular_buffer.rs:230:25
@@ -165,21 +338,122 @@ error[E0999]: arithmetic operation may underflow
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::circular_buffer::IterMut<'\''a, T, N> as core::iter::Iterator>::size_hint'`
 
-error[E0999]: assertion might fail: possible remainder with a divisor of zero
-   --> src/util/paging.rs:237:30
+error[E0999]: error jumping to join point
+   --> src/util/paging.rs:111:36
     |
-237 |             layout.align() - start_address % layout.align()
-    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+111 | ...                   return Ok(ptr);
+    |                              ^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::alloc'`
 
-error[E0999]: arithmetic operation may underflow
-   --> src/util/paging.rs:237:13
+error[E0999]: type invariant may not hold (when place is folded)
+   --> src/util/paging.rs:135:21
     |
-237 |             layout.align() - start_address % layout.align()
-    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+135 |                     bucket.replace(page);
+    |                     ^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::alloc'`
+
+error[E0999]: error jumping to join point
+  |
+  = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::alloc'`
+
+error[E0999]: refinement type error
+   --> src/util/paging.rs:118:39
+    |
+118 |                     let page_layout = Layout::from_size_align(self.page_size, ALIGNMENT).unwrap();
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::alloc'`
+
+error[E0999]: error jumping to join point
+   --> src/util/paging.rs:149:29
+    |
+149 |                       None => {
+    |  _____________________________^
+...   |
+152 | |                     }
+    | |_____________________^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::dealloc'`
+
+error[E0999]: error jumping to join point
+   --> src/util/paging.rs:176:14
+    |
+176 |             }
+    |              ^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::dealloc'`
+
+error[E0999]: type invariant may not hold (when place is folded)
+   --> src/util/paging.rs:165:29
+    |
+165 | ...                   bucket.take();
+    |                       ^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::dealloc'`
+
+error[E0999]: refinement type error
+   --> src/util/paging.rs:161:37
+    |
+161 | ...                   Layout::from_size_align(self.page_size, ALIGNMENT).unwrap(),
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::PageAllocatorInner::<A, MAX_PAGES>::dealloc'`
+
+error[E0999]: type invariant may not hold (when place is folded)
+   --> src/util/paging.rs:203:21
+    |
+203 |                     bucket.take();
+    |                     ^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::paging::PageAllocatorInner<A, MAX_PAGES> as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+   --> src/util/paging.rs:199:29
+    |
+199 | ...                   Layout::from_size_align(self.page_size, ALIGNMENT).unwrap(),
+    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::paging::PageAllocatorInner<A, MAX_PAGES> as core::ops::Drop>::drop'`
+
+error[E0999]: error jumping to join point
+   --> src/util/paging.rs:195:31
+    |
+195 |                   Some(page) => {
+    |  _______________________________^
+196 | |                     unsafe {
+197 | |                         self.page_allocator.dealloc(
+198 | |                             page.ptr,
+...   |
+203 | |                     bucket.take();
+204 | |                 }
+    | |_________________^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::paging::PageAllocatorInner<A, MAX_PAGES> as core::ops::Drop>::drop'`
+
+error[E0999]: error jumping to join point
+   --> src/util/paging.rs:194:25
+    |
+194 |                 None => {}
+    |                         ^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::paging::PageAllocatorInner<A, MAX_PAGES> as core::ops::Drop>::drop'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/util/paging.rs:242:28
@@ -189,6 +463,226 @@ error[E0999]: arithmetic operation may underflow
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::paging::Page::alloc'`
 
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:76:34
+   |
+76 |                 core::ptr::write(self.ptr.add(self.len), value);
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:76:34
+   |
+76 |                 core::ptr::write(self.ptr.add(self.len), value);
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+   --> src/util/inner_vec.rs:76:17
+    |
+ 76 |                 core::ptr::write(self.ptr.add(self.len), value);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:31
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:76:34
+   |
+76 |                 core::ptr::write(self.ptr.add(self.len), value);
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:76:34
+   |
+76 |                 core::ptr::write(self.ptr.add(self.len), value);
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+   --> src/util/inner_vec.rs:76:17
+    |
+ 76 |                 core::ptr::write(self.ptr.add(self.len), value);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:5
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::try_push'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:89:9
+   |
+89 | /         self.try_push(value)
+90 | |             .expect("attempting to push beyond Vec capacity");
+   | |_____________________________________________________________^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+   |
+84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+   |                            ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::push'`
+
+error[E0999]: refinement type error
+   --> src/util/inner_vec.rs:98:27
+    |
+ 98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
+error[E0999]: refinement type error
+   --> src/util/inner_vec.rs:98:27
+    |
+ 98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:31
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:98:43
+   |
+98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+   |                                           ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:98:43
+   |
+98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+   |                                           ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:98:43
+   |
+98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+   |                                           ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
+error[E0999]: refinement type error
+  --> src/util/inner_vec.rs:98:43
+   |
+98 |             unsafe { Some(core::ptr::read(self.ptr.add(self.len))) }
+   |                                           ^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::inner_vec::InnerVec::<T>::pop'`
+
 error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/util/vec.rs:65:20
    |
@@ -196,6 +690,143 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    |                    ^^^^^^^
    |
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::vec::Vec::<T, A>::try_clone'`
+
+error[E0999]: refinement type error
+  --> src/util/vec.rs:77:9
+   |
+77 |         self.try_clone().expect("Vec::clone: allocation failed")
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+   |
+84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+   |                            ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::clone::Clone>::clone'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:293:25
+    |
+293 |             let alloc = core::ptr::read(&self.alloc);
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::vec::Vec::<T, A>::into_boxed_slice'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:330:21
+    |
+330 |                     Layout::array::<T>(self.inner.capacity).unwrap(),
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:360:26
+    |
+360 |                 unsafe { ptr.add(len) }
+    |                          ^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::iter::IntoIterator>::into_iter'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:350:30
+    |
+350 |         let alloc = unsafe { core::ptr::read(&vec.alloc) };
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::iter::IntoIterator>::into_iter'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:360:26
+    |
+360 |                 unsafe { ptr.add(len) }
+    |                          ^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::iter::IntoIterator>::into_iter'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:360:26
+    |
+360 |                 unsafe { ptr.add(len) }
+    |                          ^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::iter::IntoIterator>::into_iter'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:360:26
+    |
+360 |                 unsafe { ptr.add(len) }
+    |                          ^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::Vec<T, A> as core::iter::IntoIterator>::into_iter'`
+
+error[E0999]: internal flux error: crates/flux-infer/src/infer.rs:887:22
+   --> src/util/vec.rs:393:5
+    |
+393 |     fn next(&mut self) -> Option<T> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: incompatible types: `self: &'_ strg IntoIter<T, A>[curr_s]` - `&'_ mut IntoIter<T, A>`
 
 error[E0999]: assertion might fail: possible division by zero
    --> src/util/vec.rs:406:19
@@ -212,6 +843,354 @@ error[E0999]: arithmetic operation may underflow
     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::Iterator>::size_hint'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:417:28
+    |
+417 |                 self.end = self.end.offset(-1);
+    |                            ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:97:30
+    |
+ 97 |                     requires in_bounds(p) && count * T::size_of() <= p.size && p.addr + count * T::size_of() >= p.base
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:417:28
+    |
+417 |                 self.end = self.end.offset(-1);
+    |                            ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:97:30
+    |
+ 97 |                     requires in_bounds(p) && count * T::size_of() <= p.size && p.addr + count * T::size_of() >= p.base
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:417:28
+    |
+417 |                 self.end = self.end.offset(-1);
+    |                            ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:97:30
+    |
+ 97 |                     requires in_bounds(p) && count * T::size_of() <= p.size && p.addr + count * T::size_of() >= p.base
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:417:28
+    |
+417 |                 self.end = self.end.offset(-1);
+    |                            ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:97:80
+    |
+ 97 |                     requires in_bounds(p) && count * T::size_of() <= p.size && p.addr + count * T::size_of() >= p.base
+    |                                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:417:28
+    |
+417 |                 self.end = self.end.offset(-1);
+    |                            ^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:97:46
+    |
+ 97 |                     requires in_bounds(p) && count * T::size_of() <= p.size && p.addr + count * T::size_of() >= p.base
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:418:22
+    |
+418 |                 Some(core::ptr::read(self.end))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:5
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:418:22
+    |
+418 |                 Some(core::ptr::read(self.end))
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:216:31
+    |
+216 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::iter::DoubleEndedIterator>::next_back'`
+
+error[E0999]: refinement type error
+   --> src/util/vec.rs:429:26
+    |
+429 |             let layout = Layout::array::<T>(self.cap).unwrap();
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::vec::IntoIter<T, A> as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:107:13
+    |
+107 |             core::ptr::write(ptr as *mut Cell<u32>, Cell::new(1));
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:31
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:107:13
+    |
+107 |             core::ptr::write(ptr as *mut Cell<u32>, Cell::new(1));
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:5
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:110:29
+    |
+110 |             let slice_ptr = ptr.add(slice_offset) as *mut T;
+    |                             ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:110:29
+    |
+110 |             let slice_ptr = ptr.add(slice_offset) as *mut T;
+    |                             ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:110:29
+    |
+110 |             let slice_ptr = ptr.add(slice_offset) as *mut T;
+    |                             ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:116:42
+    |
+116 |             let rc = Self::from_inner_in(NonNull::new_unchecked(rc_inner_ptr), alloc);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/non_null.rs:45:74
+    |
+ 45 |     #[spec(fn(*mut[@p] T) -> NonNull<T>[p.base, p.addr, p.size] requires p.addr != 0)]
+    |                                                                          ^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:110:29
+    |
+110 |             let slice_ptr = ptr.add(slice_offset) as *mut T;
+    |                             ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_uninit_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:34
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                                  ^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:34
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                                  ^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:17
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:27:58
+    |
+ 27 |     fn addr_aligned(addr: int, alignment: int) -> bool { addr % alignment == 0 }
+    |                                                          ^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:31
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:34
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                                  ^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:34
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                                  ^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
+
+error[E0999]: refinement type error
+   --> src/util/rc.rs:131:17
+    |
+131 |                 core::ptr::write(slice_ptr.add(i), init(i));
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:231:5
+    |
+231 |     valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |     ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::rc::Rc::<[T], A>::new_slice_in'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/util/rc.rs:326:25
@@ -245,6 +1224,19 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    |
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::static_vec::StaticVec<T, N> as core::ops::Drop>::drop'`
 
+error[E0999]: refinement type error
+  --> src/util/static_vec.rs:68:35
+   |
+68 |         core::str::from_utf8(&self[0..(self.len as usize)])
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:52:77
+   |
+52 | #[flux::assoc(fn in_bounds(r: Self, len: int) -> bool { r.start <= r.end && r.end <= len })]
+   |                                                                             ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<&'\''a util::static_vec::StaticVec<u8, N> as core::convert::TryInto<&'\''a str>>::try_into'`
+
 error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/util/static_vec.rs:98:27
    |
@@ -253,18 +1245,18 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    |
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:util::static_vec::StaticVec::<T, N>::pop'`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/util/static_vec.rs:138:33
+error[E0999]: internal flux error: crates/flux-infer/src/infer.rs:887:22
+   --> src/util/static_vec.rs:140:5
     |
-138 |             let item = unsafe { self.vec.data[self.pos].assume_init_read() };
-    |                                 ^^^^^^^^^^^^^^^^^^^^^^^
+140 |     fn next(&mut self) -> Option<Self::Item> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::static_vec::StaticVecIntoIter<T, N> as core::iter::Iterator>::next'`
+    = note: incompatible types: `self: &'_ strg StaticVecIntoIter<T, N>[curr_s]` - `&'_ mut StaticVecIntoIter<T, N>`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/util/static_vec.rs:151:22
+   --> src/util/static_vec.rs:155:22
     |
-151 |             unsafe { self.vec.data[self.pos].assume_init_drop() };
+155 |             unsafe { self.vec.data[self.pos].assume_init_drop() };
     |                      ^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<util::static_vec::StaticVecIntoIter<T, N> as core::ops::Drop>::drop'`
@@ -313,14 +1305,6 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/store.rs:106:18
     |
 106 |                 &self.host_modules[host_import.module.0 as usize].table[host_import.index as usize]
-    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_table'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/store.rs:106:18
-    |
-106 |                 &self.host_modules[host_import.module.0 as usize].table[host_import.index as usize]
     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_table'`
@@ -342,22 +1326,12 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_table'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/store.rs:134:57
+   --> src/store.rs:106:18
     |
-134 |                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[r].memory else {
-    |                                                         ^^^^^^^^^^^^^^^
+106 |                 &self.host_modules[host_import.module.0 as usize].table[host_import.index as usize]
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/store.rs:141:22
-    |
-141 |                   &mut self.host_modules[host_import.module.0 as usize].memory
-    |  ______________________^
-142 | |                     [host_import.index as usize]
-    | |________________________________________________^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_table'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/store.rs:123:16
@@ -375,11 +1349,45 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
 
+error[E0999]: error jumping to join point
+   --> src/store.rs:126:52
+    |
+126 |                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[module_ref.0 as usize].memory
+    |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
+
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/store.rs:126:57
     |
 126 |                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[module_ref.0 as usize].memory
     |                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/store.rs:141:22
+    |
+141 |                   &mut self.host_modules[host_import.module.0 as usize].memory
+    |  ______________________^
+142 | |                     [host_import.index as usize]
+    | |________________________________________________^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
+
+error[E0999]: error jumping to join point
+   --> src/store.rs:134:52
+    |
+134 |                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[r].memory else {
+    |                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/store.rs:134:57
+    |
+134 |                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[r].memory else {
+    |                                                         ^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:store::Store::get_memory_mut'`
 
@@ -415,21 +1423,18 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:reader::Reader::<'\''wasm>::fill_buffer'`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-  --> src/host.rs:32:13
+error[E0999]: refinement type error
+  --> src/host.rs:64:19
    |
-32 |             data[i] = bytes[i];
-   |             ^^^^^^^
+64 |         &self.data[..self.len as usize]
+   |                   ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
    |
-   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostName::<CAPACITY>::build'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-  --> src/host.rs:32:23
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:57:57
    |
-32 |             data[i] = bytes[i];
-   |                       ^^^^^^^^
-   |
-   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostName::<CAPACITY>::build'`
+57 | #[flux::assoc(fn in_bounds(r: Self, len: int) -> bool { r.end <= len })]
+   |                                                         ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostName::<CAPACITY>::as_bytes'`
 
 error[E0999]: internal flux error: crates/flux-refineck/src/checker.rs:1877:17
    --> src/host.rs:150:19
@@ -437,7 +1442,33 @@ error[E0999]: internal flux error: crates/flux-refineck/src/checker.rs:1877:17
 150 |         let ptr = self.as_mut_ptr() as *mut dyn GlobalValue;
     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: unsupported unsize cast from `(*mut { T | * })[a0]` to `*mut dyn host::GlobalValue + '?3`
+    = note: unsupported unsize cast from `(*mut { T | * })[a1]` to `*mut dyn host::GlobalValue + '?3`
+
+error[E0999]: refinement type error
+   --> src/host.rs:228:9
+    |
+228 |         HostValList::try_new(s).expect("invalid host value signature")
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+    |
+ 84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostValList::new'`
+
+error[E0999]: refinement type error
+   --> src/host.rs:253:19
+    |
+253 |         &self.data[..self.len as usize]
+    |                   ^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:57:57
+    |
+ 57 | #[flux::assoc(fn in_bounds(r: Self, len: int) -> bool { r.end <= len })]
+    |                                                         ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostValList::as_slice'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/host.rs:298:14
@@ -447,13 +1478,13 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<host::HostValListIter as core::iter::DoubleEndedIterator>::next_back'`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/host.rs:310:17
+error[E0999]: internal flux error: crates/flux-infer/src/infer.rs:887:22
+   --> src/host.rs:305:5
     |
-310 |         let c = self.data.data[self.index];
-    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+305 |     fn next(&mut self) -> Option<Self::Item> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<host::HostValListIter as core::iter::Iterator>::next'`
+    = note: incompatible types: `self: &'_ strg HostValListIter[curr_s]` - `&'_ mut HostValListIter`
 
 error[E0999]: internal flux error: crates/flux-refineck/src/checker.rs:1877:17
    --> src/host.rs:321:19
@@ -461,15 +1492,21 @@ error[E0999]: internal flux error: crates/flux-refineck/src/checker.rs:1877:17
 321 |         let ptr = self.as_mut_ptr() as *mut dyn Fn(&mut Engine, &[Value]) -> HostFunctionResult;
     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: unsupported unsize cast from `(*mut { T | * })[a0]` to `*mut dyn for<Region(Named(DefId(0:4313 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_))), Region(Named(DefId(0:4314 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_#1)))> core::ops::Fn<(&DebruijnIndex(0)BoundRegion { var: 0, kind: Named(DefId(0:4313 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_)) } mut engine::Engine, &DebruijnIndex(0)BoundRegion { var: 1, kind: Named(DefId(0:4314 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_#1)) } [types::Value])>, for<Region(Named(DefId(0:4313 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_))), Region(Named(DefId(0:4314 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_#1)))> (core::ops::FnOnce::Output<(&DebruijnIndex(0)BoundRegion { var: 0, kind: Named(DefId(0:4313 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_)) } mut engine::Engine, &DebruijnIndex(0)BoundRegion { var: 1, kind: Named(DefId(0:4314 ~ spacewasm[2074]::host::{impl#16}::into_host_function_dyn::'_#1)) } [types::Value])> = core::ops::ControlFlow<host::HostFunctionBreak, core::option::Option<types::Value>>) + '?3`
+    = note: unsupported unsize cast from `(*mut { T | * })[a1]` to `*mut dyn for<Region(Named(DefId(0:4315 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_))), Region(Named(DefId(0:4316 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_#1)))> core::ops::Fn<(&DebruijnIndex(0)BoundRegion { var: 0, kind: Named(DefId(0:4315 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_)) } mut engine::Engine, &DebruijnIndex(0)BoundRegion { var: 1, kind: Named(DefId(0:4316 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_#1)) } [types::Value])>, for<Region(Named(DefId(0:4315 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_))), Region(Named(DefId(0:4316 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_#1)))> (core::ops::FnOnce::Output<(&DebruijnIndex(0)BoundRegion { var: 0, kind: Named(DefId(0:4315 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_)) } mut engine::Engine, &DebruijnIndex(0)BoundRegion { var: 1, kind: Named(DefId(0:4316 ~ spacewasm[126a]::host::{impl#16}::into_host_function_dyn::'_#1)) } [types::Value])> = core::ops::ControlFlow<host::HostFunctionBreak, core::option::Option<types::Value>>) + '?3`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/imports.rs:108:46
+error[E0999]: refinement type error
+   --> src/host.rs:386:9
     |
-108 | ...                   let f = &hm.functions[index as usize];
-    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+386 | /         HostFunction::try_new(name.into(), params, returns, f)
+387 | |             .expect("host function signature too large or invalid return value")
+    | |________________________________________________________________________________^ a precondition cannot be proved
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+    |
+ 84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:host::HostFunction::new'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/imports.rs:107:47
@@ -488,6 +1525,27 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
+  --> src/imports.rs:78:46
+   |
+78 | ...                   let f = &module.functions[idx as usize];
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
+
+error[E0999]: refinement type error
+  --> src/imports.rs:96:47
+   |
+96 | ...                   let em = &self.modules().get(module.0 as usize).unwrap();
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+   |
+46 |     #[sig(fn(Option<T>[true]) -> T)]
+   |                        ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/imports.rs:97:46
    |
 97 | ...                   let f = &em.functions[index as usize];
@@ -496,12 +1554,25 @@ error[E0999]: assertion might fail: possible out-of-bounds access
    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-  --> src/imports.rs:78:46
-   |
-78 | ...                   let f = &module.functions[idx as usize];
-   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
+   --> src/imports.rs:108:46
+    |
+108 | ...                   let f = &hm.functions[index as usize];
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_function'`
+
+error[E0999]: refinement type error
+   --> src/imports.rs:188:46
+    |
+188 | ...                   let em = self.modules().get(module.0 as usize).unwrap();
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_global'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/imports.rs:175:46
@@ -562,10 +1633,12 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_table'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/imports.rs:370:42
+   --> src/imports.rs:385:51
     |
-370 | ...                   &self.modules()[i.0 as usize].memory
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+385 |   ...                   let symbol = &self.host_modules()[i.module.0 as usize].memory
+    |  _____________________________________^
+386 | | ...                       [i.index as usize];
+    | |____________________________________________^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_memory'`
 
@@ -578,12 +1651,10 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_memory'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/imports.rs:385:51
+   --> src/imports.rs:370:42
     |
-385 |   ...                   let symbol = &self.host_modules()[i.module.0 as usize].memory
-    |  _____________________________________^
-386 | | ...                       [i.index as usize];
-    | |____________________________________________^
+370 | ...                   &self.modules()[i.0 as usize].memory
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:imports::<impl store::Store>::link_memory'`
 
@@ -612,14 +1683,6 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::<impl code::Func>::read_func_section'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/module.rs:815:30
-    |
-815 |                         &mut store.modules_mut()[i.0 as usize].table
-    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::Module::get_table'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/module.rs:823:26
     |
 823 |                     &mut store.host_modules_mut()[i.module.0 as usize].table[i.index as usize]
@@ -636,12 +1699,20 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::Module::get_table'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/module.rs:893:17
+   --> src/module.rs:815:30
     |
-893 |                 table[index] = tr;
-    |                 ^^^^^^^^^^^^
+815 |                         &mut store.modules_mut()[i.0 as usize].table
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::Element::read'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::Module::get_table'`
+
+error[E0999]: error jumping to join point
+   --> src/module.rs:815:25
+    |
+815 |                         &mut store.modules_mut()[i.0 as usize].table
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::Module::get_table'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
     --> src/module.rs:1023:22
@@ -667,13 +1738,18 @@ error[E0999]: assertion might fail: possible out-of-bounds access
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:module::DataSection::read'`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/code.rs:163:41
-    |
-163 |         let _ = core::mem::replace(&mut self.functions[i], f);
-    |                                         ^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:code::<impl module::Module>::read_function_code'`
+error[E0999]: refinement type error
+  --> src/code.rs:19:12
+   |
+19 |         Ok(value.unwrap())
+   |            ^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+   |
+46 |     #[sig(fn(Option<T>[true]) -> T)]
+   |                        ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:code::Expr::read_constant'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/code.rs:166:12
@@ -700,10 +1776,18 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:code::<impl module::Module>::read_function_code'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/compiler.rs:228:26
+   --> src/code.rs:163:41
     |
-228 |                 let f = &hm.functions[index as usize];
-    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+163 |         let _ = core::mem::replace(&mut self.functions[i], f);
+    |                                         ^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:code::<impl module::Module>::read_function_code'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/compiler.rs:244:26
+    |
+244 |                 let f = &m.functions[index as usize];
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
 
@@ -712,14 +1796,6 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
 243 |                 let m = &state.store().modules()[module.0 as usize];
     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/compiler.rs:244:26
-    |
-244 |                 let f = &m.functions[index as usize];
-    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
 
@@ -740,6 +1816,14 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/compiler.rs:227:27
+    |
+227 |                 let hm = &state.store().host_modules()[module.0 as usize];
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
    --> src/compiler.rs:211:26
     |
 211 |                 let f = &state.module().functions[index as usize];
@@ -748,10 +1832,10 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/compiler.rs:227:27
+   --> src/compiler.rs:228:26
     |
-227 |                 let hm = &state.store().host_modules()[module.0 as usize];
-    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+228 |                 let f = &hm.functions[index as usize];
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<compiler::Compiler<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH> as visitor::WasmVisitor>::call'`
 
@@ -811,6 +1895,58 @@ error[E0999]: arithmetic operation may underflow
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::get_local'`
 
+error[E0999]: refinement type error
+   --> src/text.rs:656:30
+    |
+656 |                 let global = module.globals.get(index as usize).unwrap();
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::get_global'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:655:30
+    |
+655 |                 let module = self.store.host_modules().get(module.0 as usize).unwrap();
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::get_global'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:665:30
+    |
+665 |                 let module = self.store.modules().get(module.0 as usize).unwrap();
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::get_global'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:666:30
+    |
+666 |                 let global = module.globals.get(index as usize).unwrap();
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::get_global'`
+
 error[E0999]: arithmetic operation may underflow
    --> src/text.rs:703:9
     |
@@ -818,14 +1954,6 @@ error[E0999]: arithmetic operation may underflow
     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::control_frame_stack_len'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-   --> src/text.rs:750:38
-    |
-750 |             let control_frame = &mut self.control_frames[idx];
-    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::write_label_target'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/text.rs:744:31
@@ -858,6 +1986,92 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::write_label_target'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+   --> src/text.rs:750:38
+    |
+750 |             let control_frame = &mut self.control_frames[idx];
+    |                                      ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::write_label_target'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:808:34
+    |
+808 |         for i in self.value_stack[0..truncate_len].iter() {
+    |                                  ^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:52:77
+    |
+ 52 | #[flux::assoc(fn in_bounds(r: Self, len: int) -> bool { r.start <= r.end && r.end <= len })]
+    |                                                                             ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::stack_height_for'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:948:9
+    |
+948 |         self.control_frames.last_mut().unwrap().target = patch_location;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::write_if_else_target'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:976:20
+    |
+976 |         let last = self.control_frames.pop().unwrap();
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::pop_control_and_patch_if'`
+
+error[E0999]: refinement type error
+   --> src/text.rs:961:20
+    |
+961 |         let last = self.control_frames.last().unwrap();
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::pop_control_and_patch_if'`
+
+error[E0999]: refinement type error
+    --> src/text.rs:1035:24
+     |
+1035 |             let last = self.control_frames.last().unwrap();
+     |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+     |
+  46 |     #[sig(fn(Option<T>[true]) -> T)]
+     |                        ^^^^
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::pop_control'`
+
+error[E0999]: refinement type error
+    --> src/text.rs:1049:20
+     |
+1049 |         let last = self.control_frames.pop().unwrap();
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+     |
+  46 |     #[sig(fn(Option<T>[true]) -> T)]
+     |                        ^^^^
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:text::TextBuilder::<'\''a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::pop_control'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
   --> src/interpreter.rs:78:18
@@ -907,10 +2121,24 @@ error[E0999]: assertion might fail: possible out-of-bounds access
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:interpreter::<impl engine::Engine>::invoke'`
 
-error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:327:47
+error[E0999]: refinement type error
+   --> src/interpreter.rs:175:9
     |
-327 |                 let w2 = state.stack.read_u32(state.sp + depth - 1);
+175 | /         self.call_impl(0, f_ref.index)
+176 | |             .expect("unexpected call_impl overflowed the stack");
+    | |________________________________________________________________^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:84:28
+    |
+ 84 |     #[spec(fn(Result<T, E>[true], &str) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:interpreter::<impl engine::Engine>::invoke'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:326:47
+    |
+326 |                 let w1 = state.stack.read_u32(state.sp + depth - 2);
     |                                               ^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:interpreter::Interpreter::br_impl'`
@@ -932,9 +2160,9 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:interpreter::Interpreter::br_impl'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:326:47
+   --> src/interpreter.rs:327:47
     |
-326 |                 let w1 = state.stack.read_u32(state.sp + depth - 2);
+327 |                 let w2 = state.stack.read_u32(state.sp + depth - 1);
     |                                               ^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:interpreter::Interpreter::br_impl'`
@@ -988,18 +2216,18 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f32_load'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:588:67
-    |
-588 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
-    |                                                                   ^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_load'`
-
-error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:590:31
     |
 590 |         state.stack.write_u64(state.sp - 1, val);
     |                               ^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_load'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:588:67
+    |
+588 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
+    |                                                                   ^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_load'`
 
@@ -1036,18 +2264,18 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_load8_u'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:610:67
-    |
-610 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
-    |                                                                   ^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_load16_s'`
-
-error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:612:31
     |
 612 |         state.stack.write_u32(state.sp - 1, val as u32);
     |                               ^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_load16_s'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:610:67
+    |
+610 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
+    |                                                                   ^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_load16_s'`
 
@@ -1084,14 +2312,6 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load8_s'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:634:31
-    |
-634 |         state.stack.write_u64(state.sp - 1, val);
-    |                               ^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load8_u'`
-
-error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:632:67
     |
 632 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
@@ -1100,18 +2320,26 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load8_u'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:640:67
+   --> src/interpreter.rs:634:31
     |
-640 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
-    |                                                                   ^^^^^^^^^^^^
+634 |         state.stack.write_u64(state.sp - 1, val);
+    |                               ^^^^^^^^^^^^
     |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load16_s'`
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load8_u'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:642:31
     |
 642 |         state.stack.write_u64(state.sp - 1, val);
     |                               ^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load16_s'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:640:67
+    |
+640 |         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
+    |                                                                   ^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_load16_s'`
 
@@ -1236,14 +2464,6 @@ error[E0999]: arithmetic operation may underflow
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_store32'`
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:782:39
-    |
-782 |                 state.stack.write_u32(state.sp - 1, old_size);
-    |                                       ^^^^^^^^^^^^
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::memory_grow'`
-
-error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:785:39
     |
 785 |                 state.stack.write_u32(state.sp - 1, 0xFFFF_FFFF);
@@ -1256,6 +2476,14 @@ error[E0999]: arithmetic operation may underflow
     |
 750 |         let n = state.stack.read_u32(state.sp - 1);
     |                                      ^^^^^^^^^^^^
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::memory_grow'`
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:782:39
+    |
+782 |                 state.stack.write_u32(state.sp - 1, old_size);
+    |                                       ^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::memory_grow'`
 
@@ -1300,18 +2528,18 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f32_s'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1090:38
-     |
-1090 |         let f = state.stack.read_f32(state.sp - 1);
-     |                                      ^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f32_u'`
-
-error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1101:31
      |
 1101 |         state.stack.write_u32(state.sp - 1, f as u32);
      |                               ^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f32_u'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1090:38
+     |
+1090 |         let f = state.stack.read_f32(state.sp - 1);
+     |                                      ^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f32_u'`
 
@@ -1340,10 +2568,10 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f64_s'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1122:9
+    --> src/interpreter.rs:1123:38
      |
-1122 |         state.sp -= 1;
-     |         ^^^^^^^^^^^^^
+1123 |         let f = state.stack.read_f64(state.sp - 1);
+     |                                      ^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f64_u'`
 
@@ -1356,26 +2584,26 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f64_u'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1123:38
+    --> src/interpreter.rs:1122:9
      |
-1123 |         let f = state.stack.read_f64(state.sp - 1);
-     |                                      ^^^^^^^^^^^^
+1122 |         state.sp -= 1;
+     |         ^^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_trunc_f64_u'`
-
-error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1141:31
-     |
-1141 |         state.stack.write_u64(state.sp - 1, extended);
-     |                               ^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_extend_i32_s'`
 
 error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1139:38
      |
 1139 |         let i = state.stack.read_u32(state.sp - 1) as i32;
      |                                      ^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_extend_i32_s'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1141:31
+     |
+1141 |         state.stack.write_u64(state.sp - 1, extended);
+     |                               ^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_extend_i32_s'`
 
@@ -1540,14 +2768,6 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f32_convert_i64_u'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1252:38
-     |
-1252 |         let f = state.stack.read_f64(state.sp - 1);
-     |                                      ^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f32_demote_f64'`
-
-error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1251:9
      |
 1251 |         state.sp -= 1;
@@ -1560,6 +2780,14 @@ error[E0999]: arithmetic operation may underflow
      |
 1253 |         state.stack.write_f32(state.sp - 1, f as f32);
      |                               ^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f32_demote_f64'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1252:38
+     |
+1252 |         let f = state.stack.read_f64(state.sp - 1);
+     |                                      ^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f32_demote_f64'`
 
@@ -1612,18 +2840,18 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_convert_i64_s'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1278:38
-     |
-1278 |         let u = state.stack.read_u64(state.sp - 2);
-     |                                      ^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_convert_i64_u'`
-
-error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1279:31
      |
 1279 |         state.stack.write_f64(state.sp - 2, u as f64);
      |                               ^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_convert_i64_u'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1278:38
+     |
+1278 |         let u = state.stack.read_u64(state.sp - 2);
+     |                                      ^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_convert_i64_u'`
 
@@ -1653,30 +2881,6 @@ error[E0999]: arithmetic operation may underflow
      | |_________^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::drop'`
-
-error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1312:43
-     |
-1312 |                     state.stack.write_u32(state.sp - 2, val2);
-     |                                           ^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
-
-error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1324:21
-     |
-1324 |                     state.sp -= 2;
-     |                     ^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
-
-error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1313:21
-     |
-1313 |                     state.sp -= 1;
-     |                     ^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
 
 error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1322:53
@@ -1727,6 +2931,30 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
 
 error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1312:43
+     |
+1312 |                     state.stack.write_u32(state.sp - 2, val2);
+     |                                           ^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1324:21
+     |
+1324 |                     state.sp -= 2;
+     |                     ^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1313:21
+     |
+1313 |                     state.sp -= 1;
+     |                     ^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::select'`
+
+error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1333:9
      |
 1333 |         state.sp -= 1;
@@ -1751,14 +2979,6 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::br_table'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1394:31
-     |
-1394 |         let parameter_start = fp - (call_frame.parameter_size as usize);
-     |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::return_'`
-
-error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1398:44
      |
 1398 |             let val = state.stack.read_u32(state.sp - return_size + i);
@@ -1775,6 +2995,14 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::return_'`
 
 error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1394:31
+     |
+1394 |         let parameter_start = fp - (call_frame.parameter_size as usize);
+     |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::return_'`
+
+error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1448:9
      |
 1448 |         state.sp -= f.param_size();
@@ -1782,6 +3010,34 @@ error[E0999]: arithmetic operation may underflow
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
 
+error[E0999]: refinement type error
+    --> src/interpreter.rs:1458:21
+     |
+1458 | /                     sv.push(Value::I64(state.stack.read_u64(state.sp + offset) as i64))
+1459 | |                         .unwrap();
+     | |_________________________________^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+     |
+  91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+     |                            ^^^^
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
+
+error[E0999]: refinement type error
+    --> src/interpreter.rs:1463:21
+     |
+1463 | /                     sv.push(Value::F32(state.stack.read_f32(state.sp + offset)))
+1464 | |                         .unwrap();
+     | |_________________________________^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+     |
+  91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+     |                            ^^^^
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
+
 error[E0999]: assertion might fail: possible out-of-bounds access
     --> src/interpreter.rs:1447:18
      |
@@ -1796,6 +3052,20 @@ error[E0999]: assertion might fail: possible out-of-bounds access
 1476 |         let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
      |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
+
+error[E0999]: refinement type error
+    --> src/interpreter.rs:1453:21
+     |
+1453 | /                     sv.push(Value::I32(state.stack.read_u32(state.sp + offset) as i32))
+1454 | |                         .unwrap();
+     | |_________________________________^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+     |
+  91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+     |                            ^^^^
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
@@ -1813,12 +3083,50 @@ error[E0999]: assertion might fail: possible out-of-bounds access
      |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
+
+error[E0999]: refinement type error
+    --> src/interpreter.rs:1468:21
+     |
+1468 | /                     sv.push(Value::F64(state.stack.read_f64(state.sp + offset)))
+1469 | |                         .unwrap();
+     | |_________________________________^ a precondition cannot be proved
+     |
+note: this is the condition that cannot be proved
+    --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+     |
+  91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+     |                            ^^^^
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_host'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+    --> src/interpreter.rs:1562:26
+     |
+1562 |                 let m = &state.store.host_modules()[module.0 as usize];
+     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
+
+error[E0999]: arithmetic operation may underflow
+    --> src/interpreter.rs:1534:9
+     |
+1534 |         state.sp -= 1;
+     |         ^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
     --> src/interpreter.rs:1537:27
      |
 1537 |         let f_expected = &m.types[x.0 as usize];
      |                           ^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
+
+error[E0999]: assertion might fail: possible out-of-bounds access
+    --> src/interpreter.rs:1544:26
+     |
+1544 |                 let f = &m.functions[*index as usize];
+     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
 
@@ -1847,14 +3155,6 @@ error[E0999]: assertion might fail: possible out-of-bounds access
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
 
 error[E0999]: assertion might fail: possible out-of-bounds access
-    --> src/interpreter.rs:1562:26
-     |
-1562 |                 let m = &state.store.host_modules()[module.0 as usize];
-     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
     --> src/interpreter.rs:1563:26
      |
 1563 |                 let f = &m.functions[*index as usize];
@@ -1863,33 +3163,17 @@ error[E0999]: assertion might fail: possible out-of-bounds access
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1534:9
+    --> src/interpreter.rs:1607:17
      |
-1534 |         state.sp -= 1;
-     |         ^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
-
-error[E0999]: assertion might fail: possible out-of-bounds access
-    --> src/interpreter.rs:1544:26
-     |
-1544 |                 let f = &m.functions[*index as usize];
-     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::call_indirect'`
-
-error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1613:17
-     |
-1613 |                 state.sp -= 2;
+1607 |                 state.sp -= 1;
      |                 ^^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::local_set'`
 
 error[E0999]: arithmetic operation may underflow
-    --> src/interpreter.rs:1607:17
+    --> src/interpreter.rs:1613:17
      |
-1607 |                 state.sp -= 1;
+1613 |                 state.sp -= 2;
      |                 ^^^^^^^^^^^^^
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::local_set'`
@@ -1974,14 +3258,6 @@ error[E0999]: arithmetic operation may underflow
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::global_set'`
 
-error[E0999]: assertion might fail: possible out-of-bounds access
-    --> src/interpreter.rs:1718:18
-     |
-1718 |         let m = &state.store.host_modules()[module.0 as usize];
-     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     |
-     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::global_set_host'`
-
 error[E0999]: arithmetic operation may underflow
     --> src/interpreter.rs:1722:17
      |
@@ -2022,12 +3298,797 @@ error[E0999]: arithmetic operation may underflow
      |
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::global_set_host'`
 
+error[E0999]: assertion might fail: possible out-of-bounds access
+    --> src/interpreter.rs:1718:18
+     |
+1718 |         let m = &state.store.host_modules()[module.0 as usize];
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::IrVisitor>::global_set_host'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:172:13
+    |
+172 |             self.ptr.add(addr).write(i);
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:172:13
+    |
+172 |             self.ptr.add(addr).write(i);
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:167:18
+    |
+167 |         requires valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:172:13
+    |
+172 |             self.ptr.add(addr).write(i);
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:172:13
+    |
+172 |             self.ptr.add(addr).write(i);
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:172:13
+    |
+172 |             self.ptr.add(addr).write(i);
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:180:13
+    |
+180 |             self.ptr.add(addr).cast::<u16>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:180:13
+    |
+180 |             self.ptr.add(addr).cast::<u16>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:180:13
+    |
+180 |             self.ptr.add(addr).cast::<u16>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:180:13
+    |
+180 |             self.ptr.add(addr).cast::<u16>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:188:13
+    |
+188 |             self.ptr.add(addr).cast::<u32>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:188:13
+    |
+188 |             self.ptr.add(addr).cast::<u32>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:188:13
+    |
+188 |             self.ptr.add(addr).cast::<u32>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:188:13
+    |
+188 |             self.ptr.add(addr).cast::<u32>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:196:13
+    |
+196 |             self.ptr.add(addr).cast::<u64>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:196:13
+    |
+196 |             self.ptr.add(addr).cast::<u64>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:196:13
+    |
+196 |             self.ptr.add(addr).cast::<u64>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:196:13
+    |
+196 |             self.ptr.add(addr).cast::<u64>().write_unaligned(i.to_le());
+    |             ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:208:35
+    |
+208 |             data.as_ptr().copy_to(self.ptr.add(addr), data.len());
+    |                                   ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:208:35
+    |
+208 |             data.as_ptr().copy_to(self.ptr.add(addr), data.len());
+    |                                   ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:208:35
+    |
+208 |             data.as_ptr().copy_to(self.ptr.add(addr), data.len());
+    |                                   ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:208:35
+    |
+208 |             data.as_ptr().copy_to(self.ptr.add(addr), data.len());
+    |                                   ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::store'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:215:21
+    |
+215 |         unsafe { Ok(self.ptr.add(addr).read()) }
+    |                     ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:215:21
+    |
+215 |         unsafe { Ok(self.ptr.add(addr).read()) }
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:24:9
+    |
+ 24 |         num_bytes == 0 || valid_no_zst(p, num_bytes)
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:138:26
+    |
+138 |                 requires valid(p, T::size_of()) && aligned_to(p, T::align_of()))]
+    |                          ^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:215:21
+    |
+215 |         unsafe { Ok(self.ptr.add(addr).read()) }
+    |                     ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:215:21
+    |
+215 |         unsafe { Ok(self.ptr.add(addr).read()) }
+    |                     ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:215:21
+    |
+215 |         unsafe { Ok(self.ptr.add(addr).read()) }
+    |                     ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u8'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:222:17
+    |
+222 |                 self.ptr.add(addr).cast::<u16>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:222:17
+    |
+222 |                 self.ptr.add(addr).cast::<u16>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:222:17
+    |
+222 |                 self.ptr.add(addr).cast::<u16>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:222:17
+    |
+222 |                 self.ptr.add(addr).cast::<u16>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u16'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:231:17
+    |
+231 |                 self.ptr.add(addr).cast::<u32>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:231:17
+    |
+231 |                 self.ptr.add(addr).cast::<u32>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:231:17
+    |
+231 |                 self.ptr.add(addr).cast::<u32>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:231:17
+    |
+231 |                 self.ptr.add(addr).cast::<u32>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u32'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:240:17
+    |
+240 |                 self.ptr.add(addr).cast::<u64>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:240:17
+    |
+240 |                 self.ptr.add(addr).cast::<u64>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:240:17
+    |
+240 |                 self.ptr.add(addr).cast::<u64>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:240:17
+    |
+240 |                 self.ptr.add(addr).cast::<u64>().read_unaligned(),
+    |                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load_u64'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:250:49
+    |
+250 |         Ok(unsafe { core::slice::from_raw_parts(self.ptr.add(addr), len) })
+    |                                                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:250:49
+    |
+250 |         Ok(unsafe { core::slice::from_raw_parts(self.ptr.add(addr), len) })
+    |                                                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:250:49
+    |
+250 |         Ok(unsafe { core::slice::from_raw_parts(self.ptr.add(addr), len) })
+    |                                                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:250:49
+    |
+250 |         Ok(unsafe { core::slice::from_raw_parts(self.ptr.add(addr), len) })
+    |                                                 ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::load'`
+
 error[E0999]: arithmetic operation may underflow
    --> src/memory.rs:289:33
     |
 289 |                 .write_bytes(0, new_size - old_size);
     |                                 ^^^^^^^^^^^^^^^^^^^
     |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::grow'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:287:13
+    |
+287 | /             ptr.as_ptr()
+288 | |                 .add(old_size)
+    | |______________________________^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::grow'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:287:13
+    |
+287 | /             ptr.as_ptr()
+288 | |                 .add(old_size)
+    | |______________________________^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |         ^^^^^^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::grow'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:287:13
+    |
+287 | /             ptr.as_ptr()
+288 | |                 .add(old_size)
+    | |______________________________^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+    |
+  8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+    |                                                    ^^^^^^^^^^^
+note: inside this call
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                              ^^^^^^^^^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::grow'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:287:13
+    |
+287 | /             ptr.as_ptr()
+288 | |                 .add(old_size)
+    | |______________________________^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+    |
+ 67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::grow'`
 
 error[E0999]: assertion might fail: possible division by zero
@@ -2037,6 +4098,352 @@ error[E0999]: assertion might fail: possible division by zero
     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     |
     = note: to rerun: `cargo flux check -p spacewasm --only-check='def:memory::Memory::size'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:343:29
+    |
+343 |             let allocator = self.allocator.take().unwrap();
+    |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/option.rs:46:24
+    |
+ 46 |     #[sig(fn(Option<T>[true]) -> T)]
+    |                        ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<memory::Memory as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+   --> src/memory.rs:346:17
+    |
+346 |                 Layout::from_size_align(self.size, self.ty.page_alignment()).unwrap(),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+    |
+note: this is the condition that cannot be proved
+   --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+    |
+ 91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+    |                            ^^^^
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<memory::Memory as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:15:28
+   |
+15 |                     .alloc(Layout::from_size_align(bytes, 4).unwrap())?
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+   |
+91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+   |                            ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::new'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:44:19
+   |
+44 |         unsafe { *(self.ptr.add(addr)) }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:44:19
+   |
+44 |         unsafe { *(self.ptr.add(addr)) }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:44:19
+   |
+44 |         unsafe { *(self.ptr.add(addr)) }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:44:19
+   |
+44 |         unsafe { *(self.ptr.add(addr)) }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:55:18
+   |
+55 |         unsafe { self.ptr.add(addr).cast::<u64>().read_unaligned() }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:55:18
+   |
+55 |         unsafe { self.ptr.add(addr).cast::<u64>().read_unaligned() }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:55:18
+   |
+55 |         unsafe { self.ptr.add(addr).cast::<u64>().read_unaligned() }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:55:18
+   |
+55 |         unsafe { self.ptr.add(addr).cast::<u64>().read_unaligned() }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::read_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:66:19
+   |
+66 |         unsafe { *(self.ptr.add(addr)) = value }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:66:19
+   |
+66 |         unsafe { *(self.ptr.add(addr)) = value }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:66:19
+   |
+66 |         unsafe { *(self.ptr.add(addr)) = value }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:66:19
+   |
+66 |         unsafe { *(self.ptr.add(addr)) = value }
+   |                   ^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u32'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:77:18
+   |
+77 |         unsafe { self.ptr.add(addr).cast::<u64>().write_unaligned(value) }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:46
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:77:18
+   |
+77 |         unsafe { self.ptr.add(addr).cast::<u64>().write_unaligned(value) }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:29
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                             ^^^^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:77:18
+   |
+77 |         unsafe { self.ptr.add(addr).cast::<u64>().write_unaligned(value) }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:9
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |         ^^^^^^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:77:18
+   |
+77 |         unsafe { self.ptr.add(addr).cast::<u64>().write_unaligned(value) }
+   |                  ^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:8:52
+   |
+ 8 |         p.addr >= p.base && num_bytes <= p.size && p.size >= 0
+   |                                                    ^^^^^^^^^^^
+note: inside this call
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/ptr/mod.rs:67:30
+   |
+67 |                     requires in_bounds(p) && count * T::size_of() <= p.size
+   |                              ^^^^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:stack::Stack::write_u64'`
+
+error[E0999]: refinement type error
+  --> src/stack.rs:91:17
+   |
+91 |                 Layout::from_size_align(self.size * 4, 4).unwrap(),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/result.rs:91:28
+   |
+91 |     #[spec(fn(Result<T, E>[true]) -> T)]
+   |                            ^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<stack::Stack as core::ops::Drop>::drop'`
+
+error[E0999]: refinement type error
+  --> src/ir_reader.rs:40:30
+   |
+40 |             let v = unsafe { code.get_unchecked(page).0.get_unchecked(offset) };
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:48:58
+   |
+48 | #[flux::assoc(fn in_bounds(idx: int, len: int) -> bool { idx < len })]
+   |                                                          ^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:ir_reader::IrReader::read'`
+
+error[E0999]: refinement type error
+  --> src/ir_reader.rs:40:30
+   |
+40 |             let v = unsafe { code.get_unchecked(page).0.get_unchecked(offset) };
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^ a precondition cannot be proved
+   |
+note: this is the condition that cannot be proved
+  --> /home/evan/.cargo/git/checkouts/flux-88fb608948a7cfcd/a58a933/lib/flux-core/src/slice/index.rs:48:58
+   |
+48 | #[flux::assoc(fn in_bounds(idx: int, len: int) -> bool { idx < len })]
+   |                                                          ^^^^^^^^^
+   = note: to rerun: `cargo flux check -p spacewasm --only-check='def:ir_reader::IrReader::read'`
 
 error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:480:43
@@ -3071,10 +5478,10 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:540:13
+   --> src/interpreter.rs:543:35
     |
-540 |             state.sp -= 3;
-    |             ^^^^^^^^^^^^^
+543 |             state.stack.write_u32(state.sp - 1, if $($t)* { 1 } else { 0 });
+    |                                   ^^^^^^^^^^^^
 ...
 845 |     instruction!(f64_ne, f64, f64 -> bool, a, b, a != b);
     |     ---------------------------------------------------- in this macro invocation
@@ -3083,10 +5490,10 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:543:35
+   --> src/interpreter.rs:540:13
     |
-543 |             state.stack.write_u32(state.sp - 1, if $($t)* { 1 } else { 0 });
-    |                                   ^^^^^^^^^^^^
+540 |             state.sp -= 3;
+    |             ^^^^^^^^^^^^^
 ...
 845 |     instruction!(f64_ne, f64, f64 -> bool, a, b, a != b);
     |     ---------------------------------------------------- in this macro invocation
@@ -3251,10 +5658,10 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:441:43
+   --> src/interpreter.rs:442:35
     |
-441 |             let $i = state.stack.read_u32(state.sp - 1) as i32;
-    |                                           ^^^^^^^^^^^^
+442 |             state.stack.write_u32(state.sp - 1, ($($t)*) as u32);
+    |                                   ^^^^^^^^^^^^
 ...
 850 |     instruction!(i32_clz, i32 -> i32, i, i.leading_zeros() as i32);
     |     -------------------------------------------------------------- in this macro invocation
@@ -3263,10 +5670,10 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:442:35
+   --> src/interpreter.rs:441:43
     |
-442 |             state.stack.write_u32(state.sp - 1, ($($t)*) as u32);
-    |                                   ^^^^^^^^^^^^
+441 |             let $i = state.stack.read_u32(state.sp - 1) as i32;
+    |                                           ^^^^^^^^^^^^
 ...
 850 |     instruction!(i32_clz, i32 -> i32, i, i.leading_zeros() as i32);
     |     -------------------------------------------------------------- in this macro invocation
@@ -3482,23 +5889,6 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:474:35
-    |
-474 |               state.stack.write_u32(state.sp - 1, ($($t)*) as u32);
-    |                                     ^^^^^^^^^^^^
-...
-866 | /     instruction!(i32_div_u, i32, i32 -> i32, a, b, {
-867 | |         if b == 0 {
-868 | |             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
-869 | |         } else {
-...   |
-872 | |     });
-    | |______- in this macro invocation
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_div_u'`
-    = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:473:43
     |
 473 |               let $a = state.stack.read_u32(state.sp - 1) as i32;
@@ -3520,6 +5910,23 @@ error[E0999]: arithmetic operation may underflow
     |
 471 |               state.sp -= 1;
     |               ^^^^^^^^^^^^^
+...
+866 | /     instruction!(i32_div_u, i32, i32 -> i32, a, b, {
+867 | |         if b == 0 {
+868 | |             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
+869 | |         } else {
+...   |
+872 | |     });
+    | |______- in this macro invocation
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i32_div_u'`
+    = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:474:35
+    |
+474 |               state.stack.write_u32(state.sp - 1, ($($t)*) as u32);
+    |                                     ^^^^^^^^^^^^
 ...
 866 | /     instruction!(i32_div_u, i32, i32 -> i32, a, b, {
 867 | |         if b == 0 {
@@ -4459,6 +6866,18 @@ error[E0999]: arithmetic operation may underflow
     = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0999]: arithmetic operation may underflow
+   --> src/interpreter.rs:522:13
+    |
+522 |             state.sp -= 2;
+    |             ^^^^^^^^^^^^^
+...
+936 |     instruction!(i64_shr_s, i64, i64 -> i64, a, b, a.wrapping_shr(b as u32));
+    |     ------------------------------------------------------------------------ in this macro invocation
+    |
+    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_shr_s'`
+    = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0999]: arithmetic operation may underflow
    --> src/interpreter.rs:525:35
     |
 525 |             state.stack.write_u64(state.sp - 2, ($($t)*) as u64);
@@ -4475,18 +6894,6 @@ error[E0999]: arithmetic operation may underflow
     |
 524 |             let $a = state.stack.read_u64(state.sp - 2) as i64;
     |                                           ^^^^^^^^^^^^
-...
-936 |     instruction!(i64_shr_s, i64, i64 -> i64, a, b, a.wrapping_shr(b as u32));
-    |     ------------------------------------------------------------------------ in this macro invocation
-    |
-    = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::i64_shr_s'`
-    = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0999]: arithmetic operation may underflow
-   --> src/interpreter.rs:522:13
-    |
-522 |             state.sp -= 2;
-    |             ^^^^^^^^^^^^^
 ...
 936 |     instruction!(i64_shr_s, i64, i64 -> i64, a, b, a.wrapping_shr(b as u32));
     |     ------------------------------------------------------------------------ in this macro invocation
@@ -5582,4 +7989,4 @@ error[E0999]: arithmetic operation may underflow
      = note: to rerun: `cargo flux check -p spacewasm --only-check='def:<interpreter::Interpreter as visitor::BaseVisitor>::f64_copysign'`
      = note: this error originates in the macro `instruction` (in Nightly builds, run with -Z macro-backtrace for more info)
 
-error: could not compile `spacewasm` (lib) due to 527 previous errors
+error: could not compile `spacewasm` (lib) due to 683 previous errors

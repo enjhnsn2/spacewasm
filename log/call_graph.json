@@ -628,9 +628,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 169,
+      "start_line": 172,
       "start_col": 5,
-      "end_line": 169,
+      "end_line": 172,
       "end_col": 38
     },
     "deps": []
@@ -712,9 +712,9 @@
     "path": "<util::static_vec::StaticVec<T, N> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 111,
+      "start_line": 113,
       "start_col": 5,
-      "end_line": 111,
+      "end_line": 113,
       "end_col": 28
     },
     "deps": []
@@ -2932,9 +2932,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -2968,9 +2968,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -3592,9 +3592,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -3628,9 +3628,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4240,9 +4240,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4252,9 +4252,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4276,9 +4276,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4288,9 +4288,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -4324,9 +4324,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -4408,9 +4408,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -4492,9 +4492,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -4528,9 +4528,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -4612,9 +4612,9 @@
     "path": "<util::static_vec::StaticVec<T, N> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 111,
+      "start_line": 113,
       "start_col": 5,
-      "end_line": 111,
+      "end_line": 113,
       "end_col": 28
     },
     "deps": []
@@ -4756,9 +4756,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4840,9 +4840,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4864,9 +4864,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -4996,9 +4996,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 169,
+      "start_line": 172,
       "start_col": 5,
-      "end_line": 169,
+      "end_line": 172,
       "end_col": 38
     },
     "deps": []
@@ -7384,9 +7384,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 169,
+      "start_line": 172,
       "start_col": 5,
-      "end_line": 169,
+      "end_line": 172,
       "end_col": 38
     },
     "deps": []
@@ -7696,9 +7696,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -7708,9 +7708,9 @@
     "path": "util::box_::Box::<T, A>::as_mut_ptr",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 135,
+      "start_line": 138,
       "start_col": 5,
-      "end_line": 135,
+      "end_line": 138,
       "end_col": 43
     },
     "deps": []
@@ -7732,9 +7732,9 @@
     "path": "util::box_::Box::<T, A>::new_in",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 81,
+      "start_line": 84,
       "start_col": 5,
-      "end_line": 81,
+      "end_line": 84,
       "end_col": 71
     },
     "deps": []
@@ -7972,9 +7972,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -8116,9 +8116,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
@@ -8137,6 +8137,18 @@
   },
   {
     "uid": 678,
+    "path": "<util::static_vec::StaticVec<T, N> as core::ops::DerefMut>::deref_mut",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
+      "start_line": 124,
+      "start_col": 5,
+      "end_line": 124,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 679,
     "path": "util::rc::Rc::<T, A>::get_mut_unchecked",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8148,7 +8160,7 @@
     "deps": []
   },
   {
-    "uid": 679,
+    "uid": 680,
     "path": "<util::rc::Rc<T, A>::into_dyn::FatPtr as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8160,7 +8172,7 @@
     "deps": []
   },
   {
-    "uid": 680,
+    "uid": 681,
     "path": "util::rc::Rc::<T, A>::from_inner_in",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8172,7 +8184,7 @@
     "deps": []
   },
   {
-    "uid": 681,
+    "uid": 682,
     "path": "<util::paging::Page as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8184,7 +8196,7 @@
     "deps": []
   },
   {
-    "uid": 682,
+    "uid": 683,
     "path": "<util::paging::Page as core::cmp::PartialEq>::eq",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8196,7 +8208,7 @@
     "deps": []
   },
   {
-    "uid": 683,
+    "uid": 684,
     "path": "<util::paging::Page as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8208,7 +8220,7 @@
     "deps": []
   },
   {
-    "uid": 684,
+    "uid": 685,
     "path": "<util::paging::PageAllocatorStatistics as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8220,7 +8232,7 @@
     "deps": []
   },
   {
-    "uid": 685,
+    "uid": 686,
     "path": "<util::paging::PageAllocatorStatistics as core::default::Default>::default",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8232,7 +8244,7 @@
     "deps": []
   },
   {
-    "uid": 686,
+    "uid": 687,
     "path": "<util::paging::PageAllocatorStatistics as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -8244,7 +8256,7 @@
     "deps": []
   },
   {
-    "uid": 687,
+    "uid": 688,
     "path": "<util::alloc::AllocError as core::cmp::Eq>::assert_fields_are_eq",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
@@ -8256,7 +8268,7 @@
     "deps": []
   },
   {
-    "uid": 688,
+    "uid": 689,
     "path": "<util::alloc::AllocError as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
@@ -8268,7 +8280,7 @@
     "deps": []
   },
   {
-    "uid": 689,
+    "uid": 690,
     "path": "<text::LabelTarget as core::convert::From<u32>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8280,7 +8292,7 @@
     "deps": []
   },
   {
-    "uid": 690,
+    "uid": 691,
     "path": "ir_reader::<impl core::ops::AddAssign<i32> for text::JumpTarget>::add_assign",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/ir_reader.rs",
@@ -8292,19 +8304,19 @@
     "deps": []
   },
   {
-    "uid": 691,
+    "uid": 692,
     "path": "<util::box_::Box<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 163,
+      "start_line": 166,
       "start_col": 5,
-      "end_line": 163,
+      "end_line": 166,
       "end_col": 26
     },
     "deps": []
   },
   {
-    "uid": 692,
+    "uid": 693,
     "path": "text::JumpTarget::offset",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8316,7 +8328,7 @@
     "deps": []
   },
   {
-    "uid": 693,
+    "uid": 694,
     "path": "text::JumpTarget::page",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8328,7 +8340,7 @@
     "deps": []
   },
   {
-    "uid": 694,
+    "uid": 695,
     "path": "types::ValType::from_repr",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8340,7 +8352,7 @@
     "deps": []
   },
   {
-    "uid": 695,
+    "uid": 696,
     "path": "util::alloc::__spacewasm_dealloc",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
@@ -8352,7 +8364,7 @@
     "deps": []
   },
   {
-    "uid": 696,
+    "uid": 697,
     "path": "stack::Stack::len",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/stack.rs",
@@ -8364,7 +8376,7 @@
     "deps": []
   },
   {
-    "uid": 697,
+    "uid": 698,
     "path": "memory::Memory::as_shared_cells",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8376,7 +8388,7 @@
     "deps": []
   },
   {
-    "uid": 698,
+    "uid": 699,
     "path": "memory::Memory::get_slice",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8388,7 +8400,7 @@
     "deps": []
   },
   {
-    "uid": 699,
+    "uid": 700,
     "path": "memory::Memory::is_zero",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8400,7 +8412,7 @@
     "deps": []
   },
   {
-    "uid": 700,
+    "uid": 701,
     "path": "memory::Memory::grow::{closure#2}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8412,7 +8424,7 @@
     "deps": []
   },
   {
-    "uid": 701,
+    "uid": 702,
     "path": "memory::Memory::grow::{closure#1}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8424,7 +8436,7 @@
     "deps": []
   },
   {
-    "uid": 702,
+    "uid": 703,
     "path": "memory::Memory::grow::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8436,7 +8448,7 @@
     "deps": []
   },
   {
-    "uid": 703,
+    "uid": 704,
     "path": "<memory::MemoryError as core::convert::From<util::alloc::AllocError>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8448,7 +8460,7 @@
     "deps": []
   },
   {
-    "uid": 704,
+    "uid": 705,
     "path": "memory::Memory::grow::{closure#2}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8460,7 +8472,7 @@
     "deps": []
   },
   {
-    "uid": 705,
+    "uid": 706,
     "path": "memory::Memory::grow::{closure#1}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8472,7 +8484,7 @@
     "deps": []
   },
   {
-    "uid": 706,
+    "uid": 707,
     "path": "memory::Memory::grow::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8484,7 +8496,7 @@
     "deps": []
   },
   {
-    "uid": 707,
+    "uid": 708,
     "path": "memory::Memory::effective_address::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8496,7 +8508,7 @@
     "deps": []
   },
   {
-    "uid": 708,
+    "uid": 709,
     "path": "memory::Memory::new::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8508,7 +8520,7 @@
     "deps": []
   },
   {
-    "uid": 709,
+    "uid": 710,
     "path": "types::MemType::zero",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8520,7 +8532,7 @@
     "deps": []
   },
   {
-    "uid": 710,
+    "uid": 711,
     "path": "<memory::Memory as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8532,7 +8544,7 @@
     "deps": []
   },
   {
-    "uid": 711,
+    "uid": 712,
     "path": "memory::<impl util::rc::Rc<T>>::into_wasm_memory_allocator::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -8544,7 +8556,7 @@
     "deps": []
   },
   {
-    "uid": 712,
+    "uid": 713,
     "path": "types::RawValue::write_64",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8556,7 +8568,7 @@
     "deps": []
   },
   {
-    "uid": 713,
+    "uid": 714,
     "path": "types::RawValue::write_32",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8568,19 +8580,19 @@
     "deps": []
   },
   {
-    "uid": 714,
+    "uid": 715,
     "path": "<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 169,
+      "start_line": 172,
       "start_col": 5,
-      "end_line": 169,
+      "end_line": 172,
       "end_col": 38
     },
     "deps": []
   },
   {
-    "uid": 715,
+    "uid": 716,
     "path": "types::RawValue::read_32",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8592,7 +8604,7 @@
     "deps": []
   },
   {
-    "uid": 716,
+    "uid": 717,
     "path": "types::RawValue::read_64",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8604,7 +8616,7 @@
     "deps": []
   },
   {
-    "uid": 717,
+    "uid": 718,
     "path": "interpreter::<impl visitor::LocalVariable>::addr",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8616,7 +8628,7 @@
     "deps": []
   },
   {
-    "uid": 718,
+    "uid": 719,
     "path": "util::static_vec::StaticVec::<T, N>::push",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
@@ -8628,19 +8640,19 @@
     "deps": []
   },
   {
-    "uid": 719,
+    "uid": 720,
     "path": "<util::static_vec::StaticVec<T, N> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 111,
+      "start_line": 113,
       "start_col": 5,
-      "end_line": 111,
+      "end_line": 113,
       "end_col": 28
     },
     "deps": []
   },
   {
-    "uid": 720,
+    "uid": 721,
     "path": "types::ValType::size",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
@@ -8652,7 +8664,7 @@
     "deps": []
   },
   {
-    "uid": 721,
+    "uid": 722,
     "path": "<util::static_vec::StaticVec<T, N> as core::default::Default>::default",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
@@ -8664,7 +8676,7 @@
     "deps": []
   },
   {
-    "uid": 722,
+    "uid": 723,
     "path": "interpreter::CallFrame::into_bits",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8676,7 +8688,7 @@
     "deps": []
   },
   {
-    "uid": 723,
+    "uid": 724,
     "path": "code::Func::required_stack_words",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/code.rs",
@@ -8688,7 +8700,7 @@
     "deps": []
   },
   {
-    "uid": 724,
+    "uid": 725,
     "path": "util::rc::RcInner::<T>::count",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8700,7 +8712,7 @@
     "deps": []
   },
   {
-    "uid": 725,
+    "uid": 726,
     "path": "util::rc::Rc::<T, A>::inner",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8712,7 +8724,7 @@
     "deps": []
   },
   {
-    "uid": 726,
+    "uid": 727,
     "path": "<util::rc::Rc<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8724,7 +8736,7 @@
     "deps": []
   },
   {
-    "uid": 727,
+    "uid": 728,
     "path": "<text::JumpTarget as core::ops::Add<u32>>::add",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8736,7 +8748,7 @@
     "deps": []
   },
   {
-    "uid": 728,
+    "uid": 729,
     "path": "interpreter::CallFrame::from_bits",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8748,7 +8760,7 @@
     "deps": []
   },
   {
-    "uid": 729,
+    "uid": 730,
     "path": "<text::JumpTarget as core::ops::AddAssign<text::JumpOffset>>::add_assign",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8760,7 +8772,7 @@
     "deps": []
   },
   {
-    "uid": 730,
+    "uid": 731,
     "path": "text::LabelTarget::jump",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8772,7 +8784,7 @@
     "deps": []
   },
   {
-    "uid": 731,
+    "uid": 732,
     "path": "text::LabelTarget::arity",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8784,7 +8796,7 @@
     "deps": []
   },
   {
-    "uid": 732,
+    "uid": 733,
     "path": "text::LabelTarget::depth",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8796,7 +8808,7 @@
     "deps": []
   },
   {
-    "uid": 733,
+    "uid": 734,
     "path": "text::JumpOffset::offset",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8808,7 +8820,7 @@
     "deps": []
   },
   {
-    "uid": 734,
+    "uid": 735,
     "path": "<interpreter::Interpreter as visitor::IrVisitor>::drop",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8820,7 +8832,7 @@
     "deps": []
   },
   {
-    "uid": 735,
+    "uid": 736,
     "path": "util::rc::Rc::<T, A>::get_mut_unchecked",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -8832,7 +8844,7 @@
     "deps": []
   },
   {
-    "uid": 736,
+    "uid": 737,
     "path": "<util::inner_vec::InnerVec<T> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/inner_vec.rs",
@@ -8844,7 +8856,7 @@
     "deps": []
   },
   {
-    "uid": 737,
+    "uid": 738,
     "path": "<interpreter::InterpreterBreak as core::convert::From<memory::MemoryError>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8856,7 +8868,7 @@
     "deps": []
   },
   {
-    "uid": 738,
+    "uid": 739,
     "path": "<interpreter::Interpreter as visitor::BaseVisitor>::nop",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8868,7 +8880,7 @@
     "deps": []
   },
   {
-    "uid": 739,
+    "uid": 740,
     "path": "<interpreter::Interpreter as visitor::BaseVisitor>::malformed_ir",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8880,7 +8892,7 @@
     "deps": []
   },
   {
-    "uid": 740,
+    "uid": 741,
     "path": "<interpreter::Interpreter as visitor::BaseVisitor>::unreachable",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8892,7 +8904,7 @@
     "deps": []
   },
   {
-    "uid": 741,
+    "uid": 742,
     "path": "<interpreter::InterpreterBreak as core::convert::From<host::HostFunctionBreak>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -8904,7 +8916,7 @@
     "deps": []
   },
   {
-    "uid": 742,
+    "uid": 743,
     "path": "text::LabelTarget::with_jump",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8916,7 +8928,7 @@
     "deps": []
   },
   {
-    "uid": 743,
+    "uid": 744,
     "path": "text::JumpOffset::sentinel",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8928,7 +8940,7 @@
     "deps": []
   },
   {
-    "uid": 744,
+    "uid": 745,
     "path": "text::CodeBuilder::options",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8940,7 +8952,7 @@
     "deps": []
   },
   {
-    "uid": 745,
+    "uid": 746,
     "path": "<text::JumpTarget as core::ops::Add<text::JumpOffset>>::add",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -8952,7 +8964,7 @@
     "deps": []
   },
   {
-    "uid": 746,
+    "uid": 747,
     "path": "<util::inner_vec::InnerVec<T> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/inner_vec.rs",
@@ -8960,18 +8972,6 @@
       "start_col": 5,
       "end_line": 109,
       "end_col": 28
-    },
-    "deps": []
-  },
-  {
-    "uid": 747,
-    "path": "<util::static_vec::StaticVec<T, N> as core::ops::DerefMut>::deref_mut",
-    "span": {
-      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 120,
-      "start_col": 5,
-      "end_line": 120,
-      "end_col": 40
     },
     "deps": []
   },
@@ -9652,9 +9652,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -9856,9 +9856,9 @@
     "path": "<util::static_vec::StaticVec<T, N> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 161,
+      "start_line": 165,
       "start_col": 5,
-      "end_line": 161,
+      "end_line": 165,
       "end_col": 41
     },
     "deps": []
@@ -9868,9 +9868,9 @@
     "path": "<util::static_vec::StaticVecIntoIter<T, N> as core::ops::Drop>::drop",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 148,
+      "start_line": 152,
       "start_col": 5,
-      "end_line": 148,
+      "end_line": 152,
       "end_col": 23
     },
     "deps": []
@@ -9880,9 +9880,9 @@
     "path": "<util::static_vec::StaticVecIntoIter<T, N> as core::iter::Iterator>::next",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
-      "start_line": 136,
+      "start_line": 140,
       "start_col": 5,
-      "end_line": 136,
+      "end_line": 140,
       "end_col": 45
     },
     "deps": []
@@ -9988,9 +9988,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 169,
+      "start_line": 172,
       "start_col": 5,
-      "end_line": 169,
+      "end_line": 172,
       "end_col": 38
     },
     "deps": []
@@ -10096,9 +10096,9 @@
     "path": "util::box_::Box::<T, A>::from_raw",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 125,
+      "start_line": 128,
       "start_col": 5,
-      "end_line": 125,
+      "end_line": 128,
       "end_col": 63
     },
     "deps": []
@@ -10492,9 +10492,9 @@
     "path": "<util::box_::Box<T, A> as core::ops::Drop>::drop",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 175,
+      "start_line": 178,
       "start_col": 5,
-      "end_line": 175,
+      "end_line": 178,
       "end_col": 23
     },
     "deps": []
@@ -10504,9 +10504,9 @@
     "path": "util::box_::Box::<T, A>::as_ptr",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 130,
+      "start_line": 133,
       "start_col": 5,
-      "end_line": 130,
+      "end_line": 133,
       "end_col": 37
     },
     "deps": []
@@ -10865,9 +10865,9 @@
     "path": "<&'a util::box_::Box<[T], A> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 223,
+      "start_line": 226,
       "start_col": 5,
-      "end_line": 223,
+      "end_line": 226,
       "end_col": 41
     },
     "deps": [
@@ -11108,9 +11108,9 @@
     "path": "<&'a util::box_::Box<[T], A> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 223,
+      "start_line": 226,
       "start_col": 5,
-      "end_line": 223,
+      "end_line": 226,
       "end_col": 41
     },
     "deps": [
@@ -11458,9 +11458,9 @@
     "path": "<&'a util::box_::Box<[T], A> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 223,
+      "start_line": 226,
       "start_col": 5,
-      "end_line": 223,
+      "end_line": 226,
       "end_col": 41
     },
     "deps": [
@@ -11600,9 +11600,9 @@
     "path": "util::box_::Box::<T, A>::into_raw_with_allocator",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 49,
+      "start_line": 52,
       "start_col": 5,
-      "end_line": 49,
+      "end_line": 52,
       "end_col": 52
     },
     "deps": [
@@ -11997,9 +11997,9 @@
     "path": "util::box_::Box::<T>::new",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 74,
+      "start_line": 77,
       "start_col": 5,
-      "end_line": 74,
+      "end_line": 77,
       "end_col": 55
     },
     "deps": [
@@ -12081,9 +12081,9 @@
     "path": "<&'a util::box_::Box<[T], A> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 223,
+      "start_line": 226,
       "start_col": 5,
-      "end_line": 223,
+      "end_line": 226,
       "end_col": 41
     },
     "deps": [
@@ -12095,9 +12095,9 @@
     "path": "<util::box_::Box<T, A> as core::cmp::Ord>::cmp",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 209,
+      "start_line": 212,
       "start_col": 5,
-      "end_line": 209,
+      "end_line": 212,
       "end_col": 55
     },
     "deps": [
@@ -12109,9 +12109,9 @@
     "path": "<util::box_::Box<T, A> as core::cmp::PartialOrd>::partial_cmp",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 203,
+      "start_line": 206,
       "start_col": 5,
-      "end_line": 203,
+      "end_line": 206,
       "end_col": 71
     },
     "deps": [
@@ -12123,9 +12123,9 @@
     "path": "<util::box_::Box<T, A> as core::cmp::PartialEq>::eq",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 195,
+      "start_line": 198,
       "start_col": 5,
-      "end_line": 195,
+      "end_line": 198,
       "end_col": 39
     },
     "deps": [
@@ -12137,9 +12137,9 @@
     "path": "util::box_::Box::<T, A>::try_clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 30,
+      "start_line": 33,
       "start_col": 5,
-      "end_line": 30,
+      "end_line": 33,
       "end_col": 56
     },
     "deps": [
@@ -12152,9 +12152,9 @@
     "path": "<util::box_::Box<T, A> as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 19,
+      "start_line": 22,
       "start_col": 5,
-      "end_line": 19,
+      "end_line": 22,
       "end_col": 73
     },
     "deps": [
@@ -12205,6 +12205,20 @@
   },
   {
     "uid": 996,
+    "path": "text::TextBuilder::<'a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::set_control_target",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 919,
+      "start_col": 5,
+      "end_line": 919,
+      "end_col": 99
+    },
+    "deps": [
+      678
+    ]
+  },
+  {
+    "uid": 997,
     "path": "util::rc::Rc::<T, A>::into_dyn",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -12214,11 +12228,11 @@
       "end_col": 29
     },
     "deps": [
-      680
+      681
     ]
   },
   {
-    "uid": 997,
+    "uid": 998,
     "path": "util::rc::Rc::<[T], A>::new_uninit_slice_in",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -12228,11 +12242,11 @@
       "end_col": 50
     },
     "deps": [
-      680
+      681
     ]
   },
   {
-    "uid": 998,
+    "uid": 999,
     "path": "util::paging::PageAllocator::<A, MAX_PAGES>::stats",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
@@ -12242,11 +12256,11 @@
       "end_col": 51
     },
     "deps": [
-      685
+      686
     ]
   },
   {
-    "uid": 999,
+    "uid": 1000,
     "path": "ir_reader::<impl text::JumpTarget>::advance",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/ir_reader.rs",
@@ -12256,11 +12270,11 @@
       "end_col": 38
     },
     "deps": [
-      690
+      691
     ]
   },
   {
-    "uid": 1000,
+    "uid": 1001,
     "path": "<util::alloc::GlobalAllocator as util::alloc::Allocator>::dealloc",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
@@ -12270,11 +12284,11 @@
       "end_col": 59
     },
     "deps": [
-      695
+      696
     ]
   },
   {
-    "uid": 1001,
+    "uid": 1002,
     "path": "memory::Memory::zero",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
@@ -12284,11 +12298,11 @@
       "end_col": 28
     },
     "deps": [
-      709
+      710
     ]
   },
   {
-    "uid": 1002,
+    "uid": 1003,
     "path": "host::HostFunction::param_size::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
@@ -12298,11 +12312,11 @@
       "end_col": 42
     },
     "deps": [
-      720
+      721
     ]
   },
   {
-    "uid": 1003,
+    "uid": 1004,
     "path": "interpreter::<impl engine::Engine>::invoke::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
@@ -12312,11 +12326,11 @@
       "end_col": 59
     },
     "deps": [
-      720
+      721
     ]
   },
   {
-    "uid": 1004,
+    "uid": 1005,
     "path": "module::<impl code::Func>::read_func_section::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
@@ -12326,11 +12340,11 @@
       "end_col": 66
     },
     "deps": [
-      720
+      721
     ]
   },
   {
-    "uid": 1005,
+    "uid": 1006,
     "path": "host::HostFunction::param_size::{closure#0}",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
@@ -12340,11 +12354,11 @@
       "end_col": 42
     },
     "deps": [
-      720
+      721
     ]
   },
   {
-    "uid": 1006,
+    "uid": 1007,
     "path": "util::static_vec::StaticVec::<T, N>::new",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
@@ -12354,11 +12368,11 @@
       "end_col": 25
     },
     "deps": [
-      721
+      722
     ]
   },
   {
-    "uid": 1007,
+    "uid": 1008,
     "path": "util::rc::RcInner::<T>::inc",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -12368,11 +12382,11 @@
       "end_col": 18
     },
     "deps": [
-      724
+      725
     ]
   },
   {
-    "uid": 1008,
+    "uid": 1009,
     "path": "util::rc::Rc::<T, A>::is_unique",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
@@ -12382,12 +12396,12 @@
       "end_col": 32
     },
     "deps": [
-      724,
-      725
+      725,
+      726
     ]
   },
   {
-    "uid": 1009,
+    "uid": 1010,
     "path": "text::LabelTarget::is_sentinel",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -12398,11 +12412,11 @@
     },
     "deps": [
       49,
-      730
+      731
     ]
   },
   {
-    "uid": 1010,
+    "uid": 1011,
     "path": "<text::LabelTarget as core::fmt::Debug>::fmt",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -12412,13 +12426,13 @@
       "end_col": 73
     },
     "deps": [
-      730,
       731,
-      732
+      732,
+      733
     ]
   },
   {
-    "uid": 1011,
+    "uid": 1012,
     "path": "<util::vec::Vec<T, A> as core::ops::DerefMut>::deref_mut",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/vec.rs",
@@ -12428,11 +12442,11 @@
       "end_col": 40
     },
     "deps": [
-      736
+      737
     ]
   },
   {
-    "uid": 1012,
+    "uid": 1013,
     "path": "text::JumpOffset::new",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -12443,11 +12457,11 @@
     },
     "deps": [
       40,
-      743
+      744
     ]
   },
   {
-    "uid": 1013,
+    "uid": 1014,
     "path": "text::TextBuilder::<'a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::options",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
@@ -12457,11 +12471,11 @@
       "end_col": 46
     },
     "deps": [
-      744
+      745
     ]
   },
   {
-    "uid": 1014,
+    "uid": 1015,
     "path": "<util::vec::Vec<T, A> as core::ops::Deref>::deref",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/vec.rs",
@@ -12469,20 +12483,6 @@
       "start_col": 5,
       "end_line": 312,
       "end_col": 28
-    },
-    "deps": [
-      746
-    ]
-  },
-  {
-    "uid": 1015,
-    "path": "text::TextBuilder::<'a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>::set_control_target",
-    "span": {
-      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
-      "start_line": 919,
-      "start_col": 5,
-      "end_line": 919,
-      "end_col": 99
     },
     "deps": [
       747
@@ -12499,7 +12499,7 @@
       "end_col": 60
     },
     "deps": [
-      743,
+      744,
       748
     ]
   },
@@ -12514,7 +12514,7 @@
       "end_col": 46
     },
     "deps": [
-      747,
+      678,
       751
     ]
   },
@@ -12959,9 +12959,9 @@
     "path": "util::box_::Box::<T, A>::into_raw_with_allocator",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 49,
+      "start_line": 52,
       "start_col": 5,
-      "end_line": 49,
+      "end_line": 52,
       "end_col": 52
     },
     "deps": [
@@ -12973,9 +12973,9 @@
     "path": "<&'a mut util::box_::Box<[T], A> as core::iter::IntoIterator>::into_iter",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 231,
+      "start_line": 234,
       "start_col": 5,
-      "end_line": 231,
+      "end_line": 234,
       "end_col": 41
     },
     "deps": [
@@ -14163,7 +14163,7 @@
       880,
       881,
       882,
-      717
+      718
     ]
   },
   {
@@ -14181,7 +14181,7 @@
       880,
       881,
       882,
-      717
+      718
     ]
   },
   {
@@ -14199,7 +14199,7 @@
       880,
       881,
       882,
-      717
+      718
     ]
   },
   {
@@ -14214,9 +14214,9 @@
     },
     "deps": [
       882,
-      729,
       730,
-      733
+      731,
+      734
     ]
   },
   {
@@ -14294,8 +14294,8 @@
       52,
       887,
       888,
-      692,
-      693
+      693,
+      694
     ]
   },
   {
@@ -14303,9 +14303,9 @@
     "path": "util::box_::Box::<T, A>::new_in",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 81,
+      "start_line": 84,
       "start_col": 5,
-      "end_line": 81,
+      "end_line": 84,
       "end_col": 71
     },
     "deps": [
@@ -14422,9 +14422,9 @@
     "path": "util::box_::Box::<T, A>::new_in",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 81,
+      "start_line": 84,
       "start_col": 5,
-      "end_line": 81,
+      "end_line": 84,
       "end_col": 71
     },
     "deps": [
@@ -15128,9 +15128,9 @@
     "path": "util::box_::Box::<T, A>::leak",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 62,
+      "start_line": 65,
       "start_col": 5,
-      "end_line": 64,
+      "end_line": 67,
       "end_col": 15
     },
     "deps": [
@@ -15806,9 +15806,9 @@
     "path": "<util::box_::Box<T, A> as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 42,
+      "start_line": 45,
       "start_col": 5,
-      "end_line": 42,
+      "end_line": 45,
       "end_col": 28
     },
     "deps": [
@@ -15840,7 +15840,7 @@
       "end_col": 42
     },
     "deps": [
-      996
+      997
     ]
   },
   {
@@ -15854,7 +15854,7 @@
       "end_col": 30
     },
     "deps": [
-      997
+      998
     ]
   },
   {
@@ -15868,10 +15868,10 @@
       "end_col": 69
     },
     "deps": [
-      999,
-      691,
+      1000,
       692,
-      693
+      693,
+      694
     ]
   },
   {
@@ -15885,7 +15885,7 @@
       "end_col": 23
     },
     "deps": [
-      1000
+      1001
     ]
   },
   {
@@ -15899,7 +15899,7 @@
       "end_col": 25
     },
     "deps": [
-      1001
+      1002
     ]
   },
   {
@@ -15915,8 +15915,8 @@
     "deps": [
       250,
       415,
-      1007,
-      725
+      1008,
+      726
     ]
   },
   {
@@ -15930,8 +15930,8 @@
       "end_col": 48
     },
     "deps": [
-      735,
-      1008
+      736,
+      1009
     ]
   },
   {
@@ -15948,7 +15948,7 @@
       916,
       928,
       967,
-      1011
+      1012
     ]
   },
   {
@@ -15963,10 +15963,10 @@
     },
     "deps": [
       888,
-      691,
       692,
       693,
-      1014
+      694,
+      1015
     ]
   },
   {
@@ -15980,7 +15980,7 @@
       "end_col": 44
     },
     "deps": [
-      1014
+      1015
     ]
   },
   {
@@ -16181,7 +16181,7 @@
       "end_col": 28
     },
     "deps": [
-      680,
+      681,
       827,
       1047
     ]
@@ -16197,7 +16197,7 @@
       "end_col": 48
     },
     "deps": [
-      678,
+      679,
       1048
     ]
   },
@@ -16206,9 +16206,9 @@
     "path": "util::box_::Box::<T, A>::leak",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 62,
+      "start_line": 65,
       "start_col": 5,
-      "end_line": 64,
+      "end_line": 67,
       "end_col": 15
     },
     "deps": [
@@ -16220,9 +16220,9 @@
     "path": "util::box_::Box::<T, A>::into_inner",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 104,
+      "start_line": 107,
       "start_col": 5,
-      "end_line": 104,
+      "end_line": 107,
       "end_col": 36
     },
     "deps": [
@@ -17298,7 +17298,7 @@
       "end_col": 91
     },
     "deps": [
-      727,
+      728,
       1138
     ]
   },
@@ -17307,9 +17307,9 @@
     "path": "util::box_::Box::<T>::new",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 74,
+      "start_line": 77,
       "start_col": 5,
-      "end_line": 74,
+      "end_line": 77,
       "end_col": 55
     },
     "deps": [
@@ -17421,9 +17421,9 @@
     "path": "util::box_::Box::<[T], A>::try_clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 141,
+      "start_line": 144,
       "start_col": 5,
-      "end_line": 141,
+      "end_line": 144,
       "end_col": 56
     },
     "deps": [
@@ -17438,9 +17438,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17474,7 +17474,7 @@
     "deps": [
       353,
       1160,
-      720,
+      721,
       901
     ]
   },
@@ -17502,9 +17502,9 @@
     "path": "util::box_::Box::<[T], A>::try_clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 141,
+      "start_line": 144,
       "start_col": 5,
-      "end_line": 141,
+      "end_line": 144,
       "end_col": 56
     },
     "deps": [
@@ -17519,9 +17519,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17587,8 +17587,8 @@
       881,
       1176,
       405,
-      715,
-      716
+      716,
+      717
     ]
   },
   {
@@ -17605,9 +17605,9 @@
       881,
       354,
       1176,
-      696,
-      722,
-      723
+      697,
+      723,
+      724
     ]
   },
   {
@@ -17643,9 +17643,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17657,9 +17657,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17671,9 +17671,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17816,9 +17816,9 @@
       880,
       882,
       1183,
-      712,
       713,
-      714
+      714,
+      715
     ]
   },
   {
@@ -17851,9 +17851,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -17865,9 +17865,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -18064,10 +18064,10 @@
       645,
       646,
       1231,
-      718,
       719,
+      720,
       982,
-      1006
+      1007
     ]
   },
   {
@@ -18075,9 +18075,9 @@
     "path": "util::box_::Box::<[T], A>::try_clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 141,
+      "start_line": 144,
       "start_col": 5,
-      "end_line": 141,
+      "end_line": 144,
       "end_col": 56
     },
     "deps": [
@@ -18210,8 +18210,8 @@
       1182,
       1243,
       1185,
-      727,
-      728
+      728,
+      729
     ]
   },
   {
@@ -18239,7 +18239,7 @@
       "end_col": 75
     },
     "deps": [
-      727,
+      728,
       1246
     ]
   },
@@ -18297,7 +18297,7 @@
     },
     "deps": [
       644,
-      680,
+      681,
       1263
     ]
   },
@@ -18306,9 +18306,9 @@
     "path": "<util::box_::Box<[T], A> as core::convert::From<util::vec::Vec<T, A>>>::from",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 215,
+      "start_line": 218,
       "start_col": 5,
-      "end_line": 215,
+      "end_line": 218,
       "end_col": 34
     },
     "deps": [
@@ -18341,8 +18341,8 @@
     },
     "deps": [
       1336,
-      742,
-      1012
+      743,
+      1013
     ]
   },
   {
@@ -18357,8 +18357,8 @@
     },
     "deps": [
       1336,
-      742,
-      1012
+      743,
+      1013
     ]
   },
   {
@@ -18514,9 +18514,9 @@
     "path": "<util::box_::Box<[T], A> as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 156,
+      "start_line": 159,
       "start_col": 5,
-      "end_line": 156,
+      "end_line": 159,
       "end_col": 28
     },
     "deps": [
@@ -18542,9 +18542,9 @@
     "path": "<util::box_::Box<[T], A> as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 156,
+      "start_line": 159,
       "start_col": 5,
-      "end_line": 156,
+      "end_line": 159,
       "end_col": 28
     },
     "deps": [
@@ -18648,9 +18648,9 @@
       354,
       1176,
       1160,
-      696,
+      697,
       1356,
-      723,
+      724,
       1203,
       1182,
       1243,
@@ -18690,9 +18690,9 @@
     "path": "<util::box_::Box<[T], A> as core::clone::Clone>::clone",
     "span": {
       "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
-      "start_line": 156,
+      "start_line": 159,
       "start_col": 5,
-      "end_line": 156,
+      "end_line": 159,
       "end_col": 28
     },
     "deps": [
@@ -18755,7 +18755,7 @@
       1388,
       1240,
       1389,
-      694
+      695
     ]
   },
   {
@@ -18772,11 +18772,11 @@
       881,
       882,
       1390,
-      729,
       730,
       731,
       732,
-      1009
+      733,
+      1010
     ]
   },
   {
@@ -18793,7 +18793,7 @@
       881,
       882,
       401,
-      699,
+      700,
       1376,
       1243,
       1244,
@@ -18828,10 +18828,10 @@
     },
     "deps": [
       40,
-      730,
-      1009,
-      744,
+      731,
+      1010,
       745,
+      746,
       1392
     ]
   },
@@ -18846,11 +18846,11 @@
       "end_col": 64
     },
     "deps": [
-      1009,
+      1010,
       1336,
-      742,
-      1012,
       743,
+      1013,
+      744,
       1392
     ]
   },
@@ -18880,7 +18880,7 @@
     },
     "deps": [
       1398,
-      1015,
+      996,
       896
     ]
   },
@@ -19337,7 +19337,7 @@
       942,
       1381,
       1417,
-      726
+      727
     ]
   },
   {
@@ -19396,7 +19396,7 @@
     "deps": [
       882,
       1427,
-      733
+      734
     ]
   },
   {
@@ -19412,7 +19412,7 @@
     "deps": [
       882,
       1427,
-      733
+      734
     ]
   },
   {
@@ -19427,7 +19427,7 @@
     },
     "deps": [
       1427,
-      733
+      734
     ]
   },
   {
@@ -19551,9 +19551,9 @@
     "deps": [
       1434,
       59,
-      743,
+      678,
+      744,
       1398,
-      747,
       748
     ]
   },
@@ -19572,10 +19572,10 @@
       891,
       59,
       62,
-      1012,
+      678,
+      1013,
       1398,
       1335,
-      747,
       748,
       897,
       1016
@@ -19594,7 +19594,7 @@
     "deps": [
       1435,
       1421,
-      1001,
+      1002,
       1342
     ]
   },
@@ -21978,7 +21978,7 @@
       1344,
       63,
       64,
-      1013
+      1014
     ]
   },
   {
@@ -22057,7 +22057,7 @@
       1473,
       1344,
       1474,
-      720,
+      721,
       1017,
       755
     ]
@@ -22075,7 +22075,7 @@
     "deps": [
       1473,
       1474,
-      720,
+      721,
       1471
     ]
   },
@@ -22372,7 +22372,7 @@
     "deps": [
       1473,
       1472,
-      1015,
+      996,
       896,
       1479
     ]
@@ -23536,7 +23536,7 @@
     },
     "deps": [
       247,
-      720,
+      721,
       1702,
       1660
     ]
