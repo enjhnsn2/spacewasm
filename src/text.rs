@@ -194,6 +194,8 @@ impl JumpTarget {
     }
 
     /// Extract the word offset within the page (lower 8 bits).
+    // Flux: provable via the `BitAndNonNegBound` primop property in `util::flux_specs`.
+    #[flux_rs::spec(fn(&Self) -> usize{v: v < 256})]
     pub fn offset(&self) -> usize {
         (self.0 & 0xFF) as usize
     }

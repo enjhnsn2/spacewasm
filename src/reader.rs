@@ -34,6 +34,11 @@ const INTEGER_BIT_FLAG: u8 = !CONTINUATION_BIT;
 ///
 /// This reader cannot backtrack. The code that calls into the reader must
 /// allocate and copy data that should be retained as it is read.
+///
+/// Flux: refined by `offset`, the absolute byte position (`full_offset`).
+/// Every `read_*`/`skip`/`with_limit` method is specified to never decrease
+/// it, and `offset()` exposes it, so `wasm.offset() - start` is provable.
+#[flux_rs::refined_by(offset: int)]
 pub struct Reader<'wasm> {
     stream: &'wasm mut dyn WasmStream,
     /// Number of bytes we've already extracted from the next chunk and
@@ -50,6 +55,7 @@ pub struct Reader<'wasm> {
 
     /// A counter keeping track of the total number of bytes we've processed in the Wasm binary
     /// This is useful for generating error messages with an absolute location in the binary.
+    #[flux_rs::field(usize[offset])]
     full_offset: usize,
 
     /// Offset ahead of full_offset tracking the read limits of this section.
@@ -58,6 +64,7 @@ pub struct Reader<'wasm> {
 }
 
 impl<'wasm> Reader<'wasm> {
+    #[flux_rs::spec(fn(stream: _) -> Self[0])]
     pub fn new(stream: &'wasm mut dyn WasmStream) -> Self {
         Self {
             stream,
@@ -69,11 +76,14 @@ impl<'wasm> Reader<'wasm> {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.offset])]
     pub fn offset(&self) -> usize {
         self.full_offset
     }
 
     /// Run `f` with reads bounded to `len` bytes.
+    #[flux_rs::spec(fn(self: &strg Self[@v], len: usize, f: F) -> Result<T, E>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn with_limit<T, E, F>(&mut self, len: usize, f: F) -> Result<T, E>
     where
         E: From<ValidationError>,
@@ -93,6 +103,7 @@ impl<'wasm> Reader<'wasm> {
     /// Bytes that may still be read before reaching the configured
     /// section/function limit (see [`with_limit`](Self::with_limit)). Returns
     /// `usize::MAX` when no limit is in effect.
+    #[flux_rs::spec(fn(&Self[@v]) -> usize)]
     fn bytes_remaining(&self) -> usize {
         self.limit.saturating_sub(self.full_offset)
     }
@@ -109,6 +120,7 @@ impl<'wasm> Reader<'wasm> {
     // cvc5 does not terminate on this function's fixpoint query (repro in centrifuge/harness/repro-cvc5-hang);
     // z3 solves it in ~30s.
     #[flux_rs::opts(solver = "z3")]
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(), ValidationError> ensures self: Self[v.offset])]
     fn fill_buffer(&mut self) -> Result<(), ValidationError> {
         // If buffer already has data, we're done
         if !self.buffer.is_empty() {
@@ -160,6 +172,7 @@ impl<'wasm> Reader<'wasm> {
         }
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u8, ValidationError> ensures self: Self[v.offset])]
     fn peek_u8(&mut self) -> Result<u8, ValidationError> {
         // Try to get a byte from the buffer
         if let Some(&byte) = self.buffer.front() {
@@ -174,6 +187,8 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Tries to read one byte and fails if the end of file is reached.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u8, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_u8(&mut self) -> Result<u8, ValidationError> {
         if self.full_offset >= self.limit {
             return Err(ValidationError::Eof);
@@ -185,6 +200,8 @@ impl<'wasm> Reader<'wasm> {
         Ok(byte)
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], expected: u8) -> Result<(), ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn expect_u8(&mut self, expected: u8) -> Result<(), ValidationError> {
         let byte = self.peek_u8()?;
         if byte == expected {
@@ -196,6 +213,8 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Read a constant number of bytes into an array
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<[u8; N], ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn strip_bytes<const N: usize>(&mut self) -> Result<[u8; N], ValidationError> {
         let mut result = [0u8; N];
         for item in result.iter_mut().take(N) {
@@ -208,6 +227,8 @@ impl<'wasm> Reader<'wasm> {
     /// Note: If `Err`, the [Reader] object is no longer guaranteed to be in a valid state
     /// This implementation is heavily based off of DLR's Wasm interpreter:
     /// <https://github.com/DLR-FT/wasm-interpreter>
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u32, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_u32(&mut self) -> Result<u32, ValidationError> {
         /// Because up to 5 bytes (each storing 7 bits) may be used to store 32 bits,
         /// some bits in the last byte will be left unused. This is a bitmask for
@@ -254,6 +275,8 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Read a little-endian `f64` and return its raw bit pattern.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u64, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_f64_bits(&mut self) -> Result<u64, ValidationError> {
         let bytes = self.strip_bytes::<8>()?;
         Ok(u64::from_le_bytes(bytes))
@@ -261,6 +284,8 @@ impl<'wasm> Reader<'wasm> {
 
     /// This implementation is heavily based off of DLR's Wasm interpreter:
     /// <https://github.com/DLR-FT/wasm-interpreter>
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<i32, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_i32(&mut self) -> Result<i32, ValidationError> {
         /// Because up to 5 bytes (each storing 7 bits) may be used to store 32 bits,
         /// some bits in the last byte will be left unused. This is a bitmask for
@@ -335,11 +360,20 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Read a little-endian `f32` and return its raw bit pattern.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u32, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_f32_bits(&mut self) -> Result<u32, ValidationError> {
         let bytes = self.strip_bytes::<4>()?;
         Ok(u32::from_le_bytes(bytes))
     }
 
+    // cvc5 takes ~45s on this function's ten sequential `read_u8` state updates; z3 is fast.
+    // Flux: the monotonic `ensures self: Self{w: w.offset >= v.offset}` verifies here but takes
+    // ~43s (cvc5) / ~60s (z3): each of the ten `self.read_u8()?` creates a kvar over the whole
+    // scope, and the obligation keeps all of them alive. Kept unconstrained to stay within the
+    // harness per-check budget; strengthen it if a caller ever needs `read_i64` to be monotonic.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<i64, ValidationError>
+        ensures self: Self)]
     pub fn read_i64(&mut self) -> Result<i64, ValidationError> {
         /// Because up to 10 bytes (each storing 7 bits) may be used to store 64 bits,
         /// some bits in the last byte will be left unused. This is a bitmask for
@@ -454,6 +488,8 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Skip over a fixed set of bytes and ignore them
+    #[flux_rs::spec(fn(self: &strg Self[@v], len: usize) -> Result<(), ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn skip(&mut self, len: usize) -> Result<(), ValidationError> {
         for _ in 0..len {
             self.read_u8()?;
@@ -462,6 +498,8 @@ impl<'wasm> Reader<'wasm> {
     }
 
     /// Note: If `Err`, the [Reader] object is no longer guaranteed to be in a valid state
+    #[flux_rs::spec(fn(self: &strg Self[@v], read_element: F) -> Result<Vec<T>, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_vec<T, F>(&mut self, read_element: F) -> Result<Vec<T>, ValidationError>
     where
         T: 'wasm,
@@ -470,6 +508,8 @@ impl<'wasm> Reader<'wasm> {
         self.read_vec_in(GlobalAllocator, read_element)
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], read_element: _) -> Result<StaticVec<T, SIZE>, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_vec_stack<const SIZE: usize, T>(
         &mut self,
         mut read_element: impl FnMut(&mut Self) -> Result<T, ValidationError>,
@@ -490,6 +530,8 @@ impl<'wasm> Reader<'wasm> {
         Ok(out)
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], alloc: VA, read_element: F) -> Result<Vec<T, VA>, ValidationError>
+        ensures self: Self{w: w.offset >= v.offset})]
     pub fn read_vec_in<T, F, VA>(
         &mut self,
         alloc: VA,
