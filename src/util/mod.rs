@@ -24,3 +24,5 @@ pub(crate) use static_vec::*;
 
 mod string;
 pub(crate) use string::*;
+
+mod flux_specs;

@@ -1,10 +1,13 @@
 use crate::ValidationError;
 use crate::alloc::AllocError;
-use core::mem::MaybeUninit;
+use core::mem::{ManuallyDrop, MaybeUninit};
 use core::ops::{Deref, DerefMut};
 
+#[flux_rs::refined_by(len: int)]
+#[flux_rs::invariant(0 <= len && (len == 0 || len <= N))]
 pub struct StaticVec<T: Sized, const N: usize> {
     data: [MaybeUninit<T>; N],
+    #[flux_rs::field(u32[len])]
     len: u32,
 }
 
@@ -28,6 +31,7 @@ impl<T: Sized + Clone, const N: usize> Clone for StaticVec<T, N> {
 }
 
 impl<T: Sized, const N: usize> StaticVec<T, N> {
+    #[flux_rs::spec(fn(self: &strg Self[@v], new_len: usize{new_len <= v.len && new_len <= u32::MAX}) ensures self: Self[new_len])]
     pub(crate) fn truncate(&mut self, new_len: usize) {
         assert!(new_len <= self.len as usize);
         // Drop the discarded suffix [new_len..len) before shrinking, otherwise
@@ -110,6 +114,7 @@ impl<T: core::fmt::Debug, const N: usize> core::fmt::Debug for StaticVec<T, N> {
 impl<T, const N: usize> Deref for StaticVec<T, N> {
     type Target = [T];
     #[flux_rs::trusted(reason = "panicked at crates/flux-middle/src/builtin_assoc_refts.rs:134:76")]
+    #[flux_rs::spec(fn(&Self[@v]) -> &[T][v.len])]
     fn deref(&self) -> &[T] {
         unsafe {
             // SAFETY: elements [0..len) are initialized
@@ -121,6 +126,7 @@ impl<T, const N: usize> Deref for StaticVec<T, N> {
 #[flux_rs::trusted_impl(reason = "ICE")]
 impl<T, const N: usize> DerefMut for StaticVec<T, N> {
     #[flux_rs::trusted(reason = "panicked at crates/flux-middle/src/builtin_assoc_refts.rs:134:76")]
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T][v.len])]
     fn deref_mut(&mut self) -> &mut [T] {
         unsafe {
             // SAFETY: elements [0..len) are initialized
@@ -129,14 +135,25 @@ impl<T, const N: usize> DerefMut for StaticVec<T, N> {
     }
 }
 
+#[flux_rs::refined_by(vec: ManuallyDrop<StaticVec>, pos: int)]
+#[flux_rs::invariant(pos <= vec.inner.len)]
 pub struct StaticVecIntoIter<T, const N: usize> {
-    vec: core::mem::ManuallyDrop<StaticVec<T, N>>,
+    #[flux_rs::field(ManuallyDrop<StaticVec<T, N>>[vec])]
+    vec: ManuallyDrop<StaticVec<T, N>>,
+    #[flux_rs::field(usize[pos])]
     pos: usize,
 }
 
+#[flux_rs::assoc(
+    fn size(s: StaticVecIntoIter) -> int { s.vec.inner.len - s.pos }
+    fn done(s: StaticVecIntoIter) -> bool { s.pos >= s.vec.inner.len }
+    fn step(s: StaticVecIntoIter, t: StaticVecIntoIter) -> bool { t.vec.inner.len == s.vec.inner.len && s.pos <= t.pos }
+)]
 impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     type Item = T;
 
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Self::Item>[s.pos < s.vec.inner.len]
+        ensures self: Self[s.vec, if s.pos < s.vec.inner.len { s.pos + 1 } else { s.pos }])]
     fn next(&mut self) -> Option<Self::Item> {
         if self.pos < (self.vec.len as usize) {
             let item = unsafe { self.vec.data[self.pos].assume_init_read() };
