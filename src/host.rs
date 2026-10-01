@@ -390,6 +390,7 @@ impl HostFunction {
     /// Fallibly construct a host function, returning an error if the parameter
     /// or result signature is too large to encode. This is the FFI-safe
     /// constructor.
+    #[flux_rs::trusted(reason = "panicked at crates/flux-infer/src/infer.rs:1022:17")]
     pub fn try_new(
         name: HostName<HOST_FUNCTION_NAME_CAP>,
         params: HostValList,
