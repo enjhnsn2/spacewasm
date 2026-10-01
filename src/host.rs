@@ -205,8 +205,11 @@ impl From<AllocError> for HostFunctionError {
 /// parameters or results. Parsed from a signature string of the characters
 /// `i` (i32), `I` (i64), `f` (f32), `d` (f64).
 #[derive(Copy, Clone)]
+#[flux_rs::refined_by(len: int)]
+#[flux_rs::invariant(len <= MAX_HOST_FUNCTION_PARAMS)]
 pub struct HostValList {
     data: [ValType; MAX_HOST_FUNCTION_PARAMS],
+    #[flux_rs::field(u8[len])]
     len: u8,
 }
 
@@ -261,6 +264,7 @@ impl HostValList {
         })
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> &[ValType][v.len])]
     pub fn as_slice(&self) -> &[ValType] {
         &self.data[..self.len as usize]
     }
@@ -273,10 +277,12 @@ impl HostValList {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.len])]
     pub fn len(&self) -> usize {
         self.len as usize
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> bool[v.len == 0])]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
