@@ -446,6 +446,7 @@ impl HostFunction {
     /// The engine is single-threaded and a host function is not permitted to
     /// reenter itself (directly or transitively). If it does, the closure has
     /// already been taken and this returns `None`.
+    #[flux_rs::trusted(reason = "panicked at crates/flux-infer/src/infer.rs:1022:17")]
     pub fn get_call(&mut self) -> Option<HostFunctionFn> {
         self.f.take()
     }
