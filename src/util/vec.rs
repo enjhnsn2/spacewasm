@@ -12,7 +12,11 @@ use core::ops::{Deref, DerefMut};
 /// The capacity is set on construction and cannot be changed.
 /// This is very similar to `alloc::vec::Vec` however it guarantees
 /// maximum memory efficiency.
+#[flux_rs::refined_by(inner: InnerVec)]
+// `Layout::array::<T>(cap)` is valid (needed by `Drop` to recompute the layout).
+#[flux_rs::invariant(inner.cap == 0 || T::size_of() == 0 || inner.cap * T::size_of() + T::align_of() - 1 <= isize::MAX)]
 pub struct Vec<T: Sized, A: Allocator = GlobalAllocator> {
+    #[flux_rs::field(InnerVec<T>[inner])]
     inner: InnerVec<T>,
     alloc: A,
 }
@@ -43,6 +47,7 @@ macro_rules! vec {
 }
 
 impl<T> Default for Vec<T> {
+    #[flux_rs::spec(fn() -> Self[InnerVec { base: 0, addr: 0, size: 0, cap: 0, len: 0 }])]
     fn default() -> Self {
         Vec::<T>::zero()
     }
@@ -55,6 +60,7 @@ impl<A: Allocator, T: core::fmt::Debug> core::fmt::Debug for Vec<T, A> {
 }
 
 impl<T: Clone, A: Allocator + Clone> Vec<T, A> {
+    #[flux_rs::spec(fn(&Self[@v]) -> Result<Self{n: n.inner.len == v.inner.len && n.inner.cap == v.inner.cap}, AllocError>)]
     pub fn try_clone(&self) -> Result<Self, AllocError> {
         let mut n: Vec<T, A> = Vec::new_in(self.alloc.clone(), self.inner.capacity)?;
 
@@ -96,6 +102,7 @@ impl<T: Sized> Vec<T, GlobalAllocator> {
         Ok(v)
     }
 
+    #[flux_rs::spec(fn(capacity: usize) -> Result<Vec<T>{v: v.inner.len == 0 && v.inner.cap == capacity}, AllocError>)]
     pub fn new(capacity: usize) -> Result<Vec<T>, AllocError> {
         Vec::new_in(GlobalAllocator, capacity)
     }
@@ -112,6 +119,10 @@ impl<T: Sized> Vec<T, GlobalAllocator> {
     /// - Ownership of that allocation is transferred to the returned `Vec`: it
     ///   must not be freed, aliased, or otherwise used elsewhere, since the
     ///   `Vec`'s `Drop` will free it with the same allocator and layout.
+    #[flux_rs::spec(fn(ptr: *mut[@p] T, capacity: usize) -> Vec<T>[InnerVec { base: p.base, addr: p.addr, size: p.size, cap: capacity, len: 0 }]
+        requires p.addr >= p.base && p.size >= 0 && capacity * T::size_of() <= p.size
+              && (capacity == 0 || (p.addr > 0 && p.addr % T::align_of() == 0 && T::size_of() >= 0))
+              && (capacity == 0 || T::size_of() == 0 || capacity * T::size_of() + T::align_of() - 1 <= isize::MAX))]
     pub unsafe fn new_from(ptr: *mut T, capacity: usize) -> Vec<T> {
         Vec {
             // SAFETY: guaranteed by this function's contract; `len == 0` so no
@@ -135,6 +146,10 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
     /// - Ownership of that allocation is transferred to the returned `Vec`: it
     ///   must not be freed, aliased, or otherwise used elsewhere, since the
     ///   `Vec`'s `Drop` will free it with `alloc` and the same layout.
+    #[flux_rs::spec(fn(ptr: *mut[@p] T, capacity: usize, alloc: A) -> Vec<T, A>[InnerVec { base: p.base, addr: p.addr, size: p.size, cap: capacity, len: 0 }]
+        requires p.addr >= p.base && p.size >= 0 && capacity * T::size_of() <= p.size
+              && (capacity == 0 || (p.addr > 0 && p.addr % T::align_of() == 0 && T::size_of() >= 0))
+              && (capacity == 0 || T::size_of() == 0 || capacity * T::size_of() + T::align_of() - 1 <= isize::MAX))]
     pub unsafe fn new_from_with_alloc(ptr: *mut T, capacity: usize, alloc: A) -> Vec<T, A> {
         Vec {
             // SAFETY: guaranteed by this function's contract; `len == 0` so no
@@ -144,6 +159,7 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
         }
     }
 
+    #[flux_rs::spec(fn(alloc: A, capacity: usize) -> Result<Vec<T, A>{v: v.inner.len == 0 && v.inner.cap == capacity}, AllocError>)]
     pub fn new_in(alloc: A, capacity: usize) -> Result<Vec<T, A>, AllocError> {
         // We don't want to handle ZST
         const {
@@ -168,6 +184,7 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
 }
 
 impl<T: Sized> Vec<T, GlobalAllocator> {
+    #[flux_rs::spec(fn() -> Vec<T>[InnerVec { base: 0, addr: 0, size: 0, cap: 0, len: 0 }])]
     pub fn zero() -> Vec<T> {
         Vec {
             inner: InnerVec::zero(),
@@ -177,14 +194,17 @@ impl<T: Sized> Vec<T, GlobalAllocator> {
 }
 
 impl<T: Sized, A: Allocator> Vec<T, A> {
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.inner.len])]
     pub fn len(&self) -> usize {
         self.inner.len()
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> bool[v.inner.len == 0])]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.inner.cap])]
     pub fn capacity(&self) -> usize {
         self.inner.capacity()
     }
@@ -225,10 +245,14 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
     /// # Time complexity
     ///
     /// Takes *O*(1) time.
+    #[flux_rs::spec(fn(self: &strg Self[@v], value: T) requires v.inner.len < v.inner.cap
+        ensures self: Self[InnerVec { len: v.inner.len + 1, ..v.inner }])]
     pub fn push(&mut self, value: T) {
         self.inner.push(value)
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], value: T) -> Result<(), AllocError>[v.inner.len < v.inner.cap]
+        ensures self: Self[InnerVec { len: if v.inner.len < v.inner.cap { v.inner.len + 1 } else { v.inner.len }, ..v.inner }])]
     pub fn try_push(&mut self, value: T) -> Result<(), AllocError> {
         self.inner.try_push(value)
     }
@@ -260,6 +284,8 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
     /// # Time complexity
     ///
     /// Takes *O*(1) time.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Option<T>[v.inner.len > 0]
+        ensures self: Self[InnerVec { len: if v.inner.len > 0 { v.inner.len - 1 } else { 0 }, ..v.inner }])]
     pub fn pop(&mut self) -> Option<T> {
         self.inner.pop()
     }
@@ -274,6 +300,7 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
 
     /// # Safety
     /// The caller must ensure that all elements up to capacity have been initialized.
+    #[flux_rs::spec(fn(self: Self[@v]) -> Self[InnerVec { len: v.inner.cap, ..v.inner }])]
     pub unsafe fn assume_init(mut self) -> Self {
         self.inner.len = self.inner.capacity;
         self
@@ -309,12 +336,14 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
 
 impl<T, A: Allocator> Deref for Vec<T, A> {
     type Target = [T];
+    #[flux_rs::spec(fn(&Self[@v]) -> &[T][v.inner.len])]
     fn deref(&self) -> &[T] {
         self.inner.deref()
     }
 }
 
 impl<T, A: Allocator> DerefMut for Vec<T, A> {
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T])]
     fn deref_mut(&mut self) -> &mut [T] {
         self.inner.deref_mut()
     }
