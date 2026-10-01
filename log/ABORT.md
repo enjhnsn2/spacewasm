@@ -48,3 +48,8 @@ Strategies tried:
 
 Outcome: no annotation kept. Revisit `next`/`next_back` in Phase 2 by refining `end` by its own address and
 stating `end == start + rem * size_of` as an invariant rather than as the field index.
+
+## Triage pass (types 18-114): clean types
+
+66 types verified clean without annotations and checkpointed as DONE (no invariant).
+Candidates with a plausible invariant to add in Phase 2 if a caller needs it: 47 Limit (min<=max); 86 MemType (limits); 87 TableType (limits); 57 JumpTarget (page/offset bounds); 67 Chunk (expose InnerVec len); 71 String (expose len).

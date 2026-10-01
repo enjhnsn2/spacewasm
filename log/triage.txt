@@ -1,0 +1,94 @@
+18 module::DataSection ERROR 3 src/module.rs(3) 
+21 interpreter::Interpreter ERROR 417 src/interpreter.rs(417) 
+22 stack::Stack ERROR 18 src/stack.rs(18) 
+23 ir_reader::IrReader ERROR 2 src/ir_reader.rs(2) 
+26 util::box_::Box ERROR 14 src/util/box_.rs(12) src/host.rs(2) 
+27 util::paging::PageAllocatorStatistics SAFE 0 
+28 util::paging::Page ERROR 13 src/util/paging.rs(12) 
+29 util::rc::Rc<T, SAFE 0 
+30 visitor::ModuleRef SAFE 0 
+31 visitor::HostModuleRef SAFE 0 
+32 host::HostNameError SAFE 0 
+33 host::HostName ERROR 1 src/host.rs(1) 
+34 host::HostFunctionBreak SAFE 0 
+35 module::SectionKind SAFE 0 
+36 module::TypeIdx SAFE 0 
+37 module::FuncIdx SAFE 0 
+38 module::TableIdx SAFE 0 
+39 module::MemIdx SAFE 0 
+40 module::GlobalIdx SAFE 0 
+41 module::LocalIdx SAFE 0 
+42 module::LabelIdx SAFE 0 
+43 module::Data ERROR 3 src/module.rs(3) 
+44 types::ValType SAFE 0 
+45 types::Value SAFE 0 
+46 types::RawValue SAFE 0 
+47 types::Limit SAFE 0 
+48 types::MemPageSize SAFE 0 
+49 types::ElemType SAFE 0 
+50 code::MemArg SAFE 0 
+51 constant::ConstantExprError SAFE 0 
+52 compiler::Compiler ERROR 7 src/compiler.rs(7) 
+53 text::TextPage SAFE 0 
+54 text::JumpOffset SAFE 0 
+55 text::LabelTarget SAFE 0 
+56 text::LabelArity SAFE 0 
+57 text::JumpTarget SAFE 0 
+58 text::BlockKind SAFE 0 
+59 text::CompilerOptions SAFE 0 
+60 interpreter::InvokeError SAFE 0 
+61 interpreter::ResumeError SAFE 0 
+62 interpreter::TrapReason SAFE 0 
+63 memory::MemoryError SAFE 0 
+64 util::circular_buffer::Iter ERROR 4 src/util/circular_buffer.rs(4) 
+65 util::circular_buffer::IterMut ERROR 2 src/util/circular_buffer.rs(2) 
+66 util::vec::Vec ERROR 19 src/util/vec.rs(19) 
+67 stream::Chunk SAFE 0 
+68 util::rc::Rc ERROR 14 src/util/rc.rs(14) 
+69 util::static_vec::StaticVecIntoIter SAFE 0 
+70 host::HostFunctionError SAFE 0 
+71 util::string::String SAFE 0 
+72 util::paging::PageAllocatorInner ERROR 12 src/util/paging.rs(11) 
+73 imports::WasmRef SAFE 0 
+74 visitor::Ref SAFE 0 
+75 imports::HostRef SAFE 0 
+76 imports::Import SAFE 0 
+77 module::TableElement SAFE 0 
+78 host::HostGlobal SAFE 0 
+79 host::HostSymbol SAFE 0 
+80 module::ExportDesc SAFE 0 
+81 visitor::LocalVariable SAFE 0 
+82 host::HostValList ERROR 4 src/host.rs(4) 
+83 types::ResultType SAFE 0 
+84 types::GlobalType SAFE 0 
+85 text::OperandType SAFE 0 
+86 types::MemType SAFE 0 
+87 types::TableType SAFE 0 
+88 code::Expr ERROR 1 src/code.rs(1) 
+89 interpreter::InterpreterBreak SAFE 0 
+90 interpreter::InterpreterResult SAFE 0 
+91 error::ValidationError SAFE 0 
+92 text::CodeBuilder ERROR 6 src/text.rs(6) 
+93 types::FuncType SAFE 0 
+94 reader::Reader ERROR 3 src/reader.rs(3) 
+95 util::paging::PageAllocator ERROR 12 src/util/paging.rs(11) 
+96 text::GlobalVariable SAFE 0 
+97 module::Export SAFE 0 
+98 host::HostValListIter ERROR 2 src/host.rs(2) 
+99 host::HostFunction ERROR 1 src/host.rs(1) 
+100 text::ControlFrame SAFE 0 
+101 module::Global SAFE 0 
+102 memory::Memory ERROR 50 src/memory.rs(50) 
+103 module::ImportDesc SAFE 0 
+104 module::TableKind SAFE 0 
+105 code::Func ERROR 1 src/module.rs(1) 
+106 error::SectionDecodeError SAFE 0 
+107 host::HostModule SAFE 0 
+108 module::MemoryKind SAFE 0 
+109 error::ParseError SAFE 0 
+110 module::Module ERROR 9 src/module.rs(5) src/code.rs(4) 
+111 store::Store ERROR 33 src/imports.rs(17) src/store.rs(16) 
+112 constant::ConstantCompiler SAFE 0 
+113 text::TextBuilder ERROR 18 src/text.rs(18) 
+114 engine::Engine ERROR 8 src/interpreter.rs(7) src/store.rs(1) 
+DONE
