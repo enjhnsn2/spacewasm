@@ -28,3 +28,23 @@ as deferred and revisited in Phase 2, since no `refined_by`/`invariant` on the t
 Error: `arithmetic operation may underflow` at src/module.rs:498 (`wasm.offset() - start` in `CustomSection::read`).
 `CustomSection` is a unit struct. The fact needed is that `Reader::offset()` is monotonic across reads,
 which is a `Reader` refinement (type uid 94) plus specs on `Reader::read_*`. Nothing on this type can express it.
+
+## type 2 util::vec::IntoIter (src/util/vec.rs:383)
+
+Errors: `next`/`next_back` fail the flux-core `Iterator::next` spec (internal error infer.rs:887 on an
+unrefined iterator), `offset(-1)`/`read` pointer preconditions, and `size_hint` (`end as usize - start as usize`
+underflow and division by `size_of::<T>()`).
+
+Strategies tried:
+1. Refinement `refined_by(base, buf, size, cap, start, rem)` with `end` indexed as `start + rem * size_of`
+   and Iterator assoc refinements: flux rejects it (`rem` is not determined by any field index position,
+   since it only appears inside an arithmetic expression), and a full sweep with it present made cvc5
+   diverge (nonlinear `rem * size_of` with `%` alignment terms).
+2. `size_hint` casts pointers to `usize`; this flux revision does not preserve addresses through
+   pointer-to-integer casts, so the underflow and the division by zero (real for ZST `T`) cannot be discharged
+   by any spec, and `Iterator::size_hint` is a trait method that cannot take a precondition.
+3. `Drop` needs `Layout::array::<T>(cap).unwrap()` to be `Ok`, which needs flux-core's `is_valid_layout`
+   predicate, not nameable from this crate.
+
+Outcome: no annotation kept. Revisit `next`/`next_back` in Phase 2 by refining `end` by its own address and
+stating `end == start + rem * size_of` as an invariant rather than as the field index.
