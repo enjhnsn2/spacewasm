@@ -53,3 +53,40 @@ stating `end == start + rem * size_of` as an invariant rather than as the field 
 
 66 types verified clean without annotations and checkpointed as DONE (no invariant).
 Candidates with a plausible invariant to add in Phase 2 if a caller needs it: 47 Limit (min<=max); 86 MemType (limits); 87 TableType (limits); 57 JumpTarget (page/offset bounds); 67 Chunk (expose InnerVec len); 71 String (expose len).
+
+## type 66 util::vec::Vec (src/util/vec.rs:15) — partial (wave 1, worker 2)
+
+Refinement kept: `refined_by(inner: InnerVec)` with `#[field(InnerVec<T>[inner])]` and invariant
+`inner.cap == 0 || T::size_of() == 0 || inner.cap * T::size_of() + T::align_of() - 1 <= isize::MAX`
+(= flux-core's `is_valid_array_layout`, inlined; it lets `Drop` discharge `Layout::array(cap).unwrap()`).
+Specs verified on: `new_from`, `new_from_with_alloc`, `new`, `zero`, `default`, `len`, `is_empty`, `capacity`,
+`push`, `try_push`, `pop`, `assume_init`, `try_clone`, `deref`, `deref_mut`; `drop`, `eq`, `fmt`, `iter`, `iter_mut`
+verify with no spec. `InnerVec::{zero,len,is_empty,capacity}` and `<InnerVec as Deref>::deref` got detached specs
+in src/util/flux_specs.rs (plus an extern spec for `core::slice::from_raw_parts`) so `Vec` can speak about
+`inner.len`/`inner.cap`.
+
+Remaining 9 errors in 6 functions (all blocked outside src/util/vec.rs):
+
+1. `new_in` (4 errors, vec.rs:177): `InnerVec::from_raw_parts` needs `p.addr >= p.base`, `p.size >= 0`,
+   `cap * size_of <= p.size`, and non-null/aligned for `cap > 0`, but `Allocator::alloc` (src/util/alloc.rs:125)
+   has no spec, so the pointer it returns is unrefined. DEFERRED: needs an `Allocator::alloc` spec, decided by
+   worker 1 (Box/Rc). With a spec of the shape
+   `fn(&Self, layout: Layout[@s, @a]) -> Result<*mut u8{p: p.addr != 0 && p.addr % a == 0 && p.base <= p.addr && p.addr + s <= p.base + p.size}, AllocError>`
+   the four obligations follow from `Layout::array`'s `[cap * T::size_of(), T::align_of()]` index (the `*mut u8 as *mut T`
+   cast keeps the ptr index). The `Vec` invariant already follows from `Layout::array`'s `is_valid_array_layout` Ok-index.
+2. `into_boxed_slice` (vec.rs:317) and `<Vec as IntoIterator>::into_iter` (vec.rs:376): `core::ptr::read(&self.alloc)`.
+   The `&A -> *const A` coercion yields an unrefined pointer in this flux revision, so flux-core's `read` precondition
+   `valid(p, A::size_of())` is unprovable. Tried: no spec can help (the pointer comes from a coercion, not a call);
+   `ptr::from_ref` has no flux-core spec either. Would need flux to model ref-to-raw-pointer coercions.
+3. `<Vec as Clone>::clone` (vec.rs:83): `self.try_clone().expect(..)` requires `Result[true]` (flux-core `expect`
+   spec) but allocation can genuinely fail. Tried: `try_clone` now has a precise spec (len/cap preserved) but its
+   Ok-ness cannot be promised. Only a local rewrite to `match .. { Err(_) => panic!() }` would verify; not applied
+   (annotations only).
+4. `from_exact_iter` (vec.rs:33) and `from_array` (vec.rs:97): `push` needs `len < cap` inside a `for` loop over an
+   `impl ExactSizeIterator` / `[T; N]`. flux-core has no spec for `ExactSizeIterator::len` nor for
+   `core::array::IntoIter::next`, and even with one the loop invariant `o.len + size(iter) == cap` involves the
+   uninterpreted `default_iterator_size(iter)`, which kvar inference cannot express. Tried: no spec on this function
+   helps (strategy i); the struct refinement is not the issue (ii); an intermediate extern spec for
+   `ExactSizeIterator::len` (iii) would still leave the loop invariant unprovable.
+
+`IntoIter` (uid 2) was not re-attempted (its `into_iter` constructor is itself blocked by item 2).
