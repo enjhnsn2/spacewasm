@@ -31,3 +31,13 @@ impl<T> DerefMut for ManuallyDrop<T> {
     fn deref_mut(&mut self) -> &mut T;
 }
 
+
+// Flux leaves bitwise operators on integer-sorted values uninterpreted. This
+// primop property axiomatizes the one fact we need about `&`: for non-negative
+// operands, `x & y` is non-negative and bounded by both operands (true for any
+// two's-complement width). Used by `text::JumpTarget::offset` (`addr & 0xFF < 256`).
+flux_rs::defs! {
+    property BitAndNonNegBound[&](x, y) {
+        (0 <= x && 0 <= y) => (0 <= [&](x, y) && [&](x, y) <= x && [&](x, y) <= y)
+    }
+}
