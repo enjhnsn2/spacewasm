@@ -454,6 +454,7 @@ impl HostFunction {
     /// Restore the closure previously taken by [`HostFunction::get_call`] once
     /// the call has returned. Must be paired with exactly one preceding
     /// `get_call`; the closure returns to the always-`Some` steady state.
+    #[flux_rs::trusted(reason = "panicked at crates/flux-infer/src/infer.rs:1022:17")]
     pub fn finish_call(&mut self, f: HostFunctionFn) {
         let other = self.f.replace(f);
         debug_assert!(other.is_none());
