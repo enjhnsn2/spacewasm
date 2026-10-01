@@ -53,3 +53,26 @@ stating `end == start + rem * size_of` as an invariant rather than as the field 
 
 66 types verified clean without annotations and checkpointed as DONE (no invariant).
 Candidates with a plausible invariant to add in Phase 2 if a caller needs it: 47 Limit (min<=max); 86 MemType (limits); 87 TableType (limits); 57 JumpTarget (page/offset bounds); 67 Chunk (expose InnerVec len); 71 String (expose len).
+
+## type 22 stack::Stack (src/stack.rs:4) — partial: all accessors verified, `new`/`drop` blocked
+
+Refinement kept: `refined_by(base: int, addr: int, bytes: int, size: int)`, fields
+`ptr: *mut[base, addr, bytes] u32`, `size: usize[size]`, invariants `size * 4 <= bytes` and
+`addr >= base && bytes >= 0 && addr > 0 && addr % 4 == 0`. Specs: `len -> usize[s.size]`,
+`read_u32/read_f32/write_u32/write_f32` require `addr < s.size`, `read_u64/read_f64/write_u64/write_f64`
+require `addr + 2 <= s.size`. 18 -> 7 errors; every read/write/len verifies (the literal `4` is fine:
+flux relates `u32::size_of()` to 4 for the `ptr.add`/deref obligations).
+
+Remaining 7 errors, all in `Stack::new` (src/stack.rs:23-30, 26) and `<Stack as Drop>::drop` (src/stack.rs:111):
+- `new`: `Layout::from_size_align(bytes, 4).unwrap()` needs flux-core's `is_valid_layout(bytes, 4)`
+  (= `bytes + 3 <= isize::MAX && pow2(4)`); `bytes = size.checked_mul(4)?` only gives `bytes <= usize::MAX`,
+  so the unwrap is a genuine (theoretical) panic for `size > isize::MAX / 4` and no spec can discharge it
+  without a code change. `drop` has the same `unwrap` on `self.size * 4`.
+- `new`: the 5 struct-invariant obligations (`size*4 <= bytes`, `addr >= base`, `bytes >= 0`, `addr > 0`,
+  `addr % 4 == 0`) need `Allocator::alloc` to return `*mut[b, a, s] u8` with `s >= layout.size`,
+  `a >= b`, `a > 0`, `a % layout.align == 0`. `Allocator::alloc` (src/util/alloc.rs) has no spec; worker 1 owns
+  that file and the FFI allocator pattern. Once `alloc` is specified these 5 should discharge with no change here.
+Strategies: (i) function spec: `new` has no inputs to constrain (the layout bound is on `size`, and adding
+`requires size * 4 + 3 <= isize::MAX` would push an unprovable precondition onto `Engine::new`); (ii) struct
+refinement is already as strong as the accessors need; (iii) the missing callee specs (`alloc`, `is_valid_layout`)
+are outside this crate / this worker's files.

@@ -1,8 +1,19 @@
 use crate::{AllocError, Allocator, GlobalAllocator};
 use core::alloc::Layout;
 
+/// A word-addressed (`u32`) buffer of `size` words backed by a single allocation.
+///
+/// Refinement: `ptr` is `*mut[base, addr, bytes] u32` (its allocation holds
+/// `bytes` bytes starting at `addr`), and the buffer holds `size` words, so
+/// `size * 4 <= bytes`. Reads/writes of one word need `addr < size`; of two
+/// words (`u64`/`f64`) need `addr + 2 <= size`.
+#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int)]
+#[flux_rs::invariant(size * 4 <= bytes)]
+#[flux_rs::invariant(addr >= base && bytes >= 0 && addr > 0 && addr % 4 == 0)]
 pub struct Stack {
+    #[flux_rs::field(*mut[base, addr, bytes] u32)]
     ptr: *mut u32,
+    #[flux_rs::field(usize[size])]
     size: usize,
 }
 
@@ -19,6 +30,7 @@ impl Stack {
         })
     }
 
+    #[flux_rs::spec(fn(&Self[@s]) -> usize[s.size])]
     pub(crate) fn len(&self) -> usize {
         self.size
     }
@@ -39,45 +51,53 @@ impl Stack {
     }
 
     #[inline]
+    #[flux_rs::spec(fn(&Self[@s], addr: usize{addr < s.size}) -> u32)]
     pub(crate) fn read_u32(&self, addr: usize) -> u32 {
         self.check_bounds(addr, 1);
         unsafe { *(self.ptr.add(addr)) }
     }
 
     #[inline]
+    #[flux_rs::spec(fn(&Self[@s], addr: usize{addr < s.size}) -> f32)]
     pub(crate) fn read_f32(&self, addr: usize) -> f32 {
         f32::from_bits(self.read_u32(addr))
     }
 
     #[inline]
+    #[flux_rs::spec(fn(&Self[@s], addr: usize{addr + 2 <= s.size}) -> u64)]
     pub(crate) fn read_u64(&self, addr: usize) -> u64 {
         self.check_bounds(addr, 2);
         unsafe { self.ptr.add(addr).cast::<u64>().read_unaligned() }
     }
 
     #[inline]
+    #[flux_rs::spec(fn(&Self[@s], addr: usize{addr + 2 <= s.size}) -> f64)]
     pub(crate) fn read_f64(&self, addr: usize) -> f64 {
         f64::from_bits(self.read_u64(addr))
     }
 
     #[inline]
+    #[flux_rs::spec(fn(self: &mut Self[@s], addr: usize{addr < s.size}, value: u32))]
     pub(crate) fn write_u32(&mut self, addr: usize, value: u32) {
         self.check_bounds(addr, 1);
         unsafe { *(self.ptr.add(addr)) = value }
     }
 
     #[inline]
+    #[flux_rs::spec(fn(self: &mut Self[@s], addr: usize{addr < s.size}, value: f32))]
     pub(crate) fn write_f32(&mut self, addr: usize, value: f32) {
         self.write_u32(addr, value.to_bits());
     }
 
     #[inline]
+    #[flux_rs::spec(fn(self: &mut Self[@s], addr: usize{addr + 2 <= s.size}, value: u64))]
     pub(crate) fn write_u64(&mut self, addr: usize, value: u64) {
         self.check_bounds(addr, 2);
         unsafe { self.ptr.add(addr).cast::<u64>().write_unaligned(value) }
     }
 
     #[inline]
+    #[flux_rs::spec(fn(self: &mut Self[@s], addr: usize{addr + 2 <= s.size}, value: f64))]
     pub(crate) fn write_f64(&mut self, addr: usize, value: f64) {
         self.write_u64(addr, value.to_bits());
     }
