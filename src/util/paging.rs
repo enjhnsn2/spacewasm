@@ -30,6 +30,9 @@ pub struct PageAllocator<A: Allocator, const MAX_PAGES: usize> {
 }
 
 impl<A: Allocator, const MAX_PAGES: usize> PageAllocator<A, MAX_PAGES> {
+    /// `page_size` must be small enough that a page layout aligned to `ALIGNMENT` (8)
+    /// is valid, i.e. `page_size + 7 <= isize::MAX`.
+    #[flux_rs::spec(fn(alloc: A, page_size: usize{page_size + 7 <= isize::MAX}) -> Self)]
     pub const fn new(alloc: A, page_size: usize) -> Self {
         Self {
             inner: UnsafeCell::new(PageAllocatorInner::new(alloc, page_size)),
@@ -59,14 +62,22 @@ impl<A: Allocator, const MAX_PAGES: usize> PageAllocator<A, MAX_PAGES> {
     }
 }
 
+/// Refinement: `page_size` is the byte size of every page. It is bounded so that
+/// `Layout::from_size_align(page_size, ALIGNMENT)` is always valid (size rounded up to
+/// the alignment must not exceed `isize::MAX`), which is what every page (de)allocation
+/// relies on when it unwraps that layout.
+#[flux_rs::refined_by(page_size: int)]
+#[flux_rs::invariant(page_size + 7 <= isize::MAX)]
 struct PageAllocatorInner<A: Allocator, const MAX_PAGES: usize> {
     page_allocator: A,
+    #[flux_rs::field(usize[page_size])]
     page_size: usize,
     pages: [Option<Page>; MAX_PAGES],
     poisoned: bool,
 }
 
 impl<A: Allocator, const MAX_PAGES: usize> PageAllocatorInner<A, MAX_PAGES> {
+    #[flux_rs::spec(fn(alloc: A, page_size: usize{page_size + 7 <= isize::MAX}) -> PageAllocatorInner<A, MAX_PAGES>[page_size])]
     const fn new(alloc: A, page_size: usize) -> PageAllocatorInner<A, MAX_PAGES> {
         PageAllocatorInner {
             page_allocator: alloc,
@@ -88,6 +99,8 @@ unsafe impl<A: Allocator, const MAX_PAGES: usize> Allocator for PageAllocator<A,
 }
 
 impl<A: Allocator, const MAX_PAGES: usize> PageAllocatorInner<A, MAX_PAGES> {
+    // flux: cvc5 diverges on this function's fixpoint query; z3 solves it.
+    #[flux_rs::opts(solver = "z3")]
     unsafe fn alloc(&mut self, layout: Layout) -> Result<*mut u8, AllocError> {
         if layout.size() == 0 {
             return Err(AllocError::AllocationFailed);
@@ -101,7 +114,9 @@ impl<A: Allocator, const MAX_PAGES: usize> PageAllocatorInner<A, MAX_PAGES> {
         // Go through each page one-by-one and try to allocate
         // If we reach a 'None' page, allocate the page and allocate this request there
         for bucket in self.pages.iter_mut() {
-            match bucket {
+            // flux: `bucket.as_mut()` (same `Option<&mut Page>` as matching on `bucket`) keeps
+            // `*bucket` itself un-unfolded so the `replace`/`take` below can be verified.
+            match bucket.as_mut() {
                 Some(page) => {
                     match page.alloc(layout) {
                         None => {
@@ -142,22 +157,28 @@ impl<A: Allocator, const MAX_PAGES: usize> PageAllocatorInner<A, MAX_PAGES> {
         Err(AllocError::OutOfMemory)
     }
 
+    // flux: cvc5 is slow on this function's fixpoint query; z3 solves it quickly.
+    #[flux_rs::opts(solver = "z3")]
     unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
         for bucket in self.pages.iter_mut() {
-            if let Some(page) = bucket {
+            if let Some(page) = bucket.as_mut() {
                 match page.dealloc(ptr, layout) {
                     None => {
                         // This ptr is not from this page
                         // Fallthrough to the next page
                     }
                     Some(drop_page) => {
+                        // flux: read the (Copy) page pointer before branching so `page` has the
+                        // same shape on both sides of the `if` below at their join point.
+                        let page_ptr = page.ptr;
+
                         // deallocation poisons the heap
                         self.poisoned = true;
 
                         if drop_page {
                             unsafe {
                                 self.page_allocator.dealloc(
-                                    page.ptr,
+                                    page_ptr,
                                     Layout::from_size_align(self.page_size, ALIGNMENT).unwrap(),
                                 );
                             }
@@ -190,7 +211,7 @@ impl<A: Allocator, const MAX_PAGES: usize> Drop for PageAllocatorInner<A, MAX_PA
     fn drop(&mut self) {
         // Deallocate pages in reverse order to satisfy LIFO allocators like StackAllocator
         for bucket in self.pages.iter_mut().rev() {
-            match bucket {
+            match bucket.as_mut() {
                 None => {}
                 Some(page) => {
                     unsafe {
@@ -207,16 +228,26 @@ impl<A: Allocator, const MAX_PAGES: usize> Drop for PageAllocatorInner<A, MAX_PA
     }
 }
 
+/// Refinement: `cap` is the page's byte capacity (`size` field), `allocated` the bump
+/// offset and `wasted` the alignment padding committed so far. The bump offset never
+/// exceeds the capacity, and padding is part of what was allocated.
 #[derive(Clone, PartialEq, Debug)]
+#[flux_rs::refined_by(cap: int, allocated: int, wasted: int)]
+#[flux_rs::invariant(allocated <= cap)]
+#[flux_rs::invariant(wasted <= allocated)]
 struct Page {
     ptr: *mut u8,
+    #[flux_rs::field(usize[cap])]
     size: usize,
+    #[flux_rs::field(usize[allocated])]
     allocated: usize,
     n_allocations: usize,
+    #[flux_rs::field(usize[wasted])]
     wasted: usize,
 }
 
 impl Page {
+    #[flux_rs::spec(fn(ptr: *mut u8, size: usize) -> Page[size, 0, 0])]
     fn new(ptr: *mut u8, size: usize) -> Self {
         Self {
             ptr,
@@ -230,7 +261,10 @@ impl Page {
     /// Attempt to allocate on the tail end of this page
     fn alloc(&mut self, layout: Layout) -> Option<*mut u8> {
         // Find the next address that is aligned to this layout
-        let start_address = (self.ptr as usize) + self.allocated;
+        // (flux: the page address is exposed once so that `aligned_start - page_address`
+        // below is provably non-negative; two separate `as usize` casts would be unrelated)
+        let page_address = self.ptr as usize;
+        let start_address = page_address + self.allocated;
         let alignment_offset = if start_address.is_multiple_of(layout.align()) {
             0
         } else {
@@ -239,7 +273,7 @@ impl Page {
         let aligned_start = start_address + alignment_offset;
 
         // Make sure out buffer can fit in here
-        let final_offset = (aligned_start - self.ptr as usize) + layout.size();
+        let final_offset = (aligned_start - page_address) + layout.size();
         if final_offset <= self.size {
             self.wasted += alignment_offset;
             self.allocated = final_offset;
