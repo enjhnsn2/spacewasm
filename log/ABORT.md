@@ -76,3 +76,51 @@ Strategies: (i) function spec: `new` has no inputs to constrain (the layout boun
 `requires size * 4 + 3 <= isize::MAX` would push an unprovable precondition onto `Engine::new`); (ii) struct
 refinement is already as strong as the accessors need; (iii) the missing callee specs (`alloc`, `is_valid_layout`)
 are outside this crate / this worker's files.
+
+## type 21 interpreter::Interpreter (src/interpreter.rs:228) — blocked on Engine refinement + trait-level specs
+
+`Interpreter` is a unit struct. All interpreter state (`sp: usize`, `fp: u32`, `stack: Stack`) lives in
+`engine::Engine` (src/engine.rs, uid 114, wave 5), and the 172 functions in this check are 151
+`<Interpreter as BaseVisitor>` + 20 `<Interpreter as IrVisitor>` trait-impl methods (`fn op(&self, state: &mut Self::State)`)
+plus the inherent `Interpreter::br_impl`. Nothing on `Interpreter` itself can be refined; no annotation was kept in
+src/interpreter.rs.
+
+Error counts (`cargo flux -p spacewasm --only-check='def:interpreter::Interpreter'`):
+- baseline (triage): 417 = 394 underflow + 23 other.
+- after the Stack specs from this wave: 838 = 393 `arithmetic operation may underflow` (every `state.sp - n` /
+  `state.sp -= n` in the `instruction!` macro arms at lines ~430-550 and the hand-written ops), 425 Stack
+  read/write preconditions (`addr < s.size` / `addr + 2 <= s.size`; the 4 `unwrap`s are `StaticVec::push(..).unwrap()`
+  in `call_host`), 19 out-of-bounds slice indexes (`store.modules()[..]`, `m.functions[..]`, `m.types[..]`,
+  `host_modules()[..]`, `m.globals[..]` in `call_indirect`/`call_host`/`global_*`), 1 division by zero
+  (`i32_div_s`, line 870: `a / b` after `b == 0` early-return; the `u32 -> i32` cast loses the guard).
+  The +421 is expected: `Engine` is unrefined, so `state.sp` is unconstrained at every access.
+
+Experiments (all reverted; src/engine.rs and src/visitor.rs are untouched in this branch):
+1. Refining `Engine` with `refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int)`,
+   `invariant(fp <= sp && sp <= size)`, `field(u32[fp]) fp`, `field(usize[sp]) sp`,
+   `field(Stack[base, addr, bytes, size]) stack`: 838 -> 627 = 390 underflow + 161 `type invariant may not hold
+   (when place is folded)` (each `state.sp -= n` / `+= n`) + 54 Stack preconditions (all push sites
+   `write_*(state.sp, ..)`, which need `sp < size`, i.e. headroom) + 19 OOB + 1 div + 2.
+2. Impl-level precondition on one method (`#[spec(fn(&Self, state: &strg Self::State[@e]) -> Result<(), Self::Error>
+   requires e.sp >= 2 ensures state: Self::State{v: v.size == e.size})]`): the body verifies, but flux checks the
+   impl spec against the trait method's unrefined signature and reports `a precondition cannot be proved` at the
+   `fn` line. Writing `&strg Engine[@e]` instead is rejected structurally (`expected a refinement of
+   &mut <Interpreter as BaseVisitor>::State`). So impl methods cannot carry the operand-stack-depth precondition.
+3. Trait-level route (src/visitor.rs, outside this worker's files): `#[flux_rs::assoc(fn has_depth(s: Self::State, n: int) -> bool)]`
+   on `BaseVisitor`, the trait method `#[spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
+   requires <Self as BaseVisitor>::has_depth(s, 2) ensures state: Self::State)]`, and on the impl
+   `#[flux_rs::assoc(fn has_depth(s: Engine, n: int) -> bool { s.sp >= n })]` plus the impl spec from (2):
+   accepted by this flux revision; `i32_wrap_i64`'s underflow and Stack-precondition errors are discharged and only
+   the `fp <= sp` fold remains (fixable by defining `has_depth` as `s.sp >= s.fp + n`). This is the viable route.
+
+Why ABORT here: every remaining error needs (a) the `Engine` refinement above (uid 114, src/engine.rs) and (b)
+per-method `requires`/`ensures` on the `BaseVisitor`/`IrVisitor` trait methods in src/visitor.rs expressed through
+assoc refinements over `Self::State` (depth `sp >= fp + n_pop` and headroom `sp + n_push <= size`), which the wasm
+validator guarantees but which is not a local fact. Both files are outside this assignment; the macro-generated
+`visit_fn!` signatures in visitor.rs would need per-method specs (the macro has no spec slot). The 19 OOB errors
+additionally need `Store`/`Module` refinements (wave 4) relating `ModuleRef`/`FuncIdx`/`TypeIdx` to vector lengths.
+`br_impl` (the only inherent method) also needs `LabelTarget::depth()`/`arity()` to be refined (uid 55/56, currently
+unrefined) before a precondition can be stated.
+Strategies: (i) function spec — impossible on trait impls (exp. 2) and `br_impl`'s inputs are unrefined;
+(ii) struct refinement — `Interpreter` has no fields; the needed one is on `Engine` (exp. 1 measures it);
+(iii) callee spec — the Stack specs are in place; no further callee in this worker's files helps.
