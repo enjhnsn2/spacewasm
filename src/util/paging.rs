@@ -229,9 +229,8 @@ impl<A: Allocator, const MAX_PAGES: usize> Drop for PageAllocatorInner<A, MAX_PA
 }
 
 /// Refinement: `cap` is the page's byte capacity (`size` field), `allocated` the bump
-/// offset, `wasted` the alignment padding committed so far, `n` the live allocation
-/// count. The bump offset never exceeds the capacity, and padding is part of what was
-/// allocated.
+/// offset and `wasted` the alignment padding committed so far. The bump offset never
+/// exceeds the capacity, and padding is part of what was allocated.
 #[derive(Clone, PartialEq, Debug)]
 #[flux_rs::refined_by(cap: int, allocated: int, wasted: int)]
 #[flux_rs::invariant(allocated <= cap)]
