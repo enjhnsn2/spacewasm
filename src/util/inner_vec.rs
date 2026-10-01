@@ -12,9 +12,18 @@ use crate::AllocError;
 /// - `InnerVec` does **not** own its allocation: it never frees the buffer and
 ///   never drops its elements. The owner (typically [`crate::Vec`]) is
 ///   responsible for both.
+#[flux_rs::refined_by(base: int, addr: int, size: int, cap: int, len: int)]
+#[flux_rs::invariant(len <= cap)]
+// `ptr` is in bounds of its allocation, which holds at least `cap` values of `T`.
+#[flux_rs::invariant(addr >= base && size >= 0 && cap * T::size_of() <= size)]
+// A non-empty capacity means a real (non-null, aligned) allocation.
+#[flux_rs::invariant(cap == 0 || (addr > 0 && addr % T::align_of() == 0 && T::size_of() >= 0))]
 pub struct InnerVec<T: Sized> {
+    #[flux_rs::field(*mut[base, addr, size] T)]
     pub(crate) ptr: *mut T,
+    #[flux_rs::field(usize[cap])]
     pub(crate) capacity: usize,
+    #[flux_rs::field(usize[len])]
     pub(crate) len: usize,
 }
 
@@ -49,6 +58,10 @@ impl<T: Sized> InnerVec<T> {
     /// - `InnerVec` neither frees the allocation nor drops its elements, so the
     ///   caller (typically [`crate::Vec`]) retains ownership and must keep the
     ///   allocation valid for as long as the returned value is used.
+    #[flux_rs::spec(fn(ptr: *mut[@p] T, capacity: usize, len: usize) -> InnerVec<T>[p.base, p.addr, p.size, capacity, len]
+        requires len <= capacity
+              && p.addr >= p.base && p.size >= 0 && capacity * T::size_of() <= p.size
+              && (capacity == 0 || (p.addr > 0 && p.addr % T::align_of() == 0 && T::size_of() >= 0)))]
     pub unsafe fn from_raw_parts(ptr: *mut T, capacity: usize, len: usize) -> InnerVec<T> {
         InnerVec { ptr, capacity, len }
     }
@@ -70,6 +83,8 @@ impl<T: Sized> InnerVec<T> {
         self.capacity
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], value: T) -> Result<(), AllocError>[v.len < v.cap]
+        ensures self: Self[v.base, v.addr, v.size, v.cap, if v.len < v.cap { v.len + 1 } else { v.len }])]
     pub fn try_push(&mut self, value: T) -> Result<(), AllocError> {
         if self.len < self.capacity {
             unsafe {
@@ -85,11 +100,15 @@ impl<T: Sized> InnerVec<T> {
 
     /// Push a new item to the vector
     /// If the capacity is exceeded, this will panic
+    #[flux_rs::spec(fn(self: &strg Self[@v], value: T) requires v.len < v.cap
+        ensures self: Self[v.base, v.addr, v.size, v.cap, v.len + 1])]
     pub fn push(&mut self, value: T) {
         self.try_push(value)
             .expect("attempting to push beyond Vec capacity");
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Option<T>[v.len > 0]
+        ensures self: Self[v.base, v.addr, v.size, v.cap, if v.len > 0 { v.len - 1 } else { 0 }])]
     pub fn pop(&mut self) -> Option<T> {
         if self.len == 0 {
             None
@@ -116,6 +135,7 @@ impl<T> Deref for InnerVec<T> {
 }
 
 impl<T> DerefMut for InnerVec<T> {
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T])]
     fn deref_mut(&mut self) -> &mut [T] {
         if self.ptr.is_null() {
             &mut []
