@@ -3,6 +3,7 @@
 
 use core::mem::ManuallyDrop;
 use core::ops::{Deref, DerefMut};
+use core::ptr::NonNull;
 
 // `ManuallyDrop<T>` is a transparent wrapper: it is refined by the refinement of
 // the wrapped value, and (de)referencing yields that same value.
@@ -64,3 +65,10 @@ use crate::util::InnerVec;
     }
 }]
 const _: () = ();
+
+// Attaching slice metadata keeps the data pointer's allocation indices (as flux-core does
+// for `NonNull::slice_from_raw_parts`); the raw-pointer form is a safe fn with no
+// precondition.
+#[flux_rs::extern_spec(core::ptr)]
+#[flux_rs::spec(fn(data: *mut[@p] T, len: usize) -> *mut[p.base, p.addr, p.size] [T])]
+fn slice_from_raw_parts_mut<T>(data: *mut T, len: usize) -> *mut [T];

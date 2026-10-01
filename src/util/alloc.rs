@@ -122,6 +122,11 @@ macro_rules! global_allocator {
 pub unsafe trait Allocator {
     /// # Safety
     /// The caller must ensure that the layout has non-zero size.
+    // An `Ok` pointer is the start (`base == addr`) of a block tracked as exactly
+    // `layout.size()` bytes (as flux-core does for `core::alloc::Allocator`), aligned to
+    // `layout.align()`. Implementations inherit this spec.
+    #[flux_rs::spec(fn(&Self, layout: Layout[@l])
+        -> Result<*mut{p: p.addr != 0 && p.base == p.addr && p.size == l.size && p.addr % l.align == 0} u8, AllocError>)]
     unsafe fn alloc(&self, layout: Layout) -> Result<*mut u8, AllocError>;
 
     /// # Safety
@@ -130,6 +135,8 @@ pub unsafe trait Allocator {
 }
 
 unsafe impl<T: Allocator> Allocator for &T {
+    #[flux_rs::spec(fn(&Self, layout: Layout[@l])
+        -> Result<*mut{p: p.addr != 0 && p.base == p.addr && p.size == l.size && p.addr % l.align == 0} u8, AllocError>)]
     unsafe fn alloc(&self, layout: Layout) -> Result<*mut u8, AllocError> {
         unsafe { (**self).alloc(layout) }
     }
@@ -142,6 +149,8 @@ unsafe impl<T: Allocator> Allocator for &T {
 #[derive(Clone, Copy)]
 pub struct GlobalAllocator;
 unsafe impl Allocator for GlobalAllocator {
+    #[flux_rs::spec(fn(&Self, layout: Layout[@l])
+        -> Result<*mut{p: p.addr != 0 && p.base == p.addr && p.size == l.size && p.addr % l.align == 0} u8, AllocError>)]
     unsafe fn alloc(&self, layout: Layout) -> Result<*mut u8, AllocError> {
         let mut err: u32 = 0;
         let ptr = unsafe { __spacewasm_alloc(layout.size(), layout.align(), &mut err) };
