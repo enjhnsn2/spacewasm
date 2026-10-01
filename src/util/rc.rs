@@ -182,6 +182,7 @@ impl<T: ?Sized, A: Allocator> Rc<T, A> {
     /// # Safety
     /// The caller must ensure that the coercion is valid and that the resulting
     /// `RcInner<U>` has the same memory layout as `RcInner<T>`.
+    #[flux_rs::trusted(reason = "panicked at crates/flux-refineck/src/type_env/place_ty.rs:496:18")]
     pub unsafe fn into_dyn<U: ?Sized, F>(self, coerce: F) -> Rc<U, A>
     where
         F: FnOnce(&T) -> &U,
