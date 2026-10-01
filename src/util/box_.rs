@@ -10,8 +10,12 @@ use core::{mem, ptr};
 
 /// A heap-allocated value with a configurable allocator.
 /// Similar to `alloc::boxed::Box` but allows specifying a custom allocator.
+// `ptr` is non-null and points at a block of `size` bytes; a zero-sized block (ZST /
+// empty slice) is a dangling sentinel whose `base` is unknown, otherwise `addr` lies
+// inside its allocation. (`T: ?Sized`, so `T::size_of()`/`T::align_of()` cannot be
+// named here; the pointee-size facts are re-established at each `Sized` use site.)
 #[flux_rs::refined_by(base: int, addr: int, size: int)]
-#[flux_rs::invariant(addr != 0 && size >= 0)]
+#[flux_rs::invariant(addr != 0 && size >= 0 && (size == 0 || addr >= base))]
 pub struct Box<T: ?Sized, A: Allocator = GlobalAllocator> {
     #[flux_rs::field(*mut[base, addr, size] T)]
     ptr: *mut T,
@@ -48,6 +52,10 @@ impl<T: Clone, A: Allocator + Clone> Clone for Box<T, A> {
 }
 
 impl<T: ?Sized, A: Allocator> Box<T, A> {
+    // `ptr::read(&b.alloc)` needs `A::size_of() >= 0`, which flux has no axiom for; it is
+    // discharged by callers (a constant for any concrete `A`, e.g. `GlobalAllocator`).
+    #[flux_rs::spec(fn(self: Self[@v]) -> (*mut{p: p.addr != 0 && p.base == p.addr} T, A)
+        requires A::size_of() >= 0)]
     #[inline]
     fn into_raw_with_allocator(self) -> (*mut T, A) {
         let mut b = mem::ManuallyDrop::new(self);
@@ -61,6 +69,7 @@ impl<T: ?Sized, A: Allocator> Box<T, A> {
         (ptr, alloc)
     }
 
+    #[flux_rs::spec(fn(b: Self[@v]) -> &mut T requires A::size_of() >= 0)]
     #[inline]
     pub fn leak<'a>(b: Self) -> &'a mut T
     where
@@ -104,6 +113,7 @@ impl<T: Sized, A: Allocator> Box<T, A> {
 impl<T: Sized, A: Allocator> Box<T, A> {
     /// Consume the box, returning the contained value and freeing the backing
     /// allocation. This is the inverse of [`Box::new_in`].
+    #[flux_rs::spec(fn(b: Self[@v]) -> T requires A::size_of() >= 0)]
     pub fn into_inner(b: Self) -> T {
         let (ptr, alloc) = b.into_raw_with_allocator();
         // SAFETY: `ptr` came from a live box; read the value out, then free the
@@ -125,16 +135,20 @@ impl<T: ?Sized, A: Allocator> Box<T, A> {
     /// `ptr` must have come from a `Box<T, A>` allocated with `alloc`, and must
     /// not be used again after this call. Reconstructing a box twice from the
     /// same pointer is undefined behavior (double free).
+    #[flux_rs::spec(fn(alloc: A, ptr: *mut[@p] T) -> Box<T, A>[p.base, p.addr, p.size]
+        requires p.addr != 0 && p.size >= 0 && (p.size == 0 || p.addr >= p.base))]
     pub unsafe fn from_raw(alloc: A, ptr: *mut T) -> Box<T, A> {
         Box { ptr, alloc }
     }
 
     /// Get a raw pointer to the boxed value
+    #[flux_rs::spec(fn(&Self[@v]) -> *const[v.base, v.addr, v.size] T)]
     pub fn as_ptr(&self) -> *const T {
         self.ptr
     }
 
     /// Get a mutable raw pointer to the boxed value
+    #[flux_rs::spec(fn(&mut Self[@v]) -> *mut[v.base, v.addr, v.size] T)]
     pub fn as_mut_ptr(&mut self) -> *mut T {
         self.ptr
     }
