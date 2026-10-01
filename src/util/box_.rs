@@ -10,7 +10,10 @@ use core::{mem, ptr};
 
 /// A heap-allocated value with a configurable allocator.
 /// Similar to `alloc::boxed::Box` but allows specifying a custom allocator.
+#[flux_rs::refined_by(base: int, addr: int, size: int)]
+#[flux_rs::invariant(addr != 0 && size >= 0)]
 pub struct Box<T: ?Sized, A: Allocator = GlobalAllocator> {
+    #[flux_rs::field(*mut[base, addr, size] T)]
     ptr: *mut T,
     alloc: A,
 }

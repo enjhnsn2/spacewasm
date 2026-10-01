@@ -1,0 +1,1574 @@
+[
+  {
+    "uid": 0,
+    "path": "util::box_::Box",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/box_.rs",
+      "start_line": 13,
+      "start_col": 1,
+      "end_line": 13,
+      "end_col": 58
+    },
+    "deps": []
+  },
+  {
+    "uid": 1,
+    "path": "util::circular_buffer::CircularBuffer",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/circular_buffer.rs",
+      "start_line": 16,
+      "start_col": 1,
+      "end_line": 16,
+      "end_col": 45
+    },
+    "deps": []
+  },
+  {
+    "uid": 2,
+    "path": "util::inner_vec::InnerVec",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/inner_vec.rs",
+      "start_line": 15,
+      "start_col": 1,
+      "end_line": 15,
+      "end_col": 30
+    },
+    "deps": []
+  },
+  {
+    "uid": 3,
+    "path": "util::vec::IntoIter",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/vec.rs",
+      "start_line": 383,
+      "start_col": 1,
+      "end_line": 383,
+      "end_col": 55
+    },
+    "deps": []
+  },
+  {
+    "uid": 4,
+    "path": "util::rc::RcInner",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
+      "start_line": 15,
+      "start_col": 1,
+      "end_line": 15,
+      "end_col": 26
+    },
+    "deps": []
+  },
+  {
+    "uid": 5,
+    "path": "util::static_vec::StaticVec",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
+      "start_line": 6,
+      "start_col": 1,
+      "end_line": 6,
+      "end_col": 47
+    },
+    "deps": []
+  },
+  {
+    "uid": 6,
+    "path": "host::GlobalValueError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 6,
+      "start_col": 1,
+      "end_line": 6,
+      "end_col": 28
+    },
+    "deps": []
+  },
+  {
+    "uid": 7,
+    "path": "module::DefaultCustomSectionHandler",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 52,
+      "start_col": 1,
+      "end_line": 52,
+      "end_col": 35
+    },
+    "deps": []
+  },
+  {
+    "uid": 8,
+    "path": "module::CustomSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 481,
+      "start_col": 1,
+      "end_line": 481,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 9,
+    "path": "module::TypeSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 510,
+      "start_col": 1,
+      "end_line": 510,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 10,
+    "path": "module::ImportSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 563,
+      "start_col": 1,
+      "end_line": 563,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 11,
+    "path": "module::FunctionSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 610,
+      "start_col": 1,
+      "end_line": 610,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 12,
+    "path": "module::TableSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 617,
+      "start_col": 1,
+      "end_line": 617,
+      "end_col": 24
+    },
+    "deps": []
+  },
+  {
+    "uid": 13,
+    "path": "module::MemorySection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 635,
+      "start_col": 1,
+      "end_line": 635,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 14,
+    "path": "module::GlobalSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 712,
+      "start_col": 1,
+      "end_line": 712,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 15,
+    "path": "module::ExportSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 786,
+      "start_col": 1,
+      "end_line": 786,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 16,
+    "path": "module::Element",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 842,
+      "start_col": 1,
+      "end_line": 842,
+      "end_col": 19
+    },
+    "deps": []
+  },
+  {
+    "uid": 17,
+    "path": "module::ElementSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 903,
+      "start_col": 1,
+      "end_line": 903,
+      "end_col": 26
+    },
+    "deps": []
+  },
+  {
+    "uid": 18,
+    "path": "module::CodeSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 919,
+      "start_col": 1,
+      "end_line": 919,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 19,
+    "path": "module::DataSection",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 1003,
+      "start_col": 1,
+      "end_line": 1003,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 20,
+    "path": "types::Name",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 9,
+      "start_col": 1,
+      "end_line": 9,
+      "end_col": 16
+    },
+    "deps": []
+  },
+  {
+    "uid": 21,
+    "path": "interpreter::CallFrame",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 11,
+      "start_col": 1,
+      "end_line": 11,
+      "end_col": 17
+    },
+    "deps": []
+  },
+  {
+    "uid": 22,
+    "path": "interpreter::Interpreter",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 228,
+      "start_col": 1,
+      "end_line": 228,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 23,
+    "path": "stack::Stack",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/stack.rs",
+      "start_line": 4,
+      "start_col": 1,
+      "end_line": 4,
+      "end_col": 17
+    },
+    "deps": []
+  },
+  {
+    "uid": 24,
+    "path": "ir_reader::IrReader",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/ir_reader.rs",
+      "start_line": 22,
+      "start_col": 1,
+      "end_line": 22,
+      "end_col": 27
+    },
+    "deps": []
+  },
+  {
+    "uid": 25,
+    "path": "util::alloc::AllocError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
+      "start_line": 8,
+      "start_col": 1,
+      "end_line": 8,
+      "end_col": 20
+    },
+    "deps": []
+  },
+  {
+    "uid": 26,
+    "path": "util::alloc::GlobalAllocator",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/alloc.rs",
+      "start_line": 143,
+      "start_col": 1,
+      "end_line": 143,
+      "end_col": 27
+    },
+    "deps": []
+  },
+  {
+    "uid": 27,
+    "path": "util::paging::PageAllocatorStatistics",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
+      "start_line": 11,
+      "start_col": 1,
+      "end_line": 11,
+      "end_col": 35
+    },
+    "deps": []
+  },
+  {
+    "uid": 28,
+    "path": "util::paging::Page",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
+      "start_line": 211,
+      "start_col": 1,
+      "end_line": 211,
+      "end_col": 12
+    },
+    "deps": []
+  },
+  {
+    "uid": 29,
+    "path": "util::rc::Rc<T, A>::into_dyn::FatPtr",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
+      "start_line": 193,
+      "start_col": 9,
+      "end_line": 193,
+      "end_col": 22
+    },
+    "deps": []
+  },
+  {
+    "uid": 30,
+    "path": "visitor::ModuleRef",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/visitor.rs",
+      "start_line": 269,
+      "start_col": 1,
+      "end_line": 269,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 31,
+    "path": "visitor::HostModuleRef",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/visitor.rs",
+      "start_line": 272,
+      "start_col": 1,
+      "end_line": 272,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 32,
+    "path": "host::HostNameError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 11,
+      "start_col": 1,
+      "end_line": 11,
+      "end_col": 25
+    },
+    "deps": []
+  },
+  {
+    "uid": 33,
+    "path": "host::HostName",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 15,
+      "start_col": 1,
+      "end_line": 15,
+      "end_col": 43
+    },
+    "deps": []
+  },
+  {
+    "uid": 34,
+    "path": "host::HostFunctionBreak",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 157,
+      "start_col": 1,
+      "end_line": 157,
+      "end_col": 27
+    },
+    "deps": []
+  },
+  {
+    "uid": 35,
+    "path": "module::SectionKind",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 437,
+      "start_col": 1,
+      "end_line": 437,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 36,
+    "path": "module::TypeIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 37,
+    "path": "module::FuncIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 38,
+    "path": "module::TableIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 39,
+    "path": "module::MemIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 40,
+    "path": "module::GlobalIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 41,
+    "path": "module::LocalIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 42,
+    "path": "module::LabelIdx",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 521,
+      "start_col": 9,
+      "end_line": 521,
+      "end_col": 40
+    },
+    "deps": []
+  },
+  {
+    "uid": 43,
+    "path": "module::Data",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 944,
+      "start_col": 1,
+      "end_line": 944,
+      "end_col": 16
+    },
+    "deps": []
+  },
+  {
+    "uid": 44,
+    "path": "types::ValType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 22,
+      "start_col": 1,
+      "end_line": 22,
+      "end_col": 17
+    },
+    "deps": []
+  },
+  {
+    "uid": 45,
+    "path": "types::Value",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 31,
+      "start_col": 1,
+      "end_line": 31,
+      "end_col": 15
+    },
+    "deps": []
+  },
+  {
+    "uid": 46,
+    "path": "types::RawValue",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 79,
+      "start_col": 1,
+      "end_line": 79,
+      "end_col": 20
+    },
+    "deps": []
+  },
+  {
+    "uid": 47,
+    "path": "types::Limit",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 207,
+      "start_col": 1,
+      "end_line": 207,
+      "end_col": 17
+    },
+    "deps": []
+  },
+  {
+    "uid": 48,
+    "path": "types::MemPageSize",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 252,
+      "start_col": 1,
+      "end_line": 252,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 49,
+    "path": "types::ElemType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 401,
+      "start_col": 1,
+      "end_line": 401,
+      "end_col": 18
+    },
+    "deps": []
+  },
+  {
+    "uid": 50,
+    "path": "code::MemArg",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/code.rs",
+      "start_line": 175,
+      "start_col": 1,
+      "end_line": 175,
+      "end_col": 18
+    },
+    "deps": []
+  },
+  {
+    "uid": 51,
+    "path": "constant::ConstantExprError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/constant.rs",
+      "start_line": 37,
+      "start_col": 1,
+      "end_line": 37,
+      "end_col": 27
+    },
+    "deps": []
+  },
+  {
+    "uid": 52,
+    "path": "compiler::Compiler",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/compiler.rs",
+      "start_line": 5,
+      "start_col": 1,
+      "end_line": 5,
+      "end_col": 87
+    },
+    "deps": []
+  },
+  {
+    "uid": 53,
+    "path": "text::TextPage",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 31,
+      "start_col": 1,
+      "end_line": 31,
+      "end_col": 20
+    },
+    "deps": []
+  },
+  {
+    "uid": 54,
+    "path": "text::JumpOffset",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 40,
+      "start_col": 1,
+      "end_line": 40,
+      "end_col": 22
+    },
+    "deps": []
+  },
+  {
+    "uid": 55,
+    "path": "text::LabelTarget",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 81,
+      "start_col": 1,
+      "end_line": 81,
+      "end_col": 23
+    },
+    "deps": []
+  },
+  {
+    "uid": 56,
+    "path": "text::LabelArity",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 101,
+      "start_col": 1,
+      "end_line": 101,
+      "end_col": 20
+    },
+    "deps": []
+  },
+  {
+    "uid": 57,
+    "path": "text::JumpTarget",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 164,
+      "start_col": 1,
+      "end_line": 164,
+      "end_col": 22
+    },
+    "deps": []
+  },
+  {
+    "uid": 58,
+    "path": "text::BlockKind",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 203,
+      "start_col": 1,
+      "end_line": 203,
+      "end_col": 19
+    },
+    "deps": []
+  },
+  {
+    "uid": 59,
+    "path": "text::CompilerOptions",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 238,
+      "start_col": 1,
+      "end_line": 238,
+      "end_col": 27
+    },
+    "deps": []
+  },
+  {
+    "uid": 60,
+    "path": "interpreter::InvokeError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 34,
+      "start_col": 1,
+      "end_line": 34,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 61,
+    "path": "interpreter::ResumeError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 47,
+      "start_col": 1,
+      "end_line": 47,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 62,
+    "path": "interpreter::TrapReason",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 231,
+      "start_col": 1,
+      "end_line": 231,
+      "end_col": 20
+    },
+    "deps": []
+  },
+  {
+    "uid": 63,
+    "path": "memory::MemoryError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
+      "start_line": 73,
+      "start_col": 1,
+      "end_line": 73,
+      "end_col": 21
+    },
+    "deps": []
+  },
+  {
+    "uid": 64,
+    "path": "util::string::String",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/string.rs",
+      "start_line": 11,
+      "start_col": 1,
+      "end_line": 11,
+      "end_col": 50
+    },
+    "deps": [
+      0
+    ]
+  },
+  {
+    "uid": 65,
+    "path": "util::circular_buffer::Iter",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/circular_buffer.rs",
+      "start_line": 182,
+      "start_col": 1,
+      "end_line": 182,
+      "end_col": 39
+    },
+    "deps": [
+      1
+    ]
+  },
+  {
+    "uid": 66,
+    "path": "util::circular_buffer::IterMut",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/circular_buffer.rs",
+      "start_line": 209,
+      "start_col": 1,
+      "end_line": 209,
+      "end_col": 42
+    },
+    "deps": [
+      1
+    ]
+  },
+  {
+    "uid": 67,
+    "path": "util::vec::Vec",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/vec.rs",
+      "start_line": 15,
+      "start_col": 1,
+      "end_line": 15,
+      "end_col": 57
+    },
+    "deps": [
+      2
+    ]
+  },
+  {
+    "uid": 68,
+    "path": "stream::Chunk",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/stream.rs",
+      "start_line": 6,
+      "start_col": 1,
+      "end_line": 6,
+      "end_col": 17
+    },
+    "deps": [
+      2
+    ]
+  },
+  {
+    "uid": 69,
+    "path": "util::rc::Rc",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/rc.rs",
+      "start_line": 20,
+      "start_col": 1,
+      "end_line": 20,
+      "end_col": 57
+    },
+    "deps": [
+      4
+    ]
+  },
+  {
+    "uid": 70,
+    "path": "util::static_vec::StaticVecIntoIter",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/static_vec.rs",
+      "start_line": 128,
+      "start_col": 1,
+      "end_line": 128,
+      "end_col": 48
+    },
+    "deps": [
+      5
+    ]
+  },
+  {
+    "uid": 71,
+    "path": "host::HostFunctionError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 172,
+      "start_col": 1,
+      "end_line": 172,
+      "end_col": 27
+    },
+    "deps": [
+      25
+    ]
+  },
+  {
+    "uid": 72,
+    "path": "util::paging::PageAllocatorInner",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
+      "start_line": 62,
+      "start_col": 1,
+      "end_line": 62,
+      "end_col": 64
+    },
+    "deps": [
+      28
+    ]
+  },
+  {
+    "uid": 73,
+    "path": "imports::WasmRef",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/imports.rs",
+      "start_line": 12,
+      "start_col": 1,
+      "end_line": 12,
+      "end_col": 19
+    },
+    "deps": [
+      30
+    ]
+  },
+  {
+    "uid": 74,
+    "path": "visitor::Ref",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/visitor.rs",
+      "start_line": 283,
+      "start_col": 1,
+      "end_line": 283,
+      "end_col": 13
+    },
+    "deps": [
+      30,
+      31
+    ]
+  },
+  {
+    "uid": 75,
+    "path": "imports::HostRef",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/imports.rs",
+      "start_line": 5,
+      "start_col": 1,
+      "end_line": 5,
+      "end_col": 19
+    },
+    "deps": [
+      31
+    ]
+  },
+  {
+    "uid": 76,
+    "path": "imports::Import",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/imports.rs",
+      "start_line": 18,
+      "start_col": 1,
+      "end_line": 18,
+      "end_col": 16
+    },
+    "deps": [
+      30,
+      31
+    ]
+  },
+  {
+    "uid": 77,
+    "path": "module::TableElement",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 18,
+      "start_col": 1,
+      "end_line": 18,
+      "end_col": 22
+    },
+    "deps": [
+      30,
+      31
+    ]
+  },
+  {
+    "uid": 78,
+    "path": "host::HostGlobal",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 132,
+      "start_col": 1,
+      "end_line": 132,
+      "end_col": 22
+    },
+    "deps": [
+      0,
+      26,
+      33
+    ]
+  },
+  {
+    "uid": 79,
+    "path": "host::HostSymbol",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 347,
+      "start_col": 1,
+      "end_line": 347,
+      "end_col": 53
+    },
+    "deps": [
+      33
+    ]
+  },
+  {
+    "uid": 80,
+    "path": "module::ExportDesc",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 724,
+      "start_col": 1,
+      "end_line": 724,
+      "end_col": 20
+    },
+    "deps": [
+      37,
+      38,
+      39,
+      40
+    ]
+  },
+  {
+    "uid": 81,
+    "path": "visitor::LocalVariable",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/visitor.rs",
+      "start_line": 255,
+      "start_col": 1,
+      "end_line": 255,
+      "end_col": 25
+    },
+    "deps": [
+      44
+    ]
+  },
+  {
+    "uid": 82,
+    "path": "host::HostValList",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 196,
+      "start_col": 1,
+      "end_line": 196,
+      "end_col": 23
+    },
+    "deps": [
+      44
+    ]
+  },
+  {
+    "uid": 83,
+    "path": "types::ResultType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 165,
+      "start_col": 1,
+      "end_line": 165,
+      "end_col": 22
+    },
+    "deps": [
+      44
+    ]
+  },
+  {
+    "uid": 84,
+    "path": "types::GlobalType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 442,
+      "start_col": 1,
+      "end_line": 442,
+      "end_col": 22
+    },
+    "deps": [
+      44
+    ]
+  },
+  {
+    "uid": 85,
+    "path": "text::OperandType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 452,
+      "start_col": 1,
+      "end_line": 452,
+      "end_col": 28
+    },
+    "deps": [
+      44
+    ]
+  },
+  {
+    "uid": 86,
+    "path": "types::MemType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 274,
+      "start_col": 1,
+      "end_line": 274,
+      "end_col": 19
+    },
+    "deps": [
+      48
+    ]
+  },
+  {
+    "uid": 87,
+    "path": "types::TableType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 415,
+      "start_col": 1,
+      "end_line": 415,
+      "end_col": 21
+    },
+    "deps": [
+      47,
+      49
+    ]
+  },
+  {
+    "uid": 88,
+    "path": "code::Expr",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/code.rs",
+      "start_line": 5,
+      "start_col": 1,
+      "end_line": 5,
+      "end_col": 16
+    },
+    "deps": [
+      57
+    ]
+  },
+  {
+    "uid": 89,
+    "path": "interpreter::InterpreterBreak",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 267,
+      "start_col": 1,
+      "end_line": 267,
+      "end_col": 26
+    },
+    "deps": [
+      62
+    ]
+  },
+  {
+    "uid": 90,
+    "path": "interpreter::InterpreterResult",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/interpreter.rs",
+      "start_line": 277,
+      "start_col": 1,
+      "end_line": 277,
+      "end_col": 27
+    },
+    "deps": [
+      62
+    ]
+  },
+  {
+    "uid": 91,
+    "path": "error::ValidationError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/error.rs",
+      "start_line": 38,
+      "start_col": 1,
+      "end_line": 38,
+      "end_col": 25
+    },
+    "deps": [
+      25,
+      35,
+      51,
+      63
+    ]
+  },
+  {
+    "uid": 92,
+    "path": "text::CodeBuilder",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 269,
+      "start_col": 1,
+      "end_line": 269,
+      "end_col": 23
+    },
+    "deps": [
+      0,
+      67,
+      26,
+      53,
+      59
+    ]
+  },
+  {
+    "uid": 93,
+    "path": "types::FuncType",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/types.rs",
+      "start_line": 180,
+      "start_col": 1,
+      "end_line": 180,
+      "end_col": 20
+    },
+    "deps": [
+      67,
+      26,
+      44
+    ]
+  },
+  {
+    "uid": 94,
+    "path": "reader::Reader",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/reader.rs",
+      "start_line": 37,
+      "start_col": 1,
+      "end_line": 37,
+      "end_col": 25
+    },
+    "deps": [
+      1,
+      68
+    ]
+  },
+  {
+    "uid": 95,
+    "path": "util::paging::PageAllocator",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/util/paging.rs",
+      "start_line": 28,
+      "start_col": 1,
+      "end_line": 28,
+      "end_col": 63
+    },
+    "deps": [
+      72
+    ]
+  },
+  {
+    "uid": 96,
+    "path": "text::GlobalVariable",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 226,
+      "start_col": 1,
+      "end_line": 226,
+      "end_col": 26
+    },
+    "deps": [
+      74,
+      44
+    ]
+  },
+  {
+    "uid": 97,
+    "path": "module::Export",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 744,
+      "start_col": 1,
+      "end_line": 744,
+      "end_col": 18
+    },
+    "deps": [
+      26,
+      64,
+      80
+    ]
+  },
+  {
+    "uid": 98,
+    "path": "host::HostValListIter",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 285,
+      "start_col": 1,
+      "end_line": 285,
+      "end_col": 27
+    },
+    "deps": [
+      82
+    ]
+  },
+  {
+    "uid": 99,
+    "path": "host::HostFunction",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 329,
+      "start_col": 1,
+      "end_line": 329,
+      "end_col": 24
+    },
+    "deps": [
+      0,
+      26,
+      33,
+      82,
+      83
+    ]
+  },
+  {
+    "uid": 100,
+    "path": "text::ControlFrame",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 211,
+      "start_col": 1,
+      "end_line": 211,
+      "end_col": 20
+    },
+    "deps": [
+      83,
+      57,
+      58
+    ]
+  },
+  {
+    "uid": 101,
+    "path": "module::Global",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 660,
+      "start_col": 1,
+      "end_line": 660,
+      "end_col": 18
+    },
+    "deps": [
+      46,
+      84
+    ]
+  },
+  {
+    "uid": 102,
+    "path": "memory::Memory",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/memory.rs",
+      "start_line": 59,
+      "start_col": 1,
+      "end_line": 59,
+      "end_col": 18
+    },
+    "deps": [
+      69,
+      26,
+      86
+    ]
+  },
+  {
+    "uid": 103,
+    "path": "module::ImportDesc",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 544,
+      "start_col": 1,
+      "end_line": 544,
+      "end_col": 20
+    },
+    "deps": [
+      36,
+      86,
+      87,
+      84
+    ]
+  },
+  {
+    "uid": 104,
+    "path": "module::TableKind",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 11,
+      "start_col": 1,
+      "end_line": 11,
+      "end_col": 19
+    },
+    "deps": [
+      69,
+      26,
+      30,
+      75,
+      77,
+      87
+    ]
+  },
+  {
+    "uid": 105,
+    "path": "code::Func",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/code.rs",
+      "start_line": 60,
+      "start_col": 1,
+      "end_line": 60,
+      "end_col": 16
+    },
+    "deps": [
+      0,
+      26,
+      36,
+      44,
+      88
+    ]
+  },
+  {
+    "uid": 106,
+    "path": "error::SectionDecodeError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/error.rs",
+      "start_line": 19,
+      "start_col": 1,
+      "end_line": 19,
+      "end_col": 30
+    },
+    "deps": [
+      91,
+      35
+    ]
+  },
+  {
+    "uid": 107,
+    "path": "host::HostModule",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/host.rs",
+      "start_line": 358,
+      "start_col": 1,
+      "end_line": 358,
+      "end_col": 22
+    },
+    "deps": [
+      67,
+      69,
+      78,
+      99,
+      102,
+      26,
+      33,
+      79,
+      77,
+      47
+    ]
+  },
+  {
+    "uid": 108,
+    "path": "module::MemoryKind",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 4,
+      "start_col": 1,
+      "end_line": 4,
+      "end_col": 20
+    },
+    "deps": [
+      69,
+      102,
+      26,
+      30,
+      75
+    ]
+  },
+  {
+    "uid": 109,
+    "path": "error::ParseError",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/error.rs",
+      "start_line": 7,
+      "start_col": 1,
+      "end_line": 7,
+      "end_col": 22
+    },
+    "deps": [
+      106
+    ]
+  },
+  {
+    "uid": 110,
+    "path": "module::Module",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/module.rs",
+      "start_line": 28,
+      "start_col": 1,
+      "end_line": 28,
+      "end_col": 18
+    },
+    "deps": [
+      0,
+      26,
+      64,
+      74,
+      76,
+      108,
+      104,
+      101,
+      97,
+      93,
+      105
+    ]
+  },
+  {
+    "uid": 111,
+    "path": "store::Store",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/store.rs",
+      "start_line": 6,
+      "start_col": 1,
+      "end_line": 6,
+      "end_col": 17
+    },
+    "deps": [
+      67,
+      69,
+      102,
+      26,
+      107,
+      77,
+      110
+    ]
+  },
+  {
+    "uid": 112,
+    "path": "constant::ConstantCompiler",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/constant.rs",
+      "start_line": 6,
+      "start_col": 1,
+      "end_line": 6,
+      "end_col": 32
+    },
+    "deps": [
+      111,
+      110
+    ]
+  },
+  {
+    "uid": 113,
+    "path": "text::TextBuilder",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/text.rs",
+      "start_line": 439,
+      "start_col": 1,
+      "end_line": 439,
+      "end_col": 90
+    },
+    "deps": [
+      5,
+      92,
+      111,
+      110,
+      83,
+      105,
+      100,
+      85
+    ]
+  },
+  {
+    "uid": 114,
+    "path": "engine::Engine",
+    "span": {
+      "file": "/home/evan/research/flux-spacewasm/spacewasm/src/engine.rs",
+      "start_line": 4,
+      "start_col": 1,
+      "end_line": 4,
+      "end_col": 18
+    },
+    "deps": [
+      69,
+      102,
+      23,
+      26,
+      30,
+      111,
+      77,
+      46,
+      83,
+      57
+    ]
+  }
+]

@@ -1,5 +1,9 @@
 #![no_std]
 
+// Pull in the flux extern specs for `core` and `alloc` (pointers, slices, Option, ...).
+extern crate flux_alloc;
+extern crate flux_core;
+
 pub mod util;
 pub use util::*;
 
