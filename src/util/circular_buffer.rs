@@ -136,6 +136,7 @@ impl<T, const N: usize> CircularBuffer<T, N> {
 
     /// Returns a reference to an element at the given index.
     /// Index 0 is the front of the buffer.
+    #[flux_rs::spec(fn(&Self[@v], index: usize) -> Option<&T>[index < v.size])]
     pub fn get(&self, index: usize) -> Option<&T> {
         if index >= self.size {
             return None;
@@ -189,14 +190,26 @@ impl<T, const N: usize> Default for CircularBuffer<T, N> {
 }
 
 /// An iterator over the elements of a `CircularBuffer`.
+#[flux_rs::refined_by(buf: CircularBuffer, index: int)]
+// (`index == 0 ||` because `0 <= buf.size` is not known when the iterator is built)
+#[flux_rs::invariant(index == 0 || index <= buf.size)]
 pub struct Iter<'a, T, const N: usize> {
+    #[flux_rs::field(&CircularBuffer<T, N>[buf])]
     buffer: &'a CircularBuffer<T, N>,
+    #[flux_rs::field(usize[index])]
     index: usize,
 }
 
+#[flux_rs::assoc(
+    fn size(s: Iter) -> int { if s.index <= s.buf.size { s.buf.size - s.index } else { 0 } }
+    fn done(s: Iter) -> bool { s.index >= s.buf.size }
+    fn step(s: Iter, t: Iter) -> bool { t.buf.size == s.buf.size && s.index <= t.index }
+)]
 impl<'a, T, const N: usize> Iterator for Iter<'a, T, N> {
     type Item = &'a T;
 
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Self::Item>[s.index < s.buf.size]
+        ensures self: Self[s.buf, if s.index < s.buf.size { s.index + 1 } else { s.index }])]
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.buffer.size {
             let value = self.buffer.get(self.index);
@@ -216,14 +229,26 @@ impl<'a, T, const N: usize> Iterator for Iter<'a, T, N> {
 impl<'a, T, const N: usize> ExactSizeIterator for Iter<'a, T, N> {}
 
 /// A mutable iterator over the elements of a `CircularBuffer`.
+#[flux_rs::refined_by(buf: CircularBuffer, index: int)]
+// (`index == 0 ||` because `0 <= buf.size` is not known when the iterator is built)
+#[flux_rs::invariant(index == 0 || index <= buf.size)]
 pub struct IterMut<'a, T, const N: usize> {
+    #[flux_rs::field(&mut CircularBuffer<T, N>[buf])]
     buffer: &'a mut CircularBuffer<T, N>,
+    #[flux_rs::field(usize[index])]
     index: usize,
 }
 
+#[flux_rs::assoc(
+    fn size(s: IterMut) -> int { if s.index <= s.buf.size { s.buf.size - s.index } else { 0 } }
+    fn done(s: IterMut) -> bool { s.index >= s.buf.size }
+    fn step(s: IterMut, t: IterMut) -> bool { t.buf.size == s.buf.size && s.index <= t.index }
+)]
 impl<'a, T, const N: usize> Iterator for IterMut<'a, T, N> {
     type Item = &'a mut T;
 
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Self::Item>[s.index < s.buf.size]
+        ensures self: Self[s.buf, if s.index < s.buf.size { s.index + 1 } else { s.index }])]
     fn next(&mut self) -> Option<Self::Item> {
         if self.index < self.buffer.size {
             let actual_index = (self.buffer.start + self.index) % N;
