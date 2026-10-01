@@ -15,3 +15,16 @@ Strategies tried:
 
 Outcome: no annotation added; `RcInner` has no expressible invariant. The `count != 0` fact belongs to the
 `Rc` ownership discipline (every live `Rc` holds a count), which is a temporal property outside flux's model.
+
+## Policy note: stateless types
+
+Unit structs and plain enums carry no refinable state. When their `--check-type` run is clean they are
+checkpointed as `DONE (no invariant)`. When the only errors are inside their associated functions and
+depend on a *different* type's refinement (typically `reader::Reader`, type uid 94), they are logged here
+as deferred and revisited in Phase 2, since no `refined_by`/`invariant` on the type itself can help.
+
+## type 7 module::CustomSection (src/module.rs:481) — deferred to Phase 2
+
+Error: `arithmetic operation may underflow` at src/module.rs:498 (`wasm.offset() - start` in `CustomSection::read`).
+`CustomSection` is a unit struct. The fact needed is that `Reader::offset()` is monotonic across reads,
+which is a `Reader` refinement (type uid 94) plus specs on `Reader::read_*`. Nothing on this type can express it.
