@@ -87,7 +87,6 @@ impl<T, A: Allocator + Clone> Rc<[T], A> {
     ///
     /// # Safety
     /// Caller must initialize all `len` elements before using the Rc.
-    #[flux_rs::opts(solver = "cvc5")] // z3 does not terminate on the Layout + pointer-offset arithmetic here
     unsafe fn new_uninit_slice_in(
         alloc: A,
         len: usize,

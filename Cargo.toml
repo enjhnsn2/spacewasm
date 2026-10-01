@@ -30,6 +30,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 [package.metadata.flux]
 enabled = true
 cache = true
+solver = "cvc5"
 
 [lib]
 name = "spacewasm"
