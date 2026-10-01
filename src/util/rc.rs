@@ -259,6 +259,7 @@ impl<T: ?Sized, A: Allocator> Rc<T, A> {
     /// # Safety
     /// The caller must ensure that no other references to the inner value exist.
     #[inline]
+    #[flux_rs::trusted(reason = "panicked at crates/flux-refineck/src/type_env/place_ty.rs:496:18")]
     pub unsafe fn get_mut_unchecked(&mut self) -> &mut T {
         // We are careful to *not* create a reference covering the "count" fields, as
         // this would conflict with accesses to the reference counts (e.g. by `Weak`).
