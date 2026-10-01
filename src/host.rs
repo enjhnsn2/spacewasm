@@ -12,12 +12,23 @@ pub struct HostNameError;
 
 /// A bounded, inline, owned host name (module / function / global / symbol).
 #[derive(Clone, Copy)]
+// Flux: `len <= CAPACITY` is the invariant `as_bytes` needs. The `CAPACITY < 256`
+// const-assert in `build` is invisible to flux, and a narrowing `as u8` is only
+// known to be lossless when the source is provably <= 255, so the invariant is
+// stated with that case split; `len <= 255` (the `u8` range, which flux only
+// tracks under `check_overflow`) makes the second disjunct usable in `as_bytes`.
+#[flux_rs::refined_by(len: int)]
+#[flux_rs::invariant(len <= 255 && (len <= CAPACITY || CAPACITY > 255))]
 pub struct HostName<const CAPACITY: usize> {
     data: [u8; CAPACITY],
+    #[flux_rs::field(u8[len])]
     len: u8,
 }
 
 impl<const CAPACITY: usize> HostName<CAPACITY> {
+    // Flux: `check_overflow` is what gives the `u8` produced by `bytes.len() as u8`
+    // its `<= 255` range, needed for the struct invariant.
+    #[flux_rs::opts(check_overflow = "lazy")]
     const fn build(bytes: &[u8]) -> Option<HostName<CAPACITY>> {
         // Using an 8-bit length so we must validate the capacity fits in a u8.
         const { assert!(CAPACITY < 256) };
@@ -60,6 +71,7 @@ impl<const CAPACITY: usize> HostName<CAPACITY> {
         HostName::build(bytes).ok_or(HostNameError)
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> &[u8][v.len])]
     pub fn as_bytes(&self) -> &[u8] {
         &self.data[..self.len as usize]
     }
