@@ -192,6 +192,7 @@ impl Module {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[flux_rs::trusted(reason = "panicked at crates/flux-refineck/src/type_env.rs:535:21")]
     fn read_section<const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>(
         &mut self,
         wasm: &mut Reader,
