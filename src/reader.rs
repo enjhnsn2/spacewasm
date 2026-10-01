@@ -106,6 +106,9 @@ impl<'wasm> Reader<'wasm> {
     /// `capacity()`, so clamping `to_copy` to `capacity()` never overfills and
     /// `CircularBuffer::push` (which overwrites the oldest element when full)
     /// never actually overwrites live data.
+    // cvc5 does not terminate on this function's fixpoint query (repro in centrifuge/harness/repro-cvc5-hang);
+    // z3 solves it in ~30s.
+    #[flux_rs::opts(solver = "z3")]
     fn fill_buffer(&mut self) -> Result<(), ValidationError> {
         // If buffer already has data, we're done
         if !self.buffer.is_empty() {
