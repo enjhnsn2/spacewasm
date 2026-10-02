@@ -132,10 +132,18 @@ flux_rs::defs! {
 // `sp`/`fp`/stack indices are preserved. Needed by `Interpreter::memory_grow`.
 use crate::Engine;
 
+// `Stack::new` (src/stack.rs) builds the buffer for exactly `size` words; `Engine::new`
+// (src/store.rs) needs `size >= 0` for the engine invariant `sp <= size` with `sp == 0`.
+use crate::{AllocError, Stack};
+
 #[flux_rs::specs {
     impl Engine {
         fn clear_memory(self: &mut Engine[@e]);
         fn clear_table(self: &mut Engine[@e]);
+    }
+
+    impl Stack {
+        fn new(size: usize) -> Result<Stack{s: s.size == size}, AllocError>;
     }
 }]
 const _: () = ();
