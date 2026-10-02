@@ -471,3 +471,105 @@ Remaining errors:
 - Not counted under this uid but in the same prefix run: `DataSection::read` (3, Store) and
   `ExportSection::read` (`out.push(e)` needs `len < cap`; `Vec::new(len)` gives `cap == len` but the loop
   index `0..len` is not related to `out.inner.len` without a loop invariant flux cannot infer here). Deferred.
+
+## Wave 2, worker 1: type 114 engine::Engine (src/engine.rs:4) and type 21 interpreter::Interpreter (src/interpreter.rs)
+
+### type 114 engine::Engine — ABORT (its own constructor verifies; `call_impl`/`invoke`/`resume` keep 21 errors)
+
+Refinement kept (src/engine.rs): `refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int)`,
+`invariant(fp <= sp && sp <= size)`, fields `fp: u32[fp]`, `sp: usize[sp]`, `stack: Stack[base, addr, bytes, size]`.
+`Engine::new`/`reset` (src/store.rs) verify (with the detached `Stack::new -> Result<Stack{s: s.size == size}, _>`
+spec appended to src/util/flux_specs.rs: `Engine::new` needs `0 <= size`). `clear_memory`/`clear_table` got detached
+specs `fn(self: &mut Engine[@e])` there too (they only touch unrefined fields; `memory_grow` needs the indices preserved).
+Inherent methods in src/interpreter.rs carry `fn(self: &strg Engine[@e], ..) -> Result<..> ensures self: Engine`
+(`call_impl`, `call_impl_enter_module`, `invoke`, `resume`); `call_impl_enter_module` verifies.
+Remaining 21 errors, all deferred to other waves/files:
+- 11 stack-headroom obligations (`write_u32(self.sp..)`, `self.sp += 2 + f.local_size` fold, `invoke`'s `expect`):
+  the guard `self.stack.len() < self.sp + f.required_stack_words()` is there, but `Function::required_stack_words`
+  (src/module.rs) is unspecified; it needs `fn(&Self[@f]) -> usize{v: v >= 2 + f.local_size}` with `Function` refined by
+  `local_size` (Module wave). `invoke` additionally needs `params_words` related to the loop (sum over `ty.params`).
+- 5 in `resume`: the host-pause result push `write_*(self.sp)` needs `sp + 2 <= size`; that headroom was reserved by
+  the validator for the paused `call_host`, nothing in the engine records it (an honest `requires e.sp + 2 <= e.size`
+  would just move the error to every test caller).
+- 5 out-of-bounds indexes `store.modules()[..]`, `m.functions[..]`, `m.types[..]` (Store/Module wave).
+Strategies: (i) specs on this function — the missing facts are callee outputs; (ii) stronger struct refinement — a
+`required <= size - sp` field does not exist in `Engine`; (iii) callee specs — the callees are in module.rs/store.rs,
+outside this worker's files.
+
+### type 21 interpreter::Interpreter — ABORT (856 -> 274 errors: 198 "validator assumption" + 76 residual)
+
+Final shape (src/interpreter.rs, src/visitor.rs): the visitor traits declare associated refinements with `true` defaults
+(`BaseVisitor`: `has_depth(s: Self::State, n: int)`, `has_room(s: Self::State, pops: int, pushes: int)`; `IrVisitor`:
+`has_local(s, l: LocalVariable)`, `can_branch(s, l: LabelTarget)`, `can_branch_after_pop(s, l)`); the interpreter defines
+them (`has_depth = s.sp >= s.fp + n`, `has_room = s.sp - pops + pushes <= s.size`, `has_local`, `can_branch` =
+`sp >= fp + depth(l) && depth(l) >= arity(l) && sp >= fp + arity(l) + 2`). Every instruction body lives in an inherent
+`Interpreter::<name>_op` method whose spec is
+`fn(&Self, <params>, state: &strg Engine[@s]) -> Result<(), InterpreterBreak> requires <Interpreter as BaseVisitor>::has_depth(s, P) [&& has_room(s, P, Q)] ensures state: Engine`
+(P/Q = words popped/pushed; the `instruction!` macro arms carry the spec per shape), and the trait impls are
+`forward!` wrappers with the spec `fn(&Self, <params>, state: &strg Self::State[@s]) -> Result<(), Self::Error> ensures state: Self::State`
+(no `requires`). This is a semantics-preserving rewrite (pure delegation; the wrappers inline) and is the only shape
+under which flux verifies the bodies — see "why" below. Pops are over-approximated by at most 2 words where the
+operand type is not statically known (`drop`, `select`, `local_set/tee`, `global_set*`): a frame always holds its
+2-word header below the operand stack, so `sp >= fp + 2` holds inside any frame and these preconditions are implied by
+the validator's guarantee; pushes are stated exactly for the 1-word case (see residuals).
+`LabelTarget`/`LabelArity` (src/text.rs, uids 55/56): `refined_by(bits: int)` / `refined_by(n: int)` with
+`depth() -> u8[(l.bits / 4194304) % 256]`, `arity() -> LabelArity[(l.bits / 1073741824) % 4]`; the two bodies were
+rewritten from `(x >> k) & m` to `(x / 2^k) % (m+1)` (identical on `u32`; flux does not reason about shifts/masks
+on integers). `LocalVariable` (src/visitor.rs) is `refined_by(off: int)`; `LocalVariable::addr` has the spec
+`fn(&Self[@l], fp: u32{fp <= i32::MAX && 0 <= fp + l.off && fp + l.off <= i32::MAX}) -> usize[fp + l.off]`.
+
+Why not the trait-level route from wave 1 (measured, all reverted):
+1. Trait-method specs on `BaseVisitor` (`fn(&Self, state: &strg Self::State[@s]) -> .. requires <Self as BaseVisitor>::has_depth(s, P) ..`)
+   + assoc definitions on the interpreter impl + restated impl specs: interpreter.rs 856 -> 90 errors (bodies verified).
+   But (a) flux PANICS (rustc `binder.rs:1285` "cannot find BoundConst in param-env", from
+   `flux_refineck::checker::trait_impl_subtyping -> SortNormalizer -> normalize_projection_ty_with_rustc`) on the
+   const-generic `impl BaseVisitor for Compiler<'a, const N, const M>` (src/compiler.rs), with or without specs restated
+   on that impl — `cargo flux` on the crate aborts, so this cannot be merged; (b) every spec-less impl hits
+   `internal flux error: incompatible types &strg State[s] - &mut State` (constant.rs: 0 -> 175) unless the `&strg`
+   spec is restated on all its ~170 methods; (c) the generic dispatchers `IrReader::visit_instruction` (src/ir_reader.rs,
+   1 -> 169) and `Expr::visit` (src/code.rs, 4 -> 179) cannot prove `<V as BaseVisitor>::has_depth(..)` for an abstract
+   `V`, so the obligations simply move there.
+2. Impl-only specs (no trait-method specs): flux reports `a precondition cannot be proved` at the `fn` line of each impl
+   method (the impl requires more than the trait) AND SKIPS THE BODY — e.g. `i32_div_u`'s division-by-zero and
+   `return_`'s invariant folds disappear. Verified by `--only-check` on single methods. So this shape verifies nothing.
+3. Hence the `*_op` split: bodies verified under their preconditions; each `forward!` wrapper reports the precondition
+   of its single `*_op` call as unprovable (198 errors = one per conjunct; e.g. `local_get` has 4). These are the exact
+   points where the Wasm validator's stack-typing guarantee is assumed; nothing local can discharge them.
+
+Residual 76 errors in the `*_op` bodies and `call_host`, by cause:
+- 24 out-of-bounds indexes into `store.modules()[..]`, `m.functions[..]`, `m.types[..]`, `m.globals[..]`,
+  `store.host_modules()[..]` (`call_impl` 2, `invoke` 3, `call_indirect_op` 7, `global_get_op` 2, `global_get_host_op`
+  2, `global_set_op` 2, `global_set_host_op` 2, `call_host` 4): need `Store`/`Module`/`HostModule` refinements
+  (ModuleRef/FuncIdx/TypeIdx/GlobalIdx vs vector lengths) — deferred to the Store/Module wave.
+- 11 in `call_impl`/`invoke` and 5 in `resume`: see type 114 above.
+- 15 in `call_host` (trait impl, no precondition possible): `state.sp -= f.param_size()` and the parameter reads/result
+  pushes depend on the host function's signature looked up in the store (`f.param_size()`, `f.returns()`), and
+  `sv.push(..).unwrap()` needs `f.params().len() <= MAX_HOST_FUNCTION_PARAMS`; also `state.call_host_fn(..)` is a
+  `trusted` `&mut self` method with no spec, so the indices are lost after it. Needs `HostFunction` refinements
+  (param_size/params len/returns) and a `call_host_fn(self: &mut Engine[@e], ..)` spec in store.rs.
+- 9 in the `i64`/`f64` arms of `local_get_op` (2), `local_set_op`, `local_tee_op`, `global_get_op` (2),
+  `global_get_host_op` (3): the word count of the operand depends on a `ValType` value (`l.ty`, `g.type_.ty`, the
+  `Value` variant). `ValType` (src/types.rs) is unrefined; with `#[flux_rs::reflect]` on it the preconditions could be
+  `has_room(s, 0, words(ty))`/`has_local(s, l, words(l.ty))` exactly. Stated conservatively for 1 word; the 2-word arms
+  fail (`write_u64(state.sp, ..)` needs `sp + 2 <= size`).
+- 4 in `return_op`: `return_fp = fp - frame_length`, `parameter_start = fp - parameter_size` (underflow) and the two
+  final folds (`fp' <= sp'`): `frame_length`/`parameter_size` are read back from the stack word at `fp` (`CallFrame::from_bits`),
+  i.e. the relation `frame_length <= fp`, `parameter_size <= fp` lives in stack *contents*, which the `Stack`
+  refinement does not model.
+- 6 in `br_table_op`: the label is `cases(v)` (closure result, data dependent), so `br_impl`'s `can_branch` cannot be
+  stated; the spec only requires `has_depth(s, 1)`.
+- 2 casts: `LocalVariable::addr` (`(fp as i32 + off as i32) as usize`: flux treats `u32 as i32` as unconstrained even
+  under `fp <= i32::MAX`, so the postcondition `usize[fp + l.off]` is unprovable; the spec is kept because the three
+  `local_*_op` callers verify against it) and `i32_div_u_op` (`(a as u32) / (b as u32)` after `if b == 0 { return .. }`
+  on the `i32`: the `i32 -> u32` cast loses `b != 0`).
+Verified clean: all 110 `instruction!`-generated ops, all loads/stores/consts/conversions, `memory_size/grow`,
+`drop`, `select`, `if_`, `br`, `br_if`, `br_impl`, `call`, `call_extern`, `call_impl_enter_module`, `global_set*`
+bodies apart from the index lookups, `LabelTarget::depth/arity`, `Engine::new/reset`.
+Strategies: (i) per-function specs — done wherever a local precondition exists (see above); (ii) struct refinement —
+`Engine` is refined as planned, the missing structure is `Store`/`Module`/`HostFunction`/`ValType`; (iii) callee specs —
+added where the callee is in this worker's files (`Engine::clear_*`, `Stack::new` detached, `LocalVariable::addr`,
+`LabelTarget::depth/arity`, `br_impl`, `return_op`); the rest are in store.rs/module.rs/types.rs.
+Cross-check after the final state: compiler:: 7 (unchanged), constant:: 0 (unchanged), ir_reader:: 1 (unchanged),
+code:: 4 (unchanged), text:: 22 (unchanged), store:: 17 (unchanged; `Engine::new` verifies). Full crate: 1032 -> 450 errors, no panics.
+Scripts (scratchpad, worker 1): `rewrite_visitor.py`/`table.py` (stack-effect table), `add_impl_specs.py` (impl specs
+from the table), `split_ops.py` (the `*_op`/`forward!` split), `classify.py` (error triage).

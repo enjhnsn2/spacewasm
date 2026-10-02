@@ -24,6 +24,18 @@ macro_rules! visit_fn {
 ///
 /// Note: This visitor does not handle the control-flow instructions since those are
 ///       IR-specific. See [WasmVisitor] and [IrVisitor]
+///
+/// Flux: `has_depth(s, n)` ("the operand stack of state `s` holds at least `n`
+/// words") and `has_room(s, pops, pushes)` ("after popping `pops` words there is
+/// room to push `pushes`") are associated refinements that a visitor modelling a
+/// value stack (the interpreter) defines; they default to `true`. They are used by
+/// the per-instruction specs on `impl BaseVisitor for Interpreter`. (Trait-level
+/// method specs are not possible: flux crashes normalising `Self::State` for the
+/// const-generic `Compiler` impl, see log/ABORT.md "type 21".)
+#[flux_rs::assoc(
+    fn has_depth(s: Self::State, n: int) -> bool { true }
+    fn has_room(s: Self::State, pops: int, pushes: int) -> bool { true }
+)]
 pub trait BaseVisitor {
     type Error;
     type State;
@@ -252,10 +264,12 @@ pub trait WasmVisitor: BaseVisitor {
 }
 
 #[derive(Debug)]
+#[flux_rs::refined_by(off: int)]
 pub struct LocalVariable {
     // Offset of the local variable in 32-bit words
     // Function parameters are negative relative to the FP
     // Locals are positive relative to FP + 2
+    #[flux_rs::field(i16[off])]
     pub frame_offset: i16,
 
     // Variable's type
@@ -291,6 +305,16 @@ pub enum Ref {
 
 /// An abstraction over IR Bytecode.
 /// Used to implement the interpreter.
+///
+/// Flux: `has_local(s, l)` ("local `l` is addressable in the frame of `s`"),
+/// `can_branch(s, l)` / `can_branch_after_pop(s, l)` ("`s` holds the words that
+/// branching to label `l` truncates and copies", the latter after one word was
+/// popped) are associated refinements defined by the interpreter; default `true`.
+#[flux_rs::assoc(
+    fn has_local(s: Self::State, l: LocalVariable) -> bool { true }
+    fn can_branch(s: Self::State, l: LabelTarget) -> bool { true }
+    fn can_branch_after_pop(s: Self::State, l: LabelTarget) -> bool { true }
+)]
 pub trait IrVisitor: BaseVisitor {
     // Parametric instructions
     visit_fn!(drop, ty: ValType);

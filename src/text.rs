@@ -78,7 +78,8 @@ impl JumpOffset {
 /// by default to mark the 'sentinel' jump target.
 ///
 #[derive(Clone, Copy)]
-pub struct LabelTarget(u32);
+#[flux_rs::refined_by(bits: int)]
+pub struct LabelTarget(#[flux_rs::field(u32[bits])] u32);
 
 impl ::core::fmt::Debug for LabelTarget {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -98,9 +99,13 @@ impl From<u32> for LabelTarget {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
+#[flux_rs::refined_by(n: int)]
 pub enum LabelArity {
+    #[flux_rs::variant(LabelArity[0])]
     None = 0,
+    #[flux_rs::variant(LabelArity[1])]
     I32 = 1,
+    #[flux_rs::variant(LabelArity[2])]
     I64 = 2,
 }
 
@@ -144,8 +149,11 @@ impl LabelTarget {
     }
 
     /// Number of 32-bit values to move from the current stack to the result stack
+    #[flux_rs::spec(fn(&LabelTarget[@l]) -> LabelArity[(l.bits / 1073741824) % 4])]
     pub fn arity(&self) -> LabelArity {
-        match (self.0 >> 30) & 0b11 {
+        // `(x >> 30) & 0b11` written as `(x / 2^30) % 4` (identical on `u32`) so that
+        // flux, which does not reason about shifts/masks on integers, can verify the spec.
+        match (self.0 / 1_073_741_824) % 4 {
             0 => LabelArity::None,
             1 => LabelArity::I32,
             2 => LabelArity::I64,
@@ -154,8 +162,10 @@ impl LabelTarget {
     }
 
     /// Number of 32-bit values to drop from the stack
+    #[flux_rs::spec(fn(&LabelTarget[@l]) -> u8[(l.bits / 4194304) % 256])]
     pub fn depth(&self) -> u8 {
-        ((self.0 >> 22) & 0xFF) as u8
+        // `(x >> 22) & 0xFF` written as `(x / 2^22) % 256` (identical on `u32`), see `arity`.
+        ((self.0 / 4_194_304) % 256) as u8
     }
 }
 
