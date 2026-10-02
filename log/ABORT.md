@@ -657,3 +657,69 @@ by extern specs for `str::len(&str[@s]) -> usize[str_len(s)]` and `str::as_bytes
 src/util/flux_specs.rs (flux refines `str` by its contents and provides the `str_len` theory function; flux-core has no
 `str` specs). RESULT=SAFE. `HostName` (33) / `HostValList` (82), which also call `str::len`/`as_bytes`, are unaffected
 (82 keeps the same 3 errors logged above).
+
+## Wave 3, worker 2 (Vec/InnerVec/Box leftovers; uids 1, 66, 26, 2, 92, 94)
+
+### DONE: `Vec::deref_mut` length index (uids 1, 66, 92)
+`<InnerVec as DerefMut>::deref_mut` now returns `&mut [T][v.len]` and `<Vec as DerefMut>::deref_mut`
+`&mut [T][v.inner.len]`, via a new extern spec for `core::slice::from_raw_parts_mut` in
+src/util/flux_specs.rs (mirror of the existing `from_raw_parts` one). uid 1 SAFE; uid 92
+(`text::CodeBuilder`) 2 -> 0 errors (SAFE) with no change to text.rs.
+
+### DONE: `Step for u32` (uid 94)
+`#![cfg_attr(flux, feature(step_trait))]` in src/lib.rs + an extern spec
+`impl core::iter::Step for u32 {}` with `assoc step_forward/size` identical to flux-core's `usize`
+impl. uid 94 (`reader::Reader`) 1 -> 0 errors (SAFE). Plain `cargo build -p spacewasm` still
+compiles, but now emits one `unexpected_cfgs` warning for the `flux` cfg name: Cargo.toml's
+`[lints.rust] unexpected_cfgs.check-cfg` lists only `cfg(kani)` and needs `'cfg(flux)'` added
+(Cargo.toml was outside this worker's file set, so the warning is left for the merge).
+
+### type 2 util::vec::IntoIter — now refined; `next`/`next_back`/`drop` verify, `size_hint` ABORT
+Refinement: `refined_by(base, buf, size, cap, start, end)` where `start`/`end` are indexed by their
+own addresses (`*const[base, start, size - (start - buf)] T`, expressions in the non-bare index
+positions are accepted). Invariants: the `InnerVec` facts on `buf`/`cap`/`size`, the `Vec`
+layout invariant (for `Drop`'s `Layout::array(cap).unwrap()`), `buf <= start <= end`,
+`end - buf <= size`, `end - buf <= cap * T::size_of()`, `(end - start) % T::size_of() == 0`
+(guarded by `cap == 0 || T::size_of() == 0 ||`), start/end aligned, and `cap > 0 || start == end`.
+`Iterator` assoc: `size = if T::size_of() == 0 { 0 } else { (end - start) / T::size_of() }`,
+`done = start >= end`, `step = t.end == s.end && s.start <= t.start`; `next`/`next_back` have
+`&strg` specs stepping `start`/`end` by `T::size_of()`.
+Solver: cvc5 diverges on the `%`/`/ T::size_of()` terms (a run of `into_iter` was killed after
+10 min), so `next`, `next_back` and `<Vec as IntoIterator>::into_iter` carry
+`#[flux_rs::opts(solver = "z3")]` (each ~3 s of solving). A first ZST invariant
+`T::size_of() != 0 || start == end` made z3 diverge in `into_iter` when combined with the `%`
+invariant; `end - buf <= cap * T::size_of()` expresses the same consequence and is fast.
+Result for uid 2: 8 errors + 1 internal error -> 2 errors, both in `size_hint`:
+`(self.end as usize - self.start as usize) / size_of::<T>()` — pointer-to-usize casts are
+uninterpreted in this flux revision (underflow unprovable) and `size_of::<T>()` may be 0 for flux
+(division by zero); `Iterator::size_hint` is a trait method, so no precondition can be added.
+ABORT for `size_hint` (not re-attempted beyond confirming, per the wave-3 instructions).
+
+### type 66 util::vec::Vec — 7 errors in 6 functions remain (was 9 in 6; `deref_mut` fixed)
+1. `new_in` (2 errors, vec.rs:180) — still blocked, now by two missing axioms rather than a missing
+   spec: `InnerVec::from_raw_parts` needs `p.size >= 0` and `p.addr > 0`, while `Allocator::alloc`
+   (src/util/alloc.rs) guarantees only `p.size == l.size` and `p.addr != 0`; `l.size == cap *
+   T::size_of()` has no sign because flux has no `T::size_of() >= 0` axiom, and pointer addresses
+   have no `addr >= 0` axiom. Tried: (i) `requires T::size_of() >= 0` on `new_in` — would propagate
+   to the generic callers `Vec::new`, `Reader::read_vec_in<T>` (reader.rs) and `Vec::try_clone` /
+   `Box<[T]>::try_clone` (whose `Clone::clone` impls cannot take a precondition), i.e. new errors in
+   other files; (ii) relaxing the `InnerVec` invariant to `addr != 0` — breaks `try_push`/`pop`
+   (`ptr.add(len)` needs `addr + len*size_of != 0`, which only follows from `addr > 0`); (iii) a
+   ghost `let _size: usize = layout.size();` (usize non-negativity) discharges `p.size >= 0`, but
+   nothing can give `p.addr > 0` (flux-core has no `ptr.addr()` spec), so no rewrite helps either.
+   Fix belongs in alloc.rs: strengthen the `Allocator::alloc` trait/impl specs to `p.addr > 0 &&
+   p.size >= 0` (both physically true: addresses and layout sizes are `usize`), as src/memory.rs
+   already does for its allocator wrapper; then `new_in` verifies as is.
+2. `into_boxed_slice`, `<Vec as IntoIterator>::into_iter` (1 each): `ptr::read(&self.alloc)` needs
+   `A::size_of() >= 0`; `into_iter` is a trait method (no precondition possible), `into_boxed_slice`
+   is called from `From<Vec> for Box<[T]>` (trait method) so a precondition would move the error.
+3. `<Vec as Clone>::clone`: `try_clone().expect(..)` — documented panic on allocation failure; left.
+4. `from_exact_iter`, `from_array`: unchanged (no flux-core spec for `ExactSizeIterator::len` /
+   `array::IntoIter`), not re-attempted.
+
+### type 26 util::box_::Box — 4 errors + 2 internal (was 5 + 2)
+`Box<[T], A>::try_clone` now verifies through the semantics-preserving local rewrite
+`let src: &[T] = self;` (one `Deref` call, so `src.len()`/`src[i]`/`Vec::new_in(.., src.len())`
+share one slice length); noted in the checkpoint. Remaining: `into_inner` (2, `?Sized` struct
+cannot carry `T::size_of()` facts), the two `Clone::clone` `expect`s (documented panics), and the
+two `checker.rs:1877` internal errors on `*mut T as *mut dyn Trait` in src/host.rs.
