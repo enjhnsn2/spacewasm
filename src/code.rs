@@ -57,6 +57,12 @@ impl From<Expr> for JumpTarget {
 }
 
 #[derive(Debug, Clone)]
+// Flux: deliberately unrefined. Exposing the frame sizes (`stack_usage`,
+// `local_size`, `parameter_size`) would give `required_stack_words` an exact
+// value, but `Module::read_function_code` assigns those fields through the
+// `&mut f` captured by its `with_limit` closure, which flux cannot strongly
+// update (2 "assignment might be unsafe" errors), and it tips that body past
+// the solver timeout.
 pub struct Func {
     /// Function signature.
     pub ty: TypeIdx,
@@ -92,6 +98,8 @@ impl Func {
 }
 
 impl Module {
+    // Flux: at the solver's edge; cvc5 takes ~65s on this body, z3 ~10s.
+    #[flux_rs::opts(solver = "z3")]
     pub fn read_function_code<const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>(
         &mut self,
         wasm: &mut Reader,

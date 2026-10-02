@@ -416,3 +416,58 @@ Flux details worth knowing:
   `self.allocator.as_ref().unwrap()`. `take()` left the struct with a non-null `ptr` and `allocator == None` at the
   fold point, violating `addr == 0 || has_alloc`; the `Rc` is dropped by the field drop glue right after the body
   either way (same order: after `deallocate`).
+
+### type 82 host::HostValList (src/host.rs:196) — update (wave 2): 1 error remains (documented panic)
+
+The two `HostValListIter` errors listed above are fixed by uid 98 (`refined_by(index, back, len)`,
+`&strg` `next`/`next_back`, `HostValList::iter -> HostValListIter[0, v.len, v.len]`). The only remaining
+error is `HostValList::new`: `try_new(s).expect(..)`. `try_new` is `Err` exactly when `s` contains a
+character outside `iIfd` or more than `MAX_HOST_FUNCTION_PARAMS` characters; `&str` contents are not
+refined, so no precondition can express it. This is the documented const-literal constructor panic
+(see its doc comment); `try_new` is the checked API. Strategies: (i) a `requires` on `new` — nothing to
+state about `s`; (ii) nothing on the struct helps (the struct is built after the check); (iii) a spec on
+`try_new` cannot make it `Result[true]` for arbitrary `s`. Kept as a documented panic.
+
+### type 99 host::HostFunction (src/host.rs:329) — ABORT (1 error, documented panic)
+
+`HostFunction::new`: `try_new(..).expect(..)`. `try_new` (already `trusted` from wave 1, infer.rs:1022
+ICE on the `Box<dyn Fn>` unsize cast) returns `Err` on (a) `returns.len() > 1`, (b) the
+`Box::new(f)?` allocation failure. (a) could be stated as `requires returns.len <= 1`, but (b) is an
+`AllocError` from `Box::new`, which has no `Result[true]` spec and genuinely can fail, so `expect` is
+unprovable on any precondition. `new`'s doc comment already lists both as panics and points callers to
+`try_new`. Strategies: (i) `requires` on `new` — cannot rule out allocation failure; (ii) `HostFunction`
+has no state that helps; (iii) a `-> Result<_, _>[true]` spec on `try_new` would be a false spec (and
+`try_new` is trusted, so it would be unchecked). Kept as a documented panic.
+
+### type 110 module::Module (src/module.rs:28) — ABORT (7 -> 6 errors; 3 blocked on Box<[T]>, 3 on Store)
+
+Kept (verified, no new errors):
+- `Module: refined_by(has_table: bool, has_memory: bool)` (`table`/`memory` are `Option[..]`-indexed) and
+  `check_memory_defined -> Result<(), _>[m.has_memory]`. This also removed the "error jumping to join point"
+  in `get_table`.
+- Index newtypes (`TypeIdx`, `FuncIdx`, `TableIdx`, `MemIdx`, `GlobalIdx`, `LocalIdx`, `LabelIdx`):
+  `refined_by(idx: int)`, `.0: u32[idx]`, `From<u32>: fn(v: u32[@n]) -> Self[n]`.
+- `#[flux_rs::opts(solver = "z3")]` on `Module::read_function_code` (code.rs): with the index-type
+  refinement the body takes ~65s under cvc5 (harness TIMEOUT) and ~10s under z3. Note that flux's query
+  cache (`target/FLUXCACHE`) makes re-runs of an unchanged constraint look instant, so time it after a change.
+
+Remaining errors:
+- code.rs `read_function_code` (3x `self.functions[i]`): the section fields are `Box<[T]>`, and the crate's
+  `util::box_::Box` is `refined_by(base, addr, size)` (allocation only) with `Deref: fn(&Self[@v]) -> &T`
+  (unrefined pointee), so every `self.functions.len()` / `self.functions[i]` is a fresh existential length.
+  A length-exposing `Module` refinement (`refined_by(n_funcs, ..)` with `#[field(Box<[Func]>{..})]`) is not
+  expressible: `Box<[T]>` has no length component and the length lives in fat-pointer metadata flux does not
+  model, so even `box_.rs` could only provide it through a trusted bridge (e.g. a trusted
+  `Box<[T]>::len -> usize[v.len]` plus a `len` refinement param set by `into_boxed_slice`). Outside this
+  worker's files; see the cross-cutting note in the handback.
+  Strategies tried: (i) a `requires i < ..` on `read_function_code` has nothing to refer to; (ii) refining
+  `Func` by `(stack_usage, local_size[, parameter_size])` to at least give `required_stack_words` an exact
+  value adds 2 "assignment might be unsafe" errors in `read_function_code` (`f.local_size = ..`,
+  `(f.expr, f.stack_usage) = ..` through the `&mut f` captured by the `with_limit` closure) and tips the
+  function over the timeout, so `Func` is left unrefined; (iii) no intermediate callee is involved.
+- `get_table` (3x `store.modules_mut()[i.0]`, `store.host_modules_mut()[..].table[..]`): the `ModuleRef` /
+  `HostRef` stored in `TableKind::Import*` are validated at import time against the `Store`; needs the
+  `Store` refinement (uid 111). Deferred.
+- Not counted under this uid but in the same prefix run: `DataSection::read` (3, Store) and
+  `ExportSection::read` (`out.push(e)` needs `len < cap`; `Vec::new(len)` gives `cap == len` but the loop
+  index `0..len` is not related to `out.inner.len` without a loop invariant flux cannot infer here). Deferred.

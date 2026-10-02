@@ -269,6 +269,7 @@ impl HostValList {
         &self.data[..self.len as usize]
     }
 
+    #[flux_rs::spec(fn(&Self[@v]) -> HostValListIter[0, v.len, v.len])]
     pub fn iter(&self) -> HostValListIter {
         HostValListIter {
             index: 0,
@@ -300,13 +301,24 @@ impl PartialEq<[ValType]> for HostValList {
     }
 }
 
+// Flux: a double-ended cursor over `data.as_slice()`: `next` yields `index` and
+// advances it, `next_back` retreats `back`; the unyielded range is `index..back`.
+// `back <= len` (with `HostValList`'s `len <= MAX_HOST_FUNCTION_PARAMS`) is what
+// makes `data.data[index]` / `data.data[back]` in-bounds.
+#[flux_rs::refined_by(index: int, back: int, len: int)]
+#[flux_rs::invariant(index <= back && back <= len && len <= MAX_HOST_FUNCTION_PARAMS)]
 pub struct HostValListIter {
+    #[flux_rs::field(usize[index])]
     index: usize,
+    #[flux_rs::field(usize[back])]
     back: usize,
+    #[flux_rs::field(HostValList[len])]
     data: HostValList,
 }
 
 impl DoubleEndedIterator for HostValListIter {
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Self::Item>[s.index < s.back]
+        ensures self: Self[s.index, if s.index < s.back { s.back - 1 } else { s.back }, s.len])]
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.index >= self.back {
             return None;
@@ -317,9 +329,16 @@ impl DoubleEndedIterator for HostValListIter {
     }
 }
 
+#[flux_rs::assoc(
+    fn size(s: HostValListIter) -> int { s.back - s.index }
+    fn done(s: HostValListIter) -> bool { s.index >= s.back }
+    fn step(s: HostValListIter, t: HostValListIter) -> bool { t.back == s.back && t.len == s.len && s.index <= t.index }
+)]
 impl Iterator for HostValListIter {
     type Item = ValType;
 
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Self::Item>[s.index < s.back]
+        ensures self: Self[if s.index < s.back { s.index + 1 } else { s.index }, s.back, s.len])]
     fn next(&mut self) -> Option<Self::Item> {
         if self.index >= self.back {
             return None;
