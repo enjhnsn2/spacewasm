@@ -707,3 +707,39 @@ Callers now carrying an obligation (interpreter.rs, not this worker's file: 274 
 `requires e.module < e.store.modules.len` on `call_impl*`/`invoke`/`resume` and the `*_op` methods that touch the
 store; it cannot be an `Engine` invariant because `Engine::new` starts with `module: ModuleRef(0)` on an empty store.
 (The -4 are the `required_stack_words` obligations at 104/105/110/120, see type 105 below.)
+
+### type 105 code::Func (src/code.rs:60) — DONE (type check SAFE; `read_function_code` keeps its 3 Box<[T]> errors)
+
+`Func: refined_by(stack_usage: int, local_size: int, parameter_size: int)` (fields `u16[..]`/`u16[..]`/`u8[..]`) and
+`required_stack_words -> usize[f.stack_usage + 2 + f.local_size]` (exact). This discharges 4 of the interpreter's
+stack-headroom obligations (`call_impl` 104/105/110/120) without any change there.
+The closure problem noted under type 110 is solved by a semantics-preserving local rewrite of
+`Module::read_function_code`: the part of the body that runs under `wasm.with_limit` is now the inherent helper
+`Module::read_function_body(&self, wasm, builder, store, f: Func) -> Result<Func, _>` (pure code motion), and the
+closure moves the `Func` through an `Option` slot (`let Some(f) = slot.take() else { unreachable!() }; ...;
+slot = Some(f)`), so the refined fields are only ever assigned on an owned `Func`. Two shapes that do NOT work,
+for the record: (a) the closure capturing `f` by value (`let mut f = f;`) or (b) the `Option` slot with the whole
+body still inside the closure both make fixpoint allocate >23 GB on `read_function_code` (189 kvars) and get
+OOM-killed (flux reports `failed to run fixpoint: EOF while parsing a value` / `Killed`); (c) the original `&mut f`
+capture gives the 2 "assignment might be unsafe" errors. With the split, `read_function_code` + `read_function_body`
+check in ~5 s (z3 kept on `read_function_code`). `slot.unwrap()` is not provable (the upvar's `Some`-ness is not
+tracked into the closure), hence the `let .. else { unreachable!() }` shape already used by `Store::get_*`.
+
+### type 110 module::Module — re-ABORT after Store (6 errors, unchanged count)
+
+- code.rs 161/176/199 (`self.functions[i]`, x3): deferred: Box<[T]> length bridge.
+- module.rs 830 (`store.modules_mut()[i.0]`): `Store::modules_mut` is unindexed (`Vec::deref_mut`), and the ref comes
+  from `TableKind::Import` — store-wide ref-validity gap (type 111). 838 (x2, host table): same gap + per-element
+  `HostModule.table.len`. Nothing Store-side can discharge these.
+
+### type 43 module::Data / type 18 module::DataSection — re-ABORT after Store (3 errors, unchanged)
+
+`DataSection::read` 1031 (`store.modules()[i.0]`, `i` from `MemoryKind::Import`) and 1039 (x2, `host_modules()[..]
+.memory[..]`): store-wide ref-validity gap (type 111), not the Box<[T]> gap. `Data::read` itself is clean.
+
+### type 52 compiler::Compiler — re-ABORT after Store (7 errors, unchanged)
+
+`<Compiler as WasmVisitor>::call` 211/212/244/245 (`functions[..]`/`types[..]`): Box<[T]> length bridge;
+227/243 (`host_modules()[module.0]`, `modules()[module.0]` with the ref from `Module::get_func_ref`): store-wide
+ref-validity gap; 228 (`hm.functions[index]`): per-element `HostModule.functions.len`. `call` is a trait method,
+so no precondition is possible either way.

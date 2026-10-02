@@ -57,24 +57,27 @@ impl From<Expr> for JumpTarget {
 }
 
 #[derive(Debug, Clone)]
-// Flux: deliberately unrefined. Exposing the frame sizes (`stack_usage`,
-// `local_size`, `parameter_size`) would give `required_stack_words` an exact
-// value, but `Module::read_function_code` assigns those fields through the
-// `&mut f` captured by its `with_limit` closure, which flux cannot strongly
-// update (2 "assignment might be unsafe" errors), and it tips that body past
-// the solver timeout.
+// Flux: refined by the frame sizes so that `required_stack_words` is exact
+// (`stack_usage + 2 + local_size`), which is what the interpreter's stack
+// headroom check needs. `Module::read_function_code` fills these fields inside
+// its `with_limit` closure; the closure owns the `Func` (moved in, returned
+// out) so that flux can strongly update it.
+#[flux_rs::refined_by(stack_usage: int, local_size: int, parameter_size: int)]
 pub struct Func {
     /// Function signature.
     pub ty: TypeIdx,
 
     /// Maximum shallow stack usage by this function (not including inner function calls)
     /// (determined from analysis)
+    #[flux_rs::field(u16[stack_usage])]
     pub stack_usage: u16,
 
     /// Size of the local variables
+    #[flux_rs::field(u16[local_size])]
     pub local_size: u16,
 
     /// Parameter size in 32-bit words
+    #[flux_rs::field(u8[parameter_size])]
     pub parameter_size: u8,
 
     /// Return value type, or `None` if the function returns nothing
@@ -91,6 +94,7 @@ pub struct Func {
 impl Func {
     /// Stack words a call to this function needs above the caller's stack
     /// pointer: the two-word call frame, the locals, and the peak operand usage.
+    #[flux_rs::spec(fn(&Self[@f]) -> usize[f.stack_usage + 2 + f.local_size])]
     #[inline]
     pub fn required_stack_words(&self) -> usize {
         self.stack_usage as usize + 2 + self.local_size as usize
@@ -98,6 +102,49 @@ impl Func {
 }
 
 impl Module {
+    /// Reads the locals and the body of `f` (the part of a code-section entry
+    /// that is read under the size limit) and returns the completed `Func`.
+    fn read_function_body<const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>(
+        &self,
+        wasm: &mut Reader,
+        builder: &mut CodeBuilder,
+        store: &Store,
+        mut f: Func,
+    ) -> Result<Func, ValidationError> {
+        f.locals = wasm
+            .read_vec(|w| {
+                let n = w.read_u32()?;
+                let t = ValType::read(w)?;
+
+                if n > 0xFFFF {
+                    return Err(ValidationError::TooManyLocals);
+                }
+
+                Ok((n as u16, t))
+            })?
+            .into();
+
+        // Compute the local size in words
+        let mut total_size: usize = 0;
+        for (n, ty) in f.locals.iter() {
+            total_size = (*n as usize)
+                .checked_mul(ty.size())
+                .and_then(|v| total_size.checked_add(v))
+                .ok_or(ValidationError::TooManyLocals)?;
+        }
+        let size_in_words = total_size / 4;
+
+        if size_in_words > 0xFFFF {
+            return Err(ValidationError::TooManyLocals);
+        }
+
+        f.local_size = size_in_words as u16;
+        (f.expr, f.stack_usage) =
+            Expr::read::<MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>(wasm, builder, store, self, &f)?;
+
+        Ok(f)
+    }
+
     // Flux: at the solver's edge; cvc5 takes ~65s on this body, z3 ~10s.
     #[flux_rs::opts(solver = "z3")]
     pub fn read_function_code<const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>(
@@ -123,42 +170,23 @@ impl Module {
             }
         };
 
-        let mut f = core::mem::replace(&mut self.functions[i], placeholder);
+        // Flux: the closure cannot strongly update a captured `&mut Func`
+        // (`read_function_body` assigns its refined fields), so it takes the
+        // `Func` out of an `Option` slot, owns it while reading, and puts it back.
+        let mut slot = Some(core::mem::replace(&mut self.functions[i], placeholder));
 
         wasm.with_limit(size as usize, |wasm| {
-            f.locals = wasm
-                .read_vec(|w| {
-                    let n = w.read_u32()?;
-                    let t = ValType::read(w)?;
-
-                    if n > 0xFFFF {
-                        return Err(ValidationError::TooManyLocals);
-                    }
-
-                    Ok((n as u16, t))
-                })?
-                .into();
-
-            // Compute the local size in words
-            let mut total_size: usize = 0;
-            for (n, ty) in f.locals.iter() {
-                total_size = (*n as usize)
-                    .checked_mul(ty.size())
-                    .and_then(|v| total_size.checked_add(v))
-                    .ok_or(ValidationError::TooManyLocals)?;
-            }
-            let size_in_words = total_size / 4;
-
-            if size_in_words > 0xFFFF {
-                return Err(ValidationError::TooManyLocals);
-            }
-
-            f.local_size = size_in_words as u16;
-            (f.expr, f.stack_usage) =
-                Expr::read::<MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>(wasm, builder, store, self, &f)?;
-
-            Ok(())
+            let Some(f) = slot.take() else {
+                unreachable!()
+            };
+            let f = self.read_function_body::<MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>(
+                wasm, builder, store, f,
+            )?;
+            slot = Some(f);
+            Ok::<(), ValidationError>(())
         })?;
+
+        let Some(f) = slot else { unreachable!() };
 
         // Bound the worst-case call frame this function can produce. When a
         // function performs a call, the frame it leaves behind is
