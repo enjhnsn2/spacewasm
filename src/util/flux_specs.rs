@@ -114,6 +114,7 @@ impl<T> [T] {
 impl Clone for usize {
     #[flux_rs::spec(fn(&usize[@v]) -> usize[v])]
     fn clone(&self) -> usize;
+}
 
 // Flux leaves bitwise operators on integer-sorted values uninterpreted. This
 // primop property axiomatizes the one fact we need about `&`: for non-negative
