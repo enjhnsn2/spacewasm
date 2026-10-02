@@ -368,3 +368,36 @@ single spec is at fault; the body (Layout::array pow2 bitvector reasoning + `len
 `pad_to_align` existentials) is at the solver's edge and any extra pointer fact tips it. Marked
 `#[flux_rs::trusted(reason = "solver divergence")]` with the user's approval; its spec (pointer validity for
 `len` values) is therefore an assumption. Trusted count 11 -> 12.
+
+## Wave 2, worker 3 (uids 92, 67, 94, 71)
+
+### type 92 text::CodeBuilder (src/text.rs:271) — ABORT (2 of 4 errors remain, both blocked on `Vec::deref_mut`)
+
+Refinement kept (verified): `refined_by(pages: InnerVec, offset: int)` with `#[field(Vec<Box<TextPage>>[pages])]`,
+`#[field(usize[offset])]`, invariant `offset <= 256 && (pages.len > 0 || offset == 0) && pages.cap < 16777216`
+(= `MAX_ADDRESSABLE_CODE_PAGES`, 2^24). Specs: `new -> Result<CodeBuilder{v: v.pages.len == 0 && v.offset == 0}, _>`,
+`pages() -> &[Box<TextPage>][v.pages.len]`, `offset() -> usize[v.offset]`, `add_page`/`push` are `&strg` and preserve
+`pages.cap` (`push` ensures `w.pages.len >= v.pages.len`). This discharges the underflow `pages.len() - 1` and the
+`.0[self.offset]` page-array index in `push` (4 -> 2 errors; `pc`, `write_32`, `read`, `read_32`, `backpatch` verify).
+
+Semantics-preserving local rewrite (last resort, noted): `add_page` now takes the page it appends
+(`fn add_page(&mut self, page: Box<TextPage>)`) and `push` calls `self.add_page(Box::new(TextPage::default())?)?`.
+Reason: flux cannot couple a function's `Result` index with its `ensures` post-state, so with the `Box::new` inside
+`add_page` its `Ok`-ness was undetermined and `push` could not know, after `self.add_page()?`, that a page exists and
+`offset == 0`. With the allocation hoisted (same evaluation order and effects: the box is allocated, then `try_push`,
+`?` on each), `add_page` is `Result<(), AllocError>[v.pages.len < v.pages.cap]` with an exact `ensures`.
+Tried first (annotations only): (i) `ensures` disjunctions (`w == v || (w.offset == 0 && w.pages.len == v.pages.len + 1)`)
+on `add_page` — `push` cannot exclude the unchanged disjunct after `?`; (ii) stronger invariant — the gap is between
+`Ok` and the post-state, not in the struct; (iii) a callee spec — `Box::new` is genuinely fallible, so `add_page`'s
+`Result` index cannot be determined without the rewrite.
+
+Remaining 2 errors: `self.pages[idx]` in `push` (text.rs `.0[self.offset] = c` line) and `self.pages[page_index]` in
+`write`: both index through `<Vec as DerefMut>::deref_mut`, whose spec in src/util/vec.rs is
+`fn(self: &mut Self[@v]) -> &mut [T]` (no length), so `IndexMut` sees an existential slice length.
+Confirmed fix (tested, then reverted because src/util/vec.rs is outside this worker's files): change it to
+`fn(self: &mut Self[@v]) -> &mut [T][v.inner.len]` — uid 92 becomes RESULT=SAFE and the only new error is the body of
+`Vec::deref_mut` itself (`self.inner.deref_mut()`, vec.rs:348), because `<InnerVec as DerefMut>::deref_mut`
+(src/util/inner_vec.rs:138) is also `-> &mut [T]`; that one needs `-> &mut [T][v.len]` plus an extern spec for
+`core::slice::from_raw_parts_mut` mirroring the existing `from_raw_parts` one in src/util/flux_specs.rs. A detached
+`flux_rs::specs { impl DerefMut for Vec .. }` in flux_specs.rs is rejected ("multiple specifications").
+No new errors in `TextBuilder` (uid 113: 18 before and after, same sites).
