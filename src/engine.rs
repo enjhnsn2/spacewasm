@@ -1,6 +1,15 @@
 use crate::{JumpTarget, Memory, ModuleRef, RawValue, Rc, ResultType, Stack, Store, TableElement};
 
 /// The Wasm engine holds the state of the interpreter and the WebAssembly store
+///
+/// Refinement: `stack` is a `Stack[base, addr, bytes, size]` (see [`Stack`]), `sp`
+/// and `fp` are the stack/frame pointers in words. Invariant `fp <= sp <= size`:
+/// the current frame starts at `fp`, the operand stack top is `sp`, and both lie
+/// within the `size`-word stack buffer. Operand-stack depth and headroom
+/// requirements of individual instructions are expressed through the
+/// `has_depth` / `has_room` associated refinements of [`crate::BaseVisitor`].
+#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int)]
+#[flux_rs::invariant(fp <= sp && sp <= size)]
 pub struct Engine {
     /// Current program counter
     pub pc: JumpTarget,
@@ -9,12 +18,15 @@ pub struct Engine {
     pub jumped: bool,
 
     /// Frame pointer. Base address of local variables in the current stack frame
+    #[flux_rs::field(u32[fp])]
     pub fp: u32,
 
     /// Stack pointer
+    #[flux_rs::field(usize[sp])]
     pub sp: usize,
 
     /// The stack
+    #[flux_rs::field(Stack[base, addr, bytes, size])]
     pub stack: Stack,
 
     /// Linear memory from the active module
