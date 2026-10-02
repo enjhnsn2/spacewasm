@@ -368,3 +368,25 @@ single spec is at fault; the body (Layout::array pow2 bitvector reasoning + `len
 `pad_to_align` existentials) is at the solver's edge and any extra pointer fact tips it. Marked
 `#[flux_rs::trusted(reason = "solver divergence")]` with the user's approval; its spec (pointer validity for
 `len` values) is therefore an assumption. Trusted count 11 -> 12.
+
+### type 82 host::HostValList (src/host.rs:196) — update (wave 2): 1 error remains (documented panic)
+
+The two `HostValListIter` errors listed above are fixed by uid 98 (`refined_by(index, back, len)`,
+`&strg` `next`/`next_back`, `HostValList::iter -> HostValListIter[0, v.len, v.len]`). The only remaining
+error is `HostValList::new`: `try_new(s).expect(..)`. `try_new` is `Err` exactly when `s` contains a
+character outside `iIfd` or more than `MAX_HOST_FUNCTION_PARAMS` characters; `&str` contents are not
+refined, so no precondition can express it. This is the documented const-literal constructor panic
+(see its doc comment); `try_new` is the checked API. Strategies: (i) a `requires` on `new` — nothing to
+state about `s`; (ii) nothing on the struct helps (the struct is built after the check); (iii) a spec on
+`try_new` cannot make it `Result[true]` for arbitrary `s`. Kept as a documented panic.
+
+### type 99 host::HostFunction (src/host.rs:329) — ABORT (1 error, documented panic)
+
+`HostFunction::new`: `try_new(..).expect(..)`. `try_new` (already `trusted` from wave 1, infer.rs:1022
+ICE on the `Box<dyn Fn>` unsize cast) returns `Err` on (a) `returns.len() > 1`, (b) the
+`Box::new(f)?` allocation failure. (a) could be stated as `requires returns.len <= 1`, but (b) is an
+`AllocError` from `Box::new`, which has no `Result[true]` spec and genuinely can fail, so `expect` is
+unprovable on any precondition. `new`'s doc comment already lists both as panics and points callers to
+`try_new`. Strategies: (i) `requires` on `new` — cannot rule out allocation failure; (ii) `HostFunction`
+has no state that helps; (iii) a `-> Result<_, _>[true]` spec on `try_new` would be a false spec (and
+`try_new` is trusted, so it would be unchecked). Kept as a documented panic.
