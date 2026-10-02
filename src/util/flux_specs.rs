@@ -267,11 +267,6 @@ flux_rs::defs! {
 }
 
 // ---------------------------------------------------------------------------
-// Detached specs for `StaticVec` (wave 4): `push` succeeds exactly when there is room,
-// so `sv.push(..).unwrap()` in `Interpreter::call_host_op` (at most
-// `MAX_HOST_FUNCTION_PARAMS` pushes, one per parameter of a `HostValList`) verifies.
-use crate::StaticVec;
-
 // Detached specs for `util::StaticVec` (src/util/static_vec.rs is untouched): `len` is
 // exact, `push` succeeds iff there is room (`len < N`) and then grows the length by one,
 // `pop` succeeds iff non-empty and then shrinks it by one; `new`/`default` start empty.
@@ -284,10 +279,6 @@ use crate::util::StaticVec;
         fn push(self: &strg StaticVec<T, N>[@v], value: T) -> Result<(), AllocError>[v.len < N]
             ensures self: StaticVec<T, N>[if v.len < N { v.len + 1 } else { v.len }];
         fn len(&StaticVec<T, N>[@v]) -> usize[v.len];
-
-        fn len(&StaticVec<T, N>[@v]) -> usize[v.len];
-        fn push(self: &strg StaticVec<T, N>[@v], value: T) -> Result<(), AllocError>[v.len < N]
-            ensures self: StaticVec<T, N>[if v.len < N { v.len + 1 } else { v.len }];
         fn pop(self: &strg StaticVec<T, N>[@v]) -> Option<T>[v.len > 0]
             ensures self: StaticVec<T, N>[if v.len > 0 { v.len - 1 } else { v.len }];
     }
