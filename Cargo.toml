@@ -25,7 +25,7 @@ keywords = ["wasm", "webassembly", "interpreter", "no_std", "embedded"]
 categories = ["wasm", "no-std", "embedded"]
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(flux)'] }
 
 [package.metadata.flux]
 enabled = true
