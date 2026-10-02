@@ -278,13 +278,23 @@ pub struct CompilerOptions {
 /// Low-level builder for paged IR code.
 ///
 /// Manages allocation of pages and writing 16-bit words to the current position.
+///
+/// Flux: refined by the page table (`pages`, an `InnerVec` index: `len`/`cap`)
+/// and the write `offset` within the last page. `offset` never exceeds a page
+/// (256 words), is `0` while no page exists, and the page table never holds
+/// more than `MAX_ADDRESSABLE_CODE_PAGES` (`2^24`) pages (24-bit addresses).
+#[flux_rs::refined_by(pages: InnerVec, offset: int)]
+#[flux_rs::invariant(offset <= 256 && (pages.len > 0 || offset == 0) && pages.cap < 16777216)]
 pub struct CodeBuilder {
+    #[flux_rs::field(Vec<Box<TextPage>>[pages])]
     pages: Vec<Box<TextPage>>,
+    #[flux_rs::field(usize[offset])]
     offset: usize,
     options: CompilerOptions,
 }
 
 impl CodeBuilder {
+    #[flux_rs::spec(fn(options: CompilerOptions) -> Result<CodeBuilder{v: v.pages.len == 0 && v.offset == 0}, AllocError>)]
     pub fn new(options: CompilerOptions) -> Result<CodeBuilder, AllocError> {
         if options.max_code_pages >= MAX_ADDRESSABLE_CODE_PAGES {
             return Err(AllocError::AllocationFailed);
@@ -342,12 +352,14 @@ impl CodeBuilder {
     ///
     /// The interpreter reads code directly from this slice, so no copy of the
     /// pages is needed to run the compiled module.
+    #[flux_rs::spec(fn(&Self[@v]) -> &[Box<TextPage>][v.pages.len])]
     pub fn pages(&self) -> &[Box<TextPage>] {
         &self.pages
     }
 
     /// The write offset within the final (partially-filled) page, i.e. the
     /// number of 16-bit words used on the last page.
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.offset])]
     pub fn offset(&self) -> usize {
         self.offset
     }
@@ -374,9 +386,18 @@ impl CodeBuilder {
         JumpTarget(((page_index as u32) << 8) | (offset as u32))
     }
 
-    /// Allocate a new page and reset the offset to the start of that page.
-    fn add_page(&mut self) -> Result<(), AllocError> {
-        self.pages.try_push(Box::new(TextPage::default())?)?;
+    /// Append a freshly allocated page and reset the offset to the start of that page.
+    ///
+    /// Flux: `Ok` exactly when the page table had room, in which case the page
+    /// count grows by one and the offset is reset; otherwise nothing changes.
+    /// (The page is allocated by the caller so that the `Result` is determined
+    /// by the page-table capacity alone.)
+    #[flux_rs::spec(fn(self: &strg Self[@v], page: Box<TextPage>) -> Result<(), AllocError>[v.pages.len < v.pages.cap]
+        ensures self: Self{w: w.pages.cap == v.pages.cap
+            && w.pages.len == (if v.pages.len < v.pages.cap { v.pages.len + 1 } else { v.pages.len })
+            && w.offset == (if v.pages.len < v.pages.cap { 0 } else { v.offset })})]
+    fn add_page(&mut self, page: Box<TextPage>) -> Result<(), AllocError> {
+        self.pages.try_push(page)?;
         self.offset = 0;
         Ok(())
     }
@@ -384,12 +405,14 @@ impl CodeBuilder {
     /// Write a 16-bit word to the current position and advance the program counter.
     ///
     /// Automatically allocates a new page if we've reached the end of the current one.
+    #[flux_rs::spec(fn(self: &strg Self[@v], c: u16) -> Result<(), AllocError>
+        ensures self: Self{w: w.pages.cap == v.pages.cap && w.pages.len >= v.pages.len})]
     fn push(&mut self, c: u16) -> Result<(), AllocError> {
         if self.offset == 0 && self.pages.is_empty() {
             // No pages have been allocated yet
-            self.add_page()?;
+            self.add_page(Box::new(TextPage::default())?)?;
         } else if self.offset >= 256 {
-            self.add_page()?;
+            self.add_page(Box::new(TextPage::default())?)?;
         }
 
         let idx = self.pages.len() - 1;

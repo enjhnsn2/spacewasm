@@ -3,15 +3,22 @@ use core::ops::Deref;
 use crate::util::InnerVec;
 
 /// A borrowed view over a buffer owned by a [`WasmStream`].
-pub struct Chunk(InnerVec<u8>);
+///
+/// Flux: refined by the wrapped buffer's `InnerVec` index, so that
+/// `chunk.len()` and `chunk[i]` (both through `Deref`) agree on `inner.len`.
+#[flux_rs::refined_by(inner: InnerVec)]
+pub struct Chunk(#[flux_rs::field(InnerVec<u8>[inner])] InnerVec<u8>);
 
 impl From<InnerVec<u8>> for Chunk {
+    #[flux_rs::spec(fn(value: InnerVec<u8>[@v]) -> Chunk[v])]
     fn from(value: InnerVec<u8>) -> Self {
         Chunk(value)
     }
 }
 
 impl Chunk {
+    /// Hand the buffer back to `stream`, leaving an empty chunk behind.
+    #[flux_rs::spec(fn(self: &strg Self, stream: _) ensures self: Self)]
     pub(crate) fn return_(&mut self, stream: &mut dyn WasmStream) {
         let to_drop = core::mem::replace(&mut self.0, InnerVec::zero());
         stream.return_(to_drop)
@@ -29,6 +36,7 @@ impl Drop for Chunk {
 
 impl Deref for Chunk {
     type Target = [u8];
+    #[flux_rs::spec(fn(&Self[@c]) -> &[u8][c.inner.len])]
     fn deref(&self) -> &[u8] {
         &self.0
     }

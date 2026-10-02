@@ -573,3 +573,87 @@ Cross-check after the final state: compiler:: 7 (unchanged), constant:: 0 (uncha
 code:: 4 (unchanged), text:: 22 (unchanged), store:: 17 (unchanged; `Engine::new` verifies). Full crate: 1032 -> 450 errors, no panics.
 Scripts (scratchpad, worker 1): `rewrite_visitor.py`/`table.py` (stack-effect table), `add_impl_specs.py` (impl specs
 from the table), `split_ops.py` (the `*_op`/`forward!` split), `classify.py` (error triage).
+
+## Wave 2, worker 3 (uids 92, 67, 94, 71)
+
+### type 92 text::CodeBuilder (src/text.rs:271) — ABORT (2 of 4 errors remain, both blocked on `Vec::deref_mut`)
+
+Refinement kept (verified): `refined_by(pages: InnerVec, offset: int)` with `#[field(Vec<Box<TextPage>>[pages])]`,
+`#[field(usize[offset])]`, invariant `offset <= 256 && (pages.len > 0 || offset == 0) && pages.cap < 16777216`
+(= `MAX_ADDRESSABLE_CODE_PAGES`, 2^24). Specs: `new -> Result<CodeBuilder{v: v.pages.len == 0 && v.offset == 0}, _>`,
+`pages() -> &[Box<TextPage>][v.pages.len]`, `offset() -> usize[v.offset]`, `add_page`/`push` are `&strg` and preserve
+`pages.cap` (`push` ensures `w.pages.len >= v.pages.len`). This discharges the underflow `pages.len() - 1` and the
+`.0[self.offset]` page-array index in `push` (4 -> 2 errors; `pc`, `write_32`, `read`, `read_32`, `backpatch` verify).
+
+Semantics-preserving local rewrite (last resort, noted): `add_page` now takes the page it appends
+(`fn add_page(&mut self, page: Box<TextPage>)`) and `push` calls `self.add_page(Box::new(TextPage::default())?)?`.
+Reason: flux cannot couple a function's `Result` index with its `ensures` post-state, so with the `Box::new` inside
+`add_page` its `Ok`-ness was undetermined and `push` could not know, after `self.add_page()?`, that a page exists and
+`offset == 0`. With the allocation hoisted (same evaluation order and effects: the box is allocated, then `try_push`,
+`?` on each), `add_page` is `Result<(), AllocError>[v.pages.len < v.pages.cap]` with an exact `ensures`.
+Tried first (annotations only): (i) `ensures` disjunctions (`w == v || (w.offset == 0 && w.pages.len == v.pages.len + 1)`)
+on `add_page` — `push` cannot exclude the unchanged disjunct after `?`; (ii) stronger invariant — the gap is between
+`Ok` and the post-state, not in the struct; (iii) a callee spec — `Box::new` is genuinely fallible, so `add_page`'s
+`Result` index cannot be determined without the rewrite.
+
+Remaining 2 errors: `self.pages[idx]` in `push` (text.rs `.0[self.offset] = c` line) and `self.pages[page_index]` in
+`write`: both index through `<Vec as DerefMut>::deref_mut`, whose spec in src/util/vec.rs is
+`fn(self: &mut Self[@v]) -> &mut [T]` (no length), so `IndexMut` sees an existential slice length.
+Confirmed fix (tested, then reverted because src/util/vec.rs is outside this worker's files): change it to
+`fn(self: &mut Self[@v]) -> &mut [T][v.inner.len]` — uid 92 becomes RESULT=SAFE and the only new error is the body of
+`Vec::deref_mut` itself (`self.inner.deref_mut()`, vec.rs:348), because `<InnerVec as DerefMut>::deref_mut`
+(src/util/inner_vec.rs:138) is also `-> &mut [T]`; that one needs `-> &mut [T][v.len]` plus an extern spec for
+`core::slice::from_raw_parts_mut` mirroring the existing `from_raw_parts` one in src/util/flux_specs.rs. A detached
+`flux_rs::specs { impl DerefMut for Vec .. }` in flux_specs.rs is rejected ("multiple specifications").
+No new errors in `TextBuilder` (uid 113: 18 before and after, same sites).
+
+### type 67 stream::Chunk (src/stream.rs:6) — DONE
+
+`Chunk: refined_by(inner: InnerVec)` with `#[field(InnerVec<u8>[inner])]` (a `refined_by(len: int)` with
+`#[field(InnerVec<u8>{v: v.len == len})]` is rejected: "parameter `len` cannot be determined"), specs
+`From<InnerVec<u8>>::from(value: InnerVec<u8>[@v]) -> Chunk[v]`, `Deref::deref(&Self[@c]) -> &[u8][c.inner.len]`
+(so `chunk.len()`, `chunk.is_empty()` and `chunk[i]` agree) and `return_(self: &strg Self, stream: _) ensures self: Self`
+(`core::mem::replace` has no flux-core spec; the post-state is left unconstrained on purpose — a `&strg` extern spec
+for `replace` would also apply to `code.rs`'s `replace(&mut self.functions[i], ..)` through a weak `&mut`, so it was
+not added). RESULT=SAFE; `CircularBuffer` (uid 0) and `InnerVec` (uid 1) unaffected.
+
+### type 94 reader::Reader (src/reader.rs:37) — wave 2: the 3 `fill_buffer` errors are fixed; 1 pre-existing error left
+
+Refinement is now `refined_by(offset: int, chunk_used: int)` with `#[field(usize[chunk_used])] chunk_used` and
+`#[field(Option<Chunk{c: chunk_used <= c.inner.len}>)] next` (the Reader invariant "the consumed prefix of the pending
+chunk never exceeds its length"). `new -> Self[0, 0]`; `fill_buffer`/`peek_u8` ensure `Self{w: w.offset == v.offset}`
+(`chunk_used` free); every other `read_*`/`skip`/`expect_u8`/`strip_bytes`/`with_limit`/`read_vec*` spec is unchanged
+(`ensures self: Self{w: w.offset >= v.offset}` still names the field, `read_i64` stays unconstrained). `fill_buffer`
+keeps `#[flux_rs::opts(solver = "z3")]` (~13s solver time; cvc5 still diverges).
+
+Semantics-preserving local rewrite (last resort, noted): in `fill_buffer`,
+`.map(|inner| inner.into())` -> `.map(Chunk::from)` (the blanket `impl<T, U: From<T>> Into<U> for T` resolves to
+exactly `Chunk::from`). Bisection: with `Chunk` refined, the first half of `fill_buffer` (copy from the pending chunk)
+verifies in <1s, the second half (fetch a new chunk) diverges with BOTH z3 and cvc5 (>5 min) through the `Into` blanket
+impl: flux instantiates `InnerVec<T>`'s invariant with `T = {u8[b] | $k(b)}` (a kvar-refined `u8` coming from the
+generic `into`), so the constraint contains `addr mod <{u8|$k} as Sized>::align_of()` and `size_of()` of a
+kvar-dependent type, which neither solver handles. With `Chunk::from` the whole function verifies in ~20s (z3).
+Tried before the rewrite: (i) spec — the divergence is independent of `fill_buffer`'s own spec; (ii) refinement —
+same with and without the `chunk_used` refinement; (iii) callee spec — an extern spec for the blanket `Into::into`
+cannot transfer a refinement between two different sorts.
+
+Remaining 1 error (pre-existing since the wave-1 merge, not in this worker's list): `read_vec_in`
+(src/reader.rs:559) `out.push(read_element(self)?)` needs `Vec::push`'s `len < cap`. The loop is `for _ in 0..len`
+with `len: u32`; flux-core only defines `Step::step_forward`/`size` for `usize` and `i32`, so for `u32` the counter
+is uninterpreted and no loop invariant relates `out.inner.len` to it. Fix (tested, needs a file outside this
+worker's set): add `#![cfg_attr(flux, feature(step_trait))]` to src/lib.rs and, in src/util/flux_specs.rs,
+`#[flux_rs::extern_spec(core::iter)] #[flux_rs::assoc(fn step_forward(start: int, count: int) -> int { start + count }
+fn size(lo: int, hi: int) -> int { hi - lo })] impl core::iter::Step for u32 {}` (the spec alone fails with
+E0658 "use of unstable library feature `step_trait`").
+Note: `--check-type=94` through the harness only fits in the 30s budget with a warm flux cache (a cold whole-type run
+is ~47s wall, dominated by `fill_buffer`); it is RESULT=ERROR with exactly this one error.
+
+### type 71 util::string::String (src/util/string.rs:11) — DONE (no invariant; `try_from(&str)` fixed)
+
+`String` wraps `Box<[u8], A>`, whose index is `(base, addr, size)` and carries no slice length (see type 26), so a
+`refined_by(len)` cannot be determined from the field and no length refinement is possible without changing `Box`.
+The `Vec::push` error in `TryFrom<&str>` (`Vec::new(value.len())` then one push per byte of `value.as_bytes()`) is fixed
+by extern specs for `str::len(&str[@s]) -> usize[str_len(s)]` and `str::as_bytes(&str[@s]) -> &[u8][str_len(s)]` in
+src/util/flux_specs.rs (flux refines `str` by its contents and provides the `str_len` theory function; flux-core has no
+`str` specs). RESULT=SAFE. `HostName` (33) / `HostValList` (82), which also call `str::len`/`as_bytes`, are unaffected
+(82 keeps the same 3 errors logged above).
