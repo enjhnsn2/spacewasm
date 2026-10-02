@@ -1,0 +1,13 @@
+full sweep (new flux, 11 trusted removed) -> CRASH errors=13 in 29s crates/flux-refineck/src/type_env/place_ty.rs:496:18:
+  (sweep aborted by the panic; per-function checks follow)
+<util::static_vec::StaticVec<T, N> as core::ops::Deref>::deref -> CRASH      18s  crates/flux-middle/src/builtin_assoc_refts.rs:134:76:
+<util::static_vec::StaticVec<T, N> as core::ops::DerefMut>::deref_mut -> CRASH      18s  crates/flux-middle/src/builtin_assoc_refts.rs:134:76:
+host::HostFunction::finish_call                                -> CRASH      18s  crates/flux-infer/src/infer.rs:1093:17:
+host::HostFunction::get_call                                   -> CRASH      18s  crates/flux-infer/src/infer.rs:1093:17:
+host::HostFunction::try_new                                    -> CRASH      18s  crates/flux-infer/src/infer.rs:1093:17:
+host::HostValList::try_new                                     -> SAFE       19s  
+module::Module::read_section                                   -> ERROR      23s  12 errors; first: error[E0999]: assertion might fail: possible out-of-bounds access
+store::<impl engine::Engine>::call_host_fn                     -> CRASH      18s  crates/flux-infer/src/infer.rs:1093:17:
+util::rc::Rc::<T, A>::get_mut_unchecked                        -> CRASH      18s  crates/flux-refineck/src/type_env/place_ty.rs:496:18:
+util::rc::Rc::<T, A>::into_dyn                                 -> CRASH      18s  crates/flux-refineck/src/type_env/place_ty.rs:496:18:
+done

@@ -49,9 +49,9 @@ miri-soft-floats = ["libm/force-soft-floats"]
 
 [dependencies]
 libm = "=0.2.16"
-flux-rs = { git = "https://github.com/flux-rs/flux", rev = "a58a9332d4" }
-flux-core = { git = "https://github.com/flux-rs/flux", rev = "a58a9332d4" }
-flux-alloc = { git = "https://github.com/flux-rs/flux", rev = "a58a9332d4" }
+flux-rs = { git = "https://github.com/flux-rs/flux", rev = "df25acdda5" }
+flux-core = { git = "https://github.com/flux-rs/flux", rev = "df25acdda5" }
+flux-alloc = { git = "https://github.com/flux-rs/flux", rev = "df25acdda5" }
 
 [dev-dependencies]
 serde = { version = "=1.0.228", features = ["derive"] }
