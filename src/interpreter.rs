@@ -318,7 +318,7 @@ impl Interpreter {
         state: &mut Engine,
     ) -> Result<(), InterpreterBreak> {
         if addr.is_sentinel() {
-            return self.return_(addr.arity() as u8, state);
+            return self.return_op(addr.arity() as u8, state);
         }
 
         let depth = addr.depth() as usize;
@@ -440,50 +440,50 @@ impl From<TrapReason> for InterpreterBreak {
 
 macro_rules! instruction {
     ($name:ident, f32 -> f32, $f:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             let $f = state.stack.read_f32(state.sp - 1);
             state.stack.write_f32(state.sp - 1, $($t)*);
             Ok(())
         }
     };
     ($name:ident, i32 -> i32, $i:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             let $i = state.stack.read_u32(state.sp - 1) as i32;
             state.stack.write_u32(state.sp - 1, ($($t)*) as u32);
             Ok(())
         }
     };
     ($name:ident, f64 -> f64, $f:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             let $f = state.stack.read_f64(state.sp - 2);
             state.stack.write_f64(state.sp - 2, $($t)*);
             Ok(())
         }
     };
     ($name:ident, i64 -> i64, $i:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             let $i = state.stack.read_u64(state.sp - 2) as i64;
             state.stack.write_u64(state.sp - 2, ($($t)*) as u64);
             Ok(())
         }
     };
     ($name:ident, f32, f32 -> f32, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 1;
             let $b = state.stack.read_f32(state.sp);
             let $a = state.stack.read_f32(state.sp - 1);
@@ -492,10 +492,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, i32, i32 -> i32, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 1;
             let $b = state.stack.read_u32(state.sp) as i32;
             let $a = state.stack.read_u32(state.sp - 1) as i32;
@@ -504,20 +504,20 @@ macro_rules! instruction {
         }
     };
     ($name:ident, i32 -> bool, $i:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             let $i = state.stack.read_u32(state.sp - 1) as i32;
             state.stack.write_u32(state.sp - 1, if $($t)* { 1 } else { 0 });
             Ok(())
         }
     };
     ($name:ident, i64 -> bool, $i:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 1;
             let $i = state.stack.read_u64(state.sp - 1) as i64;
             state.stack.write_u32(state.sp - 1, if $($t)* { 1 } else { 0 });
@@ -525,10 +525,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, i32, i32 -> bool, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 1;
             let $b = state.stack.read_u32(state.sp) as i32;
             let $a = state.stack.read_u32(state.sp - 1) as i32;
@@ -537,10 +537,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, f32, f32 -> bool, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 1;
             let $b = state.stack.read_f32(state.sp);
             let $a = state.stack.read_f32(state.sp - 1);
@@ -549,10 +549,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, f64, f64 -> f64, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 4) && <Self as BaseVisitor>::has_room(s, 4, 2)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 4)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 2;
             let $b = state.stack.read_f64(state.sp);
             let $a = state.stack.read_f64(state.sp - 2);
@@ -561,10 +561,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, i64, i64 -> i64, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 4) && <Self as BaseVisitor>::has_room(s, 4, 2)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 4)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 2;
             let $b = state.stack.read_u64(state.sp) as i64;
             let $a = state.stack.read_u64(state.sp - 2) as i64;
@@ -573,10 +573,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, i64, i64 -> bool, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 4) && <Self as BaseVisitor>::has_room(s, 4, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 4)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 3;
             let $b = state.stack.read_u64(state.sp + 1) as i64;
             let $a = state.stack.read_u64(state.sp - 1) as i64;
@@ -585,10 +585,10 @@ macro_rules! instruction {
         }
     };
     ($name:ident, f64, f64 -> bool, $a:ident, $b:ident, $( $t:tt )*) => {
-        #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-            requires <Self as BaseVisitor>::has_depth(s, 4) && <Self as BaseVisitor>::has_room(s, 4, 1)
-            ensures state: Self::State)]
-        fn $name(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+        #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+            requires <Interpreter as BaseVisitor>::has_depth(s, 4)
+            ensures state: Engine)]
+        fn $name(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
             state.sp -= 3;
             let $b = state.stack.read_f64(state.sp + 1);
             let $a = state.stack.read_f64(state.sp - 1);
@@ -598,52 +598,27 @@ macro_rules! instruction {
     };
 }
 
-/// Operand-stack preconditions of the interpreter (see `BaseVisitor`'s associated
-/// refinements): an instruction that pops `n` words needs `sp >= fp + n`, and one
-/// that pops `pops` and pushes `pushes` words needs `sp - pops + pushes <= size`.
-#[flux_rs::assoc(
-    fn has_depth(s: Engine, n: int) -> bool { s.sp >= s.fp + n }
-    fn has_room(s: Engine, pops: int, pushes: int) -> bool { s.sp - pops + pushes <= s.size }
-)]
-impl BaseVisitor for Interpreter {
-    type Error = InterpreterBreak;
-    type State = Engine;
-
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
-        ensures state: Self::State)]
-    fn unreachable(&self, _: &mut Self::State) -> Result<(), Self::Error> {
-        Err(InterpreterBreak::Trap(TrapReason::Unreachable))
-    }
-
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
-        ensures state: Self::State)]
-    fn malformed_ir(&self, _: &mut Self::State) -> Result<(), Self::Error> {
-        Err(InterpreterBreak::Trap(TrapReason::MalformedIr))
-    }
-
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
-        ensures state: Self::State)]
-    fn nop(&self, _: &mut Self::State) -> Result<(), Self::Error> {
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_load(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+/// Verified instruction implementations.
+///
+/// Every `*_op` method carries its operand-stack precondition (`has_depth` /
+/// `has_room` / `has_local` / `can_branch`, see [`BaseVisitor`] and [`IrVisitor`])
+/// and is checked by flux against it; the visitor-trait impls below only forward
+/// to these methods.
+impl Interpreter {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_load_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u32(addr)?;
         state.stack.write_u32(state.sp - 1, val);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u64(addr)?;
         state.stack.write_u64(state.sp - 1, val);
@@ -651,20 +626,20 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn f32_load(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn f32_load_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u32(addr)?;
         state.stack.write_u32(state.sp - 1, val);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn f64_load(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn f64_load_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u64(addr)?;
         state.stack.write_u64(state.sp - 1, val);
@@ -672,50 +647,50 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_load8_s(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_load8_s_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u8(addr)? as i8 as i32;
         state.stack.write_u32(state.sp - 1, val as u32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_load8_u(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_load8_u_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u8(addr)? as u32;
         state.stack.write_u32(state.sp - 1, val);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_load16_s(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_load16_s_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u16(addr)? as i16 as i32;
         state.stack.write_u32(state.sp - 1, val as u32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_load16_u(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_load16_u_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u16(addr)? as u32;
         state.stack.write_u32(state.sp - 1, val);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load8_s(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load8_s_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u8(addr)? as i8 as i64 as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -723,10 +698,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load8_u(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load8_u_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u8(addr)? as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -734,10 +709,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load16_s(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load16_s_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u16(addr)? as i16 as i64 as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -745,10 +720,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load16_u(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load16_u_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u16(addr)? as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -756,10 +731,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load32_s(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load32_s_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u32(addr)? as i32 as i64 as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -767,10 +742,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_load32_u(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_load32_u_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let addr = Memory::effective_address(state.stack.read_u32(state.sp - 1), m.offset)?;
         let val = state.memory.load_u32(addr)? as u64;
         state.stack.write_u64(state.sp - 1, val);
@@ -778,10 +753,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn i32_store(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_store_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 2;
         let val = state.stack.read_u32(state.sp + 1);
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -789,10 +764,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 3) && <Self as BaseVisitor>::has_room(s, 3, 0)
-        ensures state: Self::State)]
-    fn i64_store(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 3)
+        ensures state: Engine)]
+    fn i64_store_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 3;
         let val = state.stack.read_u64(state.sp + 1);
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -800,10 +775,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn f32_store(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f32_store_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 2;
         let val = state.stack.read_u32(state.sp + 1);
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -811,10 +786,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 3) && <Self as BaseVisitor>::has_room(s, 3, 0)
-        ensures state: Self::State)]
-    fn f64_store(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 3)
+        ensures state: Engine)]
+    fn f64_store_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 3;
         let val = state.stack.read_u64(state.sp + 1);
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -822,10 +797,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn i32_store8(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_store8_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 2;
         let val = state.stack.read_u32(state.sp + 1) as u8;
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -833,10 +808,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn i32_store16(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_store16_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 2;
         let val = state.stack.read_u32(state.sp + 1) as u16;
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -844,10 +819,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 3) && <Self as BaseVisitor>::has_room(s, 3, 0)
-        ensures state: Self::State)]
-    fn i64_store8(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 3)
+        ensures state: Engine)]
+    fn i64_store8_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 3;
         let val = state.stack.read_u64(state.sp + 1) as u8;
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -855,10 +830,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 3) && <Self as BaseVisitor>::has_room(s, 3, 0)
-        ensures state: Self::State)]
-    fn i64_store16(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 3)
+        ensures state: Engine)]
+    fn i64_store16_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 3;
         let val = state.stack.read_u64(state.sp + 1) as u16;
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -866,10 +841,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 3) && <Self as BaseVisitor>::has_room(s, 3, 0)
-        ensures state: Self::State)]
-    fn i64_store32(&self, m: MemArg, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, m: MemArg, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 3)
+        ensures state: Engine)]
+    fn i64_store32_op(&self, m: MemArg, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 3;
         let val = state.stack.read_u64(state.sp + 1) as u32;
         let addr = Memory::effective_address(state.stack.read_u32(state.sp), m.offset)?;
@@ -877,19 +852,19 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn memory_size(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn memory_size_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.stack.write_u32(state.sp, state.memory.size());
         state.sp += 1;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn memory_grow(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn memory_grow_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let n = state.stack.read_u32(state.sp - 1);
 
         // To grow memory we need to mutate the inside of the Rc<Memory>
@@ -932,83 +907,123 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, n: i32, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn i32_const(&self, n: i32, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, n: i32, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn i32_const_op(&self, n: i32, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.stack.write_u32(state.sp, n as u32);
         state.sp += 1;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, n: i64, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 2)
-        ensures state: Self::State)]
-    fn i64_const(&self, n: i64, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, n: i64, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 2)
+        ensures state: Engine)]
+    fn i64_const_op(&self, n: i64, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.stack.write_u64(state.sp, n as u64);
         state.sp += 2;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, z: f32, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn f32_const(&self, z: f32, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, z: f32, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn f32_const_op(&self, z: f32, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.stack.write_f32(state.sp, z);
         state.sp += 1;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, z: f64, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 2)
-        ensures state: Self::State)]
-    fn f64_const(&self, z: f64, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, z: f64, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 2)
+        ensures state: Engine)]
+    fn f64_const_op(&self, z: f64, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.stack.write_f64(state.sp, z);
         state.sp += 2;
         Ok(())
     }
 
-    instruction!(i32_eqz, i32 -> bool, i, i == 0);
-    instruction!(i32_eq, i32, i32 -> bool, a, b, a == b);
-    instruction!(i32_ne, i32, i32 -> bool, a, b, a != b);
-    instruction!(i32_lt_s, i32, i32 -> bool, a, b, a < b);
-    instruction!(i32_lt_u, i32, i32 -> bool, a, b, (a as u32) < (b as u32));
-    instruction!(i32_gt_s, i32, i32 -> bool, a, b, a > b);
-    instruction!(i32_gt_u, i32, i32 -> bool, a, b, (a as u32) > (b as u32));
-    instruction!(i32_le_s, i32, i32 -> bool, a, b, a <= b);
-    instruction!(i32_le_u, i32, i32 -> bool, a, b, (a as u32) <= (b as u32));
-    instruction!(i32_ge_s, i32, i32 -> bool, a, b, a >= b);
-    instruction!(i32_ge_u, i32, i32 -> bool, a, b, (a as u32) >= (b as u32));
-    instruction!(i64_eqz, i64 -> bool, i, i == 0);
-    instruction!(i64_eq, i64, i64 -> bool, a, b, a == b);
-    instruction!(i64_ne, i64, i64 -> bool, a, b, a != b);
-    instruction!(i64_lt_s, i64, i64 -> bool, a, b, a < b);
-    instruction!(i64_lt_u, i64, i64 -> bool, a, b, (a as u64) < (b as u64));
-    instruction!(i64_gt_s, i64, i64 -> bool, a, b, a > b);
-    instruction!(i64_gt_u, i64, i64 -> bool, a, b, (a as u64) > (b as u64));
-    instruction!(i64_le_s, i64, i64 -> bool, a, b, a <= b);
-    instruction!(i64_le_u, i64, i64 -> bool, a, b, (a as u64) <= (b as u64));
-    instruction!(i64_ge_s, i64, i64 -> bool, a, b, a >= b);
-    instruction!(i64_ge_u, i64, i64 -> bool, a, b, (a as u64) >= (b as u64));
-    instruction!(f32_eq, f32, f32 -> bool, a, b, a == b);
-    instruction!(f32_ne, f32, f32 -> bool, a, b, a != b);
-    instruction!(f32_lt, f32, f32 -> bool, a, b, a < b);
-    instruction!(f32_gt, f32, f32 -> bool, a, b, a > b);
-    instruction!(f32_le, f32, f32 -> bool, a, b, a <= b);
-    instruction!(f32_ge, f32, f32 -> bool, a, b, a >= b);
-    instruction!(f64_eq, f64, f64 -> bool, a, b, a == b);
-    instruction!(f64_ne, f64, f64 -> bool, a, b, a != b);
-    instruction!(f64_lt, f64, f64 -> bool, a, b, a < b);
-    instruction!(f64_gt, f64, f64 -> bool, a, b, a > b);
-    instruction!(f64_le, f64, f64 -> bool, a, b, a <= b);
-    instruction!(f64_ge, f64, f64 -> bool, a, b, a >= b);
-    instruction!(i32_clz, i32 -> i32, i, i.leading_zeros() as i32);
-    instruction!(i32_ctz, i32 -> i32, i, i.trailing_zeros() as i32);
-    instruction!(i32_popcnt, i32 -> i32, i, i.count_ones() as i32);
-    instruction!(i32_add, i32, i32 -> i32, a, b, a.wrapping_add(b));
-    instruction!(i32_sub, i32, i32 -> i32, a, b, a.wrapping_sub(b));
-    instruction!(i32_mul, i32, i32 -> i32, a, b, a.wrapping_mul(b));
-    instruction!(i32_div_s, i32, i32 -> i32, a, b, {
+    instruction!(i32_eqz_op, i32 -> bool, i, i == 0);
+
+    instruction!(i32_eq_op, i32, i32 -> bool, a, b, a == b);
+
+    instruction!(i32_ne_op, i32, i32 -> bool, a, b, a != b);
+
+    instruction!(i32_lt_s_op, i32, i32 -> bool, a, b, a < b);
+
+    instruction!(i32_lt_u_op, i32, i32 -> bool, a, b, (a as u32) < (b as u32));
+
+    instruction!(i32_gt_s_op, i32, i32 -> bool, a, b, a > b);
+
+    instruction!(i32_gt_u_op, i32, i32 -> bool, a, b, (a as u32) > (b as u32));
+
+    instruction!(i32_le_s_op, i32, i32 -> bool, a, b, a <= b);
+
+    instruction!(i32_le_u_op, i32, i32 -> bool, a, b, (a as u32) <= (b as u32));
+
+    instruction!(i32_ge_s_op, i32, i32 -> bool, a, b, a >= b);
+
+    instruction!(i32_ge_u_op, i32, i32 -> bool, a, b, (a as u32) >= (b as u32));
+
+    instruction!(i64_eqz_op, i64 -> bool, i, i == 0);
+
+    instruction!(i64_eq_op, i64, i64 -> bool, a, b, a == b);
+
+    instruction!(i64_ne_op, i64, i64 -> bool, a, b, a != b);
+
+    instruction!(i64_lt_s_op, i64, i64 -> bool, a, b, a < b);
+
+    instruction!(i64_lt_u_op, i64, i64 -> bool, a, b, (a as u64) < (b as u64));
+
+    instruction!(i64_gt_s_op, i64, i64 -> bool, a, b, a > b);
+
+    instruction!(i64_gt_u_op, i64, i64 -> bool, a, b, (a as u64) > (b as u64));
+
+    instruction!(i64_le_s_op, i64, i64 -> bool, a, b, a <= b);
+
+    instruction!(i64_le_u_op, i64, i64 -> bool, a, b, (a as u64) <= (b as u64));
+
+    instruction!(i64_ge_s_op, i64, i64 -> bool, a, b, a >= b);
+
+    instruction!(i64_ge_u_op, i64, i64 -> bool, a, b, (a as u64) >= (b as u64));
+
+    instruction!(f32_eq_op, f32, f32 -> bool, a, b, a == b);
+
+    instruction!(f32_ne_op, f32, f32 -> bool, a, b, a != b);
+
+    instruction!(f32_lt_op, f32, f32 -> bool, a, b, a < b);
+
+    instruction!(f32_gt_op, f32, f32 -> bool, a, b, a > b);
+
+    instruction!(f32_le_op, f32, f32 -> bool, a, b, a <= b);
+
+    instruction!(f32_ge_op, f32, f32 -> bool, a, b, a >= b);
+
+    instruction!(f64_eq_op, f64, f64 -> bool, a, b, a == b);
+
+    instruction!(f64_ne_op, f64, f64 -> bool, a, b, a != b);
+
+    instruction!(f64_lt_op, f64, f64 -> bool, a, b, a < b);
+
+    instruction!(f64_gt_op, f64, f64 -> bool, a, b, a > b);
+
+    instruction!(f64_le_op, f64, f64 -> bool, a, b, a <= b);
+
+    instruction!(f64_ge_op, f64, f64 -> bool, a, b, a >= b);
+
+    instruction!(i32_clz_op, i32 -> i32, i, i.leading_zeros() as i32);
+
+    instruction!(i32_ctz_op, i32 -> i32, i, i.trailing_zeros() as i32);
+
+    instruction!(i32_popcnt_op, i32 -> i32, i, i.count_ones() as i32);
+
+    instruction!(i32_add_op, i32, i32 -> i32, a, b, a.wrapping_add(b));
+
+    instruction!(i32_sub_op, i32, i32 -> i32, a, b, a.wrapping_sub(b));
+
+    instruction!(i32_mul_op, i32, i32 -> i32, a, b, a.wrapping_mul(b));
+
+    instruction!(i32_div_s_op, i32, i32 -> i32, a, b, {
         if b == 0 {
             return Err(TrapReason::DivideByZero.into());
         }
@@ -1018,42 +1033,60 @@ impl BaseVisitor for Interpreter {
 
         a / b
     });
-    instruction!(i32_div_u, i32, i32 -> i32, a, b, {
+
+    instruction!(i32_div_u_op, i32, i32 -> i32, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
            ((a as u32) / (b as u32)) as i32
         }
     });
-    instruction!(i32_rem_s, i32, i32 -> i32, a, b, {
+
+    instruction!(i32_rem_s_op, i32, i32 -> i32, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
             a.wrapping_rem(b)
         }
     });
-    instruction!(i32_rem_u, i32, i32 -> i32, a, b, {
+
+    instruction!(i32_rem_u_op, i32, i32 -> i32, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
             (a as u32).wrapping_rem(b as u32) as i32
         }
     });
-    instruction!(i32_and, i32, i32 -> i32, a, b, a & b);
-    instruction!(i32_or, i32, i32 -> i32, a, b, a | b);
-    instruction!(i32_xor, i32, i32 -> i32, a, b, a ^ b);
-    instruction!(i32_shl, i32, i32 -> i32, a, b, a.wrapping_shl(b as u32));
-    instruction!(i32_shr_s, i32, i32 -> i32, a, b, a.wrapping_shr(b as u32));
-    instruction!(i32_shr_u, i32, i32 -> i32, a, b, (a as u32).wrapping_shr(b as u32) as i32);
-    instruction!(i32_rotl, i32, i32 -> i32, a, b, a.rotate_left(b as u32));
-    instruction!(i32_rotr, i32, i32 -> i32, a, b, a.rotate_right(b as u32));
-    instruction!(i64_clz, i64 -> i64, i, i.leading_zeros() as i64);
-    instruction!(i64_ctz, i64 -> i64, i, i.trailing_zeros() as i64);
-    instruction!(i64_popcnt, i64 -> i64, i, i.count_ones() as i64);
-    instruction!(i64_add, i64, i64 -> i64, a, b, a.wrapping_add(b));
-    instruction!(i64_sub, i64, i64 -> i64, a, b, a.wrapping_sub(b));
-    instruction!(i64_mul, i64, i64 -> i64, a, b, a.wrapping_mul(b));
-    instruction!(i64_div_s, i64, i64 -> i64, a, b, {
+
+    instruction!(i32_and_op, i32, i32 -> i32, a, b, a & b);
+
+    instruction!(i32_or_op, i32, i32 -> i32, a, b, a | b);
+
+    instruction!(i32_xor_op, i32, i32 -> i32, a, b, a ^ b);
+
+    instruction!(i32_shl_op, i32, i32 -> i32, a, b, a.wrapping_shl(b as u32));
+
+    instruction!(i32_shr_s_op, i32, i32 -> i32, a, b, a.wrapping_shr(b as u32));
+
+    instruction!(i32_shr_u_op, i32, i32 -> i32, a, b, (a as u32).wrapping_shr(b as u32) as i32);
+
+    instruction!(i32_rotl_op, i32, i32 -> i32, a, b, a.rotate_left(b as u32));
+
+    instruction!(i32_rotr_op, i32, i32 -> i32, a, b, a.rotate_right(b as u32));
+
+    instruction!(i64_clz_op, i64 -> i64, i, i.leading_zeros() as i64);
+
+    instruction!(i64_ctz_op, i64 -> i64, i, i.trailing_zeros() as i64);
+
+    instruction!(i64_popcnt_op, i64 -> i64, i, i.count_ones() as i64);
+
+    instruction!(i64_add_op, i64, i64 -> i64, a, b, a.wrapping_add(b));
+
+    instruction!(i64_sub_op, i64, i64 -> i64, a, b, a.wrapping_sub(b));
+
+    instruction!(i64_mul_op, i64, i64 -> i64, a, b, a.wrapping_mul(b));
+
+    instruction!(i64_div_s_op, i64, i64 -> i64, a, b, {
         if b == 0 {
             return Err(TrapReason::DivideByZero.into());
         }
@@ -1063,71 +1096,94 @@ impl BaseVisitor for Interpreter {
 
         a / b
     });
-    instruction!(i64_div_u, i64, i64 -> i64, a, b, {
+
+    instruction!(i64_div_u_op, i64, i64 -> i64, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
             (a as u64).wrapping_div(b as u64) as i64
         }
     });
-    instruction!(i64_rem_s, i64, i64 -> i64, a, b, {
+
+    instruction!(i64_rem_s_op, i64, i64 -> i64, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
             a.wrapping_rem(b)
         }
     });
-    instruction!(i64_rem_u, i64, i64 -> i64, a, b, {
+
+    instruction!(i64_rem_u_op, i64, i64 -> i64, a, b, {
         if b == 0 {
             return Err(InterpreterBreak::Trap(TrapReason::DivideByZero))
         } else {
             (a as u64).wrapping_rem(b as u64) as i64
         }
     });
-    instruction!(i64_and, i64, i64 -> i64, a, b, a & b);
-    instruction!(i64_or, i64, i64 -> i64, a, b, a | b);
-    instruction!(i64_xor, i64, i64 -> i64, a, b, a ^ b);
-    instruction!(i64_shl, i64, i64 -> i64, a, b, a.wrapping_shl(b as u32));
-    instruction!(i64_shr_s, i64, i64 -> i64, a, b, a.wrapping_shr(b as u32));
-    instruction!(i64_shr_u, i64, i64 -> i64, a, b, (a as u64).wrapping_shr(b as u32) as i64);
-    instruction!(i64_rotl, i64, i64 -> i64, a, b, a.rotate_left(b as u32));
-    instruction!(i64_rotr, i64, i64 -> i64, a, b, a.rotate_right(b as u32));
-    instruction!(f32_abs, f32 -> f32, f, libm::fabsf(f));
-    instruction!(f32_neg, f32 -> f32, f, -f);
-    instruction!(f32_ceil, f32 -> f32, f, {
+
+    instruction!(i64_and_op, i64, i64 -> i64, a, b, a & b);
+
+    instruction!(i64_or_op, i64, i64 -> i64, a, b, a | b);
+
+    instruction!(i64_xor_op, i64, i64 -> i64, a, b, a ^ b);
+
+    instruction!(i64_shl_op, i64, i64 -> i64, a, b, a.wrapping_shl(b as u32));
+
+    instruction!(i64_shr_s_op, i64, i64 -> i64, a, b, a.wrapping_shr(b as u32));
+
+    instruction!(i64_shr_u_op, i64, i64 -> i64, a, b, (a as u64).wrapping_shr(b as u32) as i64);
+
+    instruction!(i64_rotl_op, i64, i64 -> i64, a, b, a.rotate_left(b as u32));
+
+    instruction!(i64_rotr_op, i64, i64 -> i64, a, b, a.rotate_right(b as u32));
+
+    instruction!(f32_abs_op, f32 -> f32, f, libm::fabsf(f));
+
+    instruction!(f32_neg_op, f32 -> f32, f, -f);
+
+    instruction!(f32_ceil_op, f32 -> f32, f, {
         if f.is_nan() {
             f32::NAN
         } else {
             libm::ceilf(f)
         }
     });
-    instruction!(f32_floor, f32 -> f32, f, {
+
+    instruction!(f32_floor_op, f32 -> f32, f, {
         if f.is_nan() {
             f32::NAN
         } else {
             libm::floorf(f)
         }
     });
-    instruction!(f32_trunc, f32 -> f32, f, {
+
+    instruction!(f32_trunc_op, f32 -> f32, f, {
         if f.is_nan() {
             f32::NAN
         } else {
             libm::truncf(f)
         }
     });
-    instruction!(f32_nearest, f32 -> f32, f, {
+
+    instruction!(f32_nearest_op, f32 -> f32, f, {
         if f.is_nan() {
             f32::NAN
         } else {
             libm::rintf(f)
         }
     });
-    instruction!(f32_sqrt, f32 -> f32, f, libm::sqrtf(f));
-    instruction!(f32_add, f32, f32 -> f32, a, b, a + b);
-    instruction!(f32_sub, f32, f32 -> f32, a, b, a - b);
-    instruction!(f32_mul, f32, f32 -> f32, a, b, a * b);
-    instruction!(f32_div, f32, f32 -> f32, a, b, a / b);
-    instruction!(f32_min, f32, f32 -> f32, a, b, {
+
+    instruction!(f32_sqrt_op, f32 -> f32, f, libm::sqrtf(f));
+
+    instruction!(f32_add_op, f32, f32 -> f32, a, b, a + b);
+
+    instruction!(f32_sub_op, f32, f32 -> f32, a, b, a - b);
+
+    instruction!(f32_mul_op, f32, f32 -> f32, a, b, a * b);
+
+    instruction!(f32_div_op, f32, f32 -> f32, a, b, a / b);
+
+    instruction!(f32_min_op, f32, f32 -> f32, a, b, {
         if a.is_nan() || b.is_nan() {
             f32::NAN
         } else if a == 0.0 && b == 0.0 {
@@ -1140,7 +1196,8 @@ impl BaseVisitor for Interpreter {
             a.min(b)
         }
     });
-    instruction!(f32_max, f32, f32 -> f32, a, b, {
+
+    instruction!(f32_max_op, f32, f32 -> f32, a, b, {
         if a.is_nan() || b.is_nan() {
             f32::NAN
         } else if a == 0.0 && b == 0.0 {
@@ -1153,43 +1210,56 @@ impl BaseVisitor for Interpreter {
             a.max(b)
         }
     });
-    instruction!(f32_copysign, f32, f32 -> f32, a, b, libm::copysignf(a, b));
-    instruction!(f64_abs, f64 -> f64, f, libm::fabs(f));
-    instruction!(f64_neg, f64 -> f64, f, -f);
-    instruction!(f64_ceil, f64 -> f64, f, {
+
+    instruction!(f32_copysign_op, f32, f32 -> f32, a, b, libm::copysignf(a, b));
+
+    instruction!(f64_abs_op, f64 -> f64, f, libm::fabs(f));
+
+    instruction!(f64_neg_op, f64 -> f64, f, -f);
+
+    instruction!(f64_ceil_op, f64 -> f64, f, {
         if f.is_nan() {
             f64::NAN
         } else {
             libm::ceil(f)
         }
     });
-    instruction!(f64_floor, f64 -> f64, f, {
+
+    instruction!(f64_floor_op, f64 -> f64, f, {
         if f.is_nan() {
             f64::NAN
         } else {
             libm::floor(f)
         }
     });
-    instruction!(f64_trunc, f64 -> f64, f, {
+
+    instruction!(f64_trunc_op, f64 -> f64, f, {
         if f.is_nan() {
             f64::NAN
         } else {
             libm::trunc(f)
         }
     });
-    instruction!(f64_nearest, f64 -> f64, f, {
+
+    instruction!(f64_nearest_op, f64 -> f64, f, {
         if f.is_nan() {
             f64::NAN
         } else {
             libm::rint(f)
         }
     });
-    instruction!(f64_sqrt, f64 -> f64, f, libm::sqrt(f));
-    instruction!(f64_add, f64, f64 -> f64, a, b, a + b);
-    instruction!(f64_sub, f64, f64 -> f64, a, b, a - b);
-    instruction!(f64_mul, f64, f64 -> f64, a, b, a * b);
-    instruction!(f64_div, f64, f64 -> f64, a, b, a / b);
-    instruction!(f64_min, f64, f64 -> f64, a, b, {
+
+    instruction!(f64_sqrt_op, f64 -> f64, f, libm::sqrt(f));
+
+    instruction!(f64_add_op, f64, f64 -> f64, a, b, a + b);
+
+    instruction!(f64_sub_op, f64, f64 -> f64, a, b, a - b);
+
+    instruction!(f64_mul_op, f64, f64 -> f64, a, b, a * b);
+
+    instruction!(f64_div_op, f64, f64 -> f64, a, b, a / b);
+
+    instruction!(f64_min_op, f64, f64 -> f64, a, b, {
         if a.is_nan() || b.is_nan() {
             f64::NAN
         } else if a == 0.0 && b == 0.0 {
@@ -1202,7 +1272,8 @@ impl BaseVisitor for Interpreter {
             a.min(b)
         }
     });
-    instruction!(f64_max, f64, f64 -> f64, a, b, {
+
+    instruction!(f64_max_op, f64, f64 -> f64, a, b, {
         if a.is_nan() || b.is_nan() {
             f64::NAN
         } else if a == 0.0 && b == 0.0 {
@@ -1215,12 +1286,12 @@ impl BaseVisitor for Interpreter {
             a.max(b)
         }
     });
-    instruction!(f64_copysign, f64, f64 -> f64, a, b, libm::copysign(a, b));
+    instruction!(f64_copysign_op, f64, f64 -> f64, a, b, libm::copysign(a, b));
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn i32_wrap_i64(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_wrap_i64_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         // i64 stored in host-endianness, read the entire 64-bit word and truncate it
         let v = state.stack.read_u64(state.sp - 2);
         state.stack.write_u32(state.sp - 2, v as u32);
@@ -1228,10 +1299,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_trunc_f32_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_trunc_f32_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f32(state.sp - 1);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1247,10 +1318,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn i32_trunc_f32_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn i32_trunc_f32_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f32(state.sp - 1);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1266,10 +1337,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn i32_trunc_f64_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_trunc_f64_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let f = state.stack.read_f64(state.sp - 1);
         if f.is_infinite() {
@@ -1285,10 +1356,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn i32_trunc_f64_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i32_trunc_f64_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let f = state.stack.read_f64(state.sp - 1);
         if f.is_infinite() {
@@ -1305,10 +1376,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_extend_i32_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_extend_i32_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let i = state.stack.read_u32(state.sp - 1) as i32;
         let extended = i as i64 as u64;
         state.stack.write_u64(state.sp - 1, extended);
@@ -1316,10 +1387,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_extend_i32_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_extend_i32_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         // Zero-extend the i32 to an i64 and write it back to the stack
         let i = state.stack.read_u32(state.sp - 1) as u64;
         state.stack.write_u64(state.sp - 1, i);
@@ -1327,10 +1398,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_trunc_f32_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_trunc_f32_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f32(state.sp - 1);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1348,10 +1419,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn i64_trunc_f32_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn i64_trunc_f32_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f32(state.sp - 1);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1369,10 +1440,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-        ensures state: Self::State)]
-    fn i64_trunc_f64_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i64_trunc_f64_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f64(state.sp - 2);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1389,10 +1460,10 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-        ensures state: Self::State)]
-    fn i64_trunc_f64_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn i64_trunc_f64_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f64(state.sp - 2);
         if f.is_infinite() {
             return Err(TrapReason::UnrepresentableResult.into());
@@ -1409,116 +1480,106 @@ impl BaseVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn f32_convert_i32_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn f32_convert_i32_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let i = state.stack.read_u32(state.sp - 1) as i32;
         state.stack.write_f32(state.sp - 1, i as f32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 1)
-        ensures state: Self::State)]
-    fn f32_convert_i32_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn f32_convert_i32_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let u = state.stack.read_u32(state.sp - 1);
         state.stack.write_f32(state.sp - 1, u as f32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn f32_convert_i64_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f32_convert_i64_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let i = state.stack.read_u64(state.sp - 1) as i64;
         state.stack.write_f32(state.sp - 1, i as f32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn f32_convert_i64_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f32_convert_i64_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let u = state.stack.read_u64(state.sp - 1);
         state.stack.write_f32(state.sp - 1, u as f32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 1)
-        ensures state: Self::State)]
-    fn f32_demote_f64(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f32_demote_f64_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let f = state.stack.read_f64(state.sp - 1);
         state.stack.write_f32(state.sp - 1, f as f32);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn f64_convert_i32_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn f64_convert_i32_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let i = state.stack.read_u32(state.sp - 1) as i32;
         state.stack.write_f64(state.sp - 1, i as f64);
         state.sp += 1;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn f64_convert_i32_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn f64_convert_i32_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let u = state.stack.read_u32(state.sp - 1);
         state.stack.write_f64(state.sp - 1, u as f64);
         state.sp += 1;
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-        ensures state: Self::State)]
-    fn f64_convert_i64_s(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f64_convert_i64_s_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let i = state.stack.read_u64(state.sp - 2) as i64;
         state.stack.write_f64(state.sp - 2, i as f64);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 2)
-        ensures state: Self::State)]
-    fn f64_convert_i64_u(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn f64_convert_i64_u_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let u = state.stack.read_u64(state.sp - 2);
         state.stack.write_f64(state.sp - 2, u as f64);
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 2)
-        ensures state: Self::State)]
-    fn f64_promote_f32(&self, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as BaseVisitor>::has_room(s, 1, 2)
+        ensures state: Engine)]
+    fn f64_promote_f32_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let f = state.stack.read_f32(state.sp - 1);
         state.stack.write_f64(state.sp - 1, f as f64);
         state.sp += 1;
         Ok(())
     }
-}
 
-/// `has_local`: the local lives at `fp + off` inside the current frame (one word is
-/// stated; the two-word `i64`/`f64` case needs a `ValType` refinement).
-/// `can_branch`: placeholders until `LabelTarget` carries `depth`/`arity` indices.
-#[flux_rs::assoc(
-    fn has_local(s: Engine, l: LocalVariable) -> bool { s.fp <= 2147483647 && 0 <= s.fp + l.off && s.fp + l.off + 1 <= s.sp }
-    fn can_branch(s: Engine, l: LabelTarget) -> bool { true }
-    fn can_branch_after_pop(s: Engine, l: LabelTarget) -> bool { true }
-)]
-impl IrVisitor for Interpreter {
-    #[flux_rs::spec(fn(&Self, ty: ValType, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn drop(&self, ty: ValType, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, ty: ValType, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn drop_op(&self, ty: ValType, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= match ty {
             ValType::I32 | ValType::F32 => 1,
             ValType::I64 | ValType::F64 => 2,
@@ -1526,10 +1587,10 @@ impl IrVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, ty: ValType, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 5) && <Self as BaseVisitor>::has_room(s, 5, 2)
-        ensures state: Self::State)]
-    fn select(&self, ty: ValType, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, ty: ValType, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 5)
+        ensures state: Engine)]
+    fn select_op(&self, ty: ValType, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let c = state.stack.read_u32(state.sp);
 
@@ -1561,10 +1622,10 @@ impl IrVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, false_address: LabelTarget, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 0)
-        ensures state: Self::State)]
-    fn if_(&self, false_address: LabelTarget, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, false_address: LabelTarget, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn if_op(&self, false_address: LabelTarget, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let v = state.stack.read_u32(state.sp);
         if v == 0 {
@@ -1577,17 +1638,17 @@ impl IrVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, addr: LabelTarget, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as IrVisitor>::can_branch(s, addr)
-        ensures state: Self::State)]
-    fn br(&self, addr: LabelTarget, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, addr: LabelTarget, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as IrVisitor>::can_branch(s, addr)
+        ensures state: Engine)]
+    fn br_op(&self, addr: LabelTarget, state: &mut Engine) -> Result<(), InterpreterBreak> {
         self.br_impl(JumpOffset::offset(1), addr, state)
     }
 
-    #[flux_rs::spec(fn(&Self, true_address: LabelTarget, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as IrVisitor>::can_branch_after_pop(s, true_address)
-        ensures state: Self::State)]
-    fn br_if(&self, true_address: LabelTarget, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, true_address: LabelTarget, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as IrVisitor>::can_branch_after_pop(s, true_address)
+        ensures state: Engine)]
+    fn br_if_op(&self, true_address: LabelTarget, state: &mut Engine) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let v = state.stack.read_u32(state.sp);
         if v != 0 {
@@ -1597,12 +1658,15 @@ impl IrVisitor for Interpreter {
         Ok(())
     }
 
-    fn br_table(
+    #[flux_rs::spec(fn(&Self, n: u32, cases: _, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn br_table_op(
         &self,
         n: u32,
         cases: impl FnOnce(u32) -> LabelTarget,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
         state.sp -= 1;
         let v = state.stack.read_u32(state.sp);
         let label = cases(v);
@@ -1623,10 +1687,10 @@ impl IrVisitor for Interpreter {
         Ok(())
     }
 
-    #[flux_rs::spec(fn(&Self, return_size: u8, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, return_size + 2)
-        ensures state: Self::State)]
-    fn return_(&self, return_size: u8, state: &mut Self::State) -> Result<(), Self::Error> {
+    #[flux_rs::spec(fn(&Self, return_size: u8, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, return_size + 2)
+        ensures state: Engine)]
+    fn return_op(&self, return_size: u8, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let return_size = return_size as usize;
 
         let fp = state.fp as usize;
@@ -1676,15 +1740,531 @@ impl IrVisitor for Interpreter {
         }
     }
 
+    #[flux_rs::spec(fn(&Self, x: TypeIdx, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        ensures state: Engine)]
+    fn call_indirect_op(&self, x: TypeIdx, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        // Pop the table pointer off the stack
+        state.sp -= 1;
+        let i = state.stack.read_u32(state.sp) as usize;
+        let m = &state.store.modules()[state.module.0 as usize];
+        let f_expected = &m.types[x.0 as usize];
+
+        // Look up the internal or host function
+        match state.table.get(i) {
+            None => Err(InterpreterBreak::Trap(TrapReason::InvalidTableIndex)),
+            Some(TableElement::Func { module, index }) => {
+                let m = &state.store.modules()[module.0 as usize];
+                let f = &m.functions[*index as usize];
+
+                // Validate the function is the proper type
+                // This asserts that it's safe to call the function with the current stack
+                let f_actual = &m.types[f.ty.0 as usize];
+
+                if f_actual.params != f_expected.params || f_actual.returns != f_expected.returns {
+                    return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
+                }
+
+                // Call the function
+                state.call_impl_enter_module(WasmRef {
+                    module: *module,
+                    index: *index,
+                })
+            }
+            Some(TableElement::Host { module, index }) => {
+                // Make sure the type matches our expectations (runtime validation)
+                let m = &state.store.host_modules()[module.0 as usize];
+                let f = &m.functions[*index as usize];
+
+                let return_vals: &[ValType] = match f.returns().0 {
+                    Some(v) => &[v],
+                    None => &[],
+                };
+
+                if f.params() != f_expected.params[..] || return_vals != &f_expected.returns[..] {
+                    return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
+                }
+
+                self.call_host(*module, *index, state)
+            }
+            Some(TableElement::Uninitialized) => Err(InterpreterBreak::Trap(
+                TrapReason::UninitializedTableElement,
+            )),
+        }
+    }
+
+    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1) && <Interpreter as IrVisitor>::has_local(s, l)
+        ensures state: Engine)]
+    fn local_get_op(&self, l: LocalVariable, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        let local_addr = l.addr(state.fp);
+        match l.ty {
+            ValType::I32 | ValType::F32 => {
+                // Read/write a single word
+                let val = state.stack.read_u32(local_addr);
+                state.stack.write_u32(state.sp, val);
+                state.sp += 1;
+            }
+            ValType::I64 | ValType::F64 => {
+                // Read/write two words
+                let val = state.stack.read_u64(local_addr);
+                state.stack.write_u64(state.sp, val);
+                state.sp += 2;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2) && <Interpreter as IrVisitor>::has_local(s, l)
+        ensures state: Engine)]
+    fn local_set_op(&self, l: LocalVariable, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        let local_addr = l.addr(state.fp);
+        match l.ty {
+            ValType::I32 | ValType::F32 => {
+                // Read/write a single word
+                state.sp -= 1;
+                let val = state.stack.read_u32(state.sp);
+                state.stack.write_u32(local_addr, val);
+            }
+            ValType::I64 | ValType::F64 => {
+                // Read/write two words
+                state.sp -= 2;
+                let val = state.stack.read_u64(state.sp);
+                state.stack.write_u64(local_addr, val);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2) && <Interpreter as IrVisitor>::has_local(s, l)
+        ensures state: Engine)]
+    fn local_tee_op(&self, l: LocalVariable, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        let local_addr = l.addr(state.fp);
+        match l.ty {
+            ValType::I32 | ValType::F32 => {
+                // Read/write a single word
+                let val = state.stack.read_u32(state.sp - 1);
+                state.stack.write_u32(local_addr, val);
+            }
+            ValType::I64 | ValType::F64 => {
+                // Read/write two words
+                let val = state.stack.read_u64(state.sp - 2);
+                state.stack.write_u64(local_addr, val);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn global_get_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        let m = &state.store.modules()[state.module.0 as usize];
+        let g = &m.globals[idx as usize];
+
+        match g.type_.ty {
+            ValType::I32 | ValType::F32 => {
+                let val = g.value.read_32();
+                state.stack.write_u32(state.sp, val);
+                state.sp += 1;
+            }
+            ValType::I64 | ValType::F64 => {
+                let val = g.value.read_64();
+                state.stack.write_u64(state.sp, val);
+                state.sp += 2;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn global_get_host_op(
+        &self,
+        module: HostModuleRef,
+        index: u16,
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
+        let m = &state.store.host_modules()[module.0 as usize];
+        match m.globals[index as usize]
+            .value
+            .read()
+            .or(Err(InterpreterBreak::Trap(TrapReason::GlobalGetFailed)))?
+        {
+            Value::I32(i) => {
+                state.stack.write_u32(state.sp, i as u32);
+                state.sp += 1;
+            }
+            Value::I64(i) => {
+                state.stack.write_u64(state.sp, i as u64);
+                state.sp += 2;
+            }
+            Value::F32(f) => {
+                state.stack.write_f32(state.sp, f);
+                state.sp += 1;
+            }
+            Value::F64(f) => {
+                state.stack.write_f64(state.sp, f);
+                state.sp += 2;
+            }
+        };
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn global_set_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
+        let m = &mut state.store.modules_mut()[state.module.0 as usize];
+        let g = &mut m.globals[idx as usize];
+        match g.type_.ty {
+            ValType::I32 | ValType::F32 => {
+                state.sp -= 1;
+                let val = state.stack.read_u32(state.sp);
+                g.value.write_32(val);
+            }
+            ValType::I64 | ValType::F64 => {
+                state.sp -= 2;
+                let val = state.stack.read_u64(state.sp);
+                g.value.write_64(val);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn global_set_host_op(
+        &self,
+        module: HostModuleRef,
+        index: u16,
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
+        let m = &state.store.host_modules()[module.0 as usize];
+        let g = &m.globals[index as usize];
+        match g.value.ty() {
+            ValType::I32 => {
+                state.sp -= 1;
+                let val = state.stack.read_u32(state.sp) as i32;
+                g.value.write(Value::I32(val))
+            }
+            ValType::I64 => {
+                state.sp -= 2;
+                let val = state.stack.read_u64(state.sp) as i64;
+                g.value.write(Value::I64(val))
+            }
+            ValType::F32 => {
+                state.sp -= 1;
+                let f = state.stack.read_f32(state.sp);
+                g.value.write(Value::F32(f))
+            }
+            ValType::F64 => {
+                state.sp -= 2;
+                let f = state.stack.read_f64(state.sp);
+                g.value.write(Value::F64(f))
+            }
+        }
+        .or(Err(InterpreterBreak::Trap(TrapReason::GlobalSetFailed)))
+    }
+
+    #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        ensures state: Engine)]
+    fn global_get_extern_op(
+        &self,
+        module: ModuleRef,
+        index: u16,
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
+        let current = state.module;
+        state.module = module;
+        let res = self.global_get_op(index, state);
+        state.module = current;
+        res
+    }
+
+    #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        ensures state: Engine)]
+    fn global_set_extern_op(
+        &self,
+        module: ModuleRef,
+        index: u16,
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
+        let current = state.module;
+        state.module = module;
+        let res = self.global_set_op(index, state);
+        state.module = current;
+        res
+    }
+}
+
+/// Forwarders from the visitor traits to the verified `*_op` implementations above.
+/// A forwarder's spec has no `requires` (a trait impl cannot strengthen the trait's
+/// signature), so flux reports the operand-stack precondition of each `*_op` call
+/// as unprovable here: that is the point where the Wasm validator's guarantee is
+/// assumed (see log/ABORT.md, "type 21").
+macro_rules! forward {
+    ($($name:ident($($p:ident: $t:ty),*) => $op:ident;)*) => { $(
+        #[flux_rs::spec(fn(&Self, $($p: _,)* state: &strg Self::State[@s]) -> Result<(), Self::Error>
+            ensures state: Self::State)]
+        fn $name(&self, $($p: $t,)* state: &mut Self::State) -> Result<(), Self::Error> {
+            self.$op($($p,)* state)
+        }
+    )* };
+}
+
+/// Operand-stack preconditions of the interpreter (see `BaseVisitor`'s associated
+/// refinements): an instruction that pops `n` words needs `sp >= fp + n`, and one
+/// that pops `pops` and pushes `pushes` words needs `sp - pops + pushes <= size`.
+#[flux_rs::assoc(
+    fn has_depth(s: Engine, n: int) -> bool { s.sp >= s.fp + n }
+    fn has_room(s: Engine, pops: int, pushes: int) -> bool { s.sp - pops + pushes <= s.size }
+)]
+impl BaseVisitor for Interpreter {
+    type Error = InterpreterBreak;
+    type State = Engine;
+
+    forward! {
+        i32_load(m: MemArg) => i32_load_op;
+        i64_load(m: MemArg) => i64_load_op;
+        f32_load(m: MemArg) => f32_load_op;
+        f64_load(m: MemArg) => f64_load_op;
+        i32_load8_s(m: MemArg) => i32_load8_s_op;
+        i32_load8_u(m: MemArg) => i32_load8_u_op;
+        i32_load16_s(m: MemArg) => i32_load16_s_op;
+        i32_load16_u(m: MemArg) => i32_load16_u_op;
+        i64_load8_s(m: MemArg) => i64_load8_s_op;
+        i64_load8_u(m: MemArg) => i64_load8_u_op;
+        i64_load16_s(m: MemArg) => i64_load16_s_op;
+        i64_load16_u(m: MemArg) => i64_load16_u_op;
+        i64_load32_s(m: MemArg) => i64_load32_s_op;
+        i64_load32_u(m: MemArg) => i64_load32_u_op;
+        i32_store(m: MemArg) => i32_store_op;
+        i64_store(m: MemArg) => i64_store_op;
+        f32_store(m: MemArg) => f32_store_op;
+        f64_store(m: MemArg) => f64_store_op;
+        i32_store8(m: MemArg) => i32_store8_op;
+        i32_store16(m: MemArg) => i32_store16_op;
+        i64_store8(m: MemArg) => i64_store8_op;
+        i64_store16(m: MemArg) => i64_store16_op;
+        i64_store32(m: MemArg) => i64_store32_op;
+        memory_size() => memory_size_op;
+        memory_grow() => memory_grow_op;
+        i32_const(n: i32) => i32_const_op;
+        i64_const(n: i64) => i64_const_op;
+        f32_const(z: f32) => f32_const_op;
+        f64_const(z: f64) => f64_const_op;
+        i32_eqz() => i32_eqz_op;
+        i32_eq() => i32_eq_op;
+        i32_ne() => i32_ne_op;
+        i32_lt_s() => i32_lt_s_op;
+        i32_lt_u() => i32_lt_u_op;
+        i32_gt_s() => i32_gt_s_op;
+        i32_gt_u() => i32_gt_u_op;
+        i32_le_s() => i32_le_s_op;
+        i32_le_u() => i32_le_u_op;
+        i32_ge_s() => i32_ge_s_op;
+        i32_ge_u() => i32_ge_u_op;
+        i64_eqz() => i64_eqz_op;
+        i64_eq() => i64_eq_op;
+        i64_ne() => i64_ne_op;
+        i64_lt_s() => i64_lt_s_op;
+        i64_lt_u() => i64_lt_u_op;
+        i64_gt_s() => i64_gt_s_op;
+        i64_gt_u() => i64_gt_u_op;
+        i64_le_s() => i64_le_s_op;
+        i64_le_u() => i64_le_u_op;
+        i64_ge_s() => i64_ge_s_op;
+        i64_ge_u() => i64_ge_u_op;
+        f32_eq() => f32_eq_op;
+        f32_ne() => f32_ne_op;
+        f32_lt() => f32_lt_op;
+        f32_gt() => f32_gt_op;
+        f32_le() => f32_le_op;
+        f32_ge() => f32_ge_op;
+        f64_eq() => f64_eq_op;
+        f64_ne() => f64_ne_op;
+        f64_lt() => f64_lt_op;
+        f64_gt() => f64_gt_op;
+        f64_le() => f64_le_op;
+        f64_ge() => f64_ge_op;
+        i32_clz() => i32_clz_op;
+        i32_ctz() => i32_ctz_op;
+        i32_popcnt() => i32_popcnt_op;
+        i32_add() => i32_add_op;
+        i32_sub() => i32_sub_op;
+        i32_mul() => i32_mul_op;
+        i32_div_s() => i32_div_s_op;
+        i32_div_u() => i32_div_u_op;
+        i32_rem_s() => i32_rem_s_op;
+        i32_rem_u() => i32_rem_u_op;
+        i32_and() => i32_and_op;
+        i32_or() => i32_or_op;
+        i32_xor() => i32_xor_op;
+        i32_shl() => i32_shl_op;
+        i32_shr_s() => i32_shr_s_op;
+        i32_shr_u() => i32_shr_u_op;
+        i32_rotl() => i32_rotl_op;
+        i32_rotr() => i32_rotr_op;
+        i64_clz() => i64_clz_op;
+        i64_ctz() => i64_ctz_op;
+        i64_popcnt() => i64_popcnt_op;
+        i64_add() => i64_add_op;
+        i64_sub() => i64_sub_op;
+        i64_mul() => i64_mul_op;
+        i64_div_s() => i64_div_s_op;
+        i64_div_u() => i64_div_u_op;
+        i64_rem_s() => i64_rem_s_op;
+        i64_rem_u() => i64_rem_u_op;
+        i64_and() => i64_and_op;
+        i64_or() => i64_or_op;
+        i64_xor() => i64_xor_op;
+        i64_shl() => i64_shl_op;
+        i64_shr_s() => i64_shr_s_op;
+        i64_shr_u() => i64_shr_u_op;
+        i64_rotl() => i64_rotl_op;
+        i64_rotr() => i64_rotr_op;
+        f32_abs() => f32_abs_op;
+        f32_neg() => f32_neg_op;
+        f32_ceil() => f32_ceil_op;
+        f32_floor() => f32_floor_op;
+        f32_trunc() => f32_trunc_op;
+        f32_nearest() => f32_nearest_op;
+        f32_sqrt() => f32_sqrt_op;
+        f32_add() => f32_add_op;
+        f32_sub() => f32_sub_op;
+        f32_mul() => f32_mul_op;
+        f32_div() => f32_div_op;
+        f32_min() => f32_min_op;
+        f32_max() => f32_max_op;
+        f32_copysign() => f32_copysign_op;
+        f64_abs() => f64_abs_op;
+        f64_neg() => f64_neg_op;
+        f64_ceil() => f64_ceil_op;
+        f64_floor() => f64_floor_op;
+        f64_trunc() => f64_trunc_op;
+        f64_nearest() => f64_nearest_op;
+        f64_sqrt() => f64_sqrt_op;
+        f64_add() => f64_add_op;
+        f64_sub() => f64_sub_op;
+        f64_mul() => f64_mul_op;
+        f64_div() => f64_div_op;
+        f64_min() => f64_min_op;
+        f64_max() => f64_max_op;
+        f64_copysign() => f64_copysign_op;
+        i32_wrap_i64() => i32_wrap_i64_op;
+        i32_trunc_f32_s() => i32_trunc_f32_s_op;
+        i32_trunc_f32_u() => i32_trunc_f32_u_op;
+        i32_trunc_f64_s() => i32_trunc_f64_s_op;
+        i32_trunc_f64_u() => i32_trunc_f64_u_op;
+        i64_extend_i32_s() => i64_extend_i32_s_op;
+        i64_extend_i32_u() => i64_extend_i32_u_op;
+        i64_trunc_f32_s() => i64_trunc_f32_s_op;
+        i64_trunc_f32_u() => i64_trunc_f32_u_op;
+        i64_trunc_f64_s() => i64_trunc_f64_s_op;
+        i64_trunc_f64_u() => i64_trunc_f64_u_op;
+        f32_convert_i32_s() => f32_convert_i32_s_op;
+        f32_convert_i32_u() => f32_convert_i32_u_op;
+        f32_convert_i64_s() => f32_convert_i64_s_op;
+        f32_convert_i64_u() => f32_convert_i64_u_op;
+        f32_demote_f64() => f32_demote_f64_op;
+        f64_convert_i32_s() => f64_convert_i32_s_op;
+        f64_convert_i32_u() => f64_convert_i32_u_op;
+        f64_convert_i64_s() => f64_convert_i64_s_op;
+        f64_convert_i64_u() => f64_convert_i64_u_op;
+        f64_promote_f32() => f64_promote_f32_op;
+    }
+
+    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
+        ensures state: Self::State)]
+    fn unreachable(&self, _: &mut Self::State) -> Result<(), Self::Error> {
+        Err(InterpreterBreak::Trap(TrapReason::Unreachable))
+    }
+
+    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
+        ensures state: Self::State)]
+    fn malformed_ir(&self, _: &mut Self::State) -> Result<(), Self::Error> {
+        Err(InterpreterBreak::Trap(TrapReason::MalformedIr))
+    }
+
+    #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
+        ensures state: Self::State)]
+    fn nop(&self, _: &mut Self::State) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+}
+
+/// `has_local`: the local lives at `fp + off` inside the current frame (one word is
+/// stated; the two-word `i64`/`f64` case needs a `ValType` refinement).
+/// `can_branch`: placeholders until `LabelTarget` carries `depth`/`arity` indices.
+/// `can_branch`: the frame holds the `depth` words the label truncates, those include the
+/// `arity` result words, and (for the early-return encoding) `return_`'s precondition.
+#[flux_rs::assoc(
+    fn has_local(s: Engine, l: LocalVariable) -> bool {
+        s.fp <= 2147483647 && 0 <= s.fp + l.off && s.fp + l.off <= 2147483647 && s.fp + l.off + 1 <= s.sp
+    }
+    fn can_branch(s: Engine, l: LabelTarget) -> bool {
+        s.sp >= s.fp + (l.bits / 4194304) % 256
+        && (l.bits / 4194304) % 256 >= (l.bits / 1073741824) % 4
+        && s.sp >= s.fp + (l.bits / 1073741824) % 4 + 2
+    }
+    fn can_branch_after_pop(s: Engine, l: LabelTarget) -> bool {
+        s.sp - 1 >= s.fp + (l.bits / 4194304) % 256
+        && (l.bits / 4194304) % 256 >= (l.bits / 1073741824) % 4
+        && s.sp - 1 >= s.fp + (l.bits / 1073741824) % 4 + 2
+    }
+)]
+impl IrVisitor for Interpreter {
+    forward! {
+        drop(ty: ValType) => drop_op;
+        select(ty: ValType) => select_op;
+        if_(false_address: LabelTarget) => if_op;
+        br(addr: LabelTarget) => br_op;
+        br_if(true_address: LabelTarget) => br_if_op;
+        return_(return_size: u8) => return_op;
+        call_indirect(x: TypeIdx) => call_indirect_op;
+        local_get(l: LocalVariable) => local_get_op;
+        local_set(l: LocalVariable) => local_set_op;
+        local_tee(l: LocalVariable) => local_tee_op;
+        global_get(idx: u16) => global_get_op;
+        global_get_host(module: HostModuleRef, index: u16) => global_get_host_op;
+        global_set(idx: u16) => global_set_op;
+        global_set_host(module: HostModuleRef, index: u16) => global_set_host_op;
+        global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op;
+        global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op;
+    }
+
+    #[flux_rs::spec(fn(&Self, n: u32, cases: _, state: &strg Self::State[@s]) -> Result<(), Self::Error>
+        ensures state: Self::State)]
+    fn br_table(
+        &self,
+        n: u32,
+        cases: impl FnOnce(u32) -> LabelTarget,
+        state: &mut Self::State,
+    ) -> Result<(), Self::Error> {
+        self.br_table_op(n, cases, state)
+    }
+
     #[flux_rs::spec(fn(&Self, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
         ensures state: Self::State)]
     fn call(&self, x: u16, state: &mut Self::State) -> Result<(), Self::Error> {
         state.call_impl(0, x)
     }
 
     #[flux_rs::spec(fn(&Self, module: HostModuleRef, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
         ensures state: Self::State)]
     fn call_host(
         &self,
@@ -1768,7 +2348,6 @@ impl IrVisitor for Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, module_ref: ModuleRef, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 0)
         ensures state: Self::State)]
     fn call_extern(
         &self,
@@ -1782,274 +2361,6 @@ impl IrVisitor for Interpreter {
         })
     }
 
-    #[flux_rs::spec(fn(&Self, x: TypeIdx, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 1) && <Self as BaseVisitor>::has_room(s, 1, 0)
-        ensures state: Self::State)]
-    fn call_indirect(&self, x: TypeIdx, state: &mut Self::State) -> Result<(), Self::Error> {
-        // Pop the table pointer off the stack
-        state.sp -= 1;
-        let i = state.stack.read_u32(state.sp) as usize;
-        let m = &state.store.modules()[state.module.0 as usize];
-        let f_expected = &m.types[x.0 as usize];
-
-        // Look up the internal or host function
-        match state.table.get(i) {
-            None => Err(InterpreterBreak::Trap(TrapReason::InvalidTableIndex)),
-            Some(TableElement::Func { module, index }) => {
-                let m = &state.store.modules()[module.0 as usize];
-                let f = &m.functions[*index as usize];
-
-                // Validate the function is the proper type
-                // This asserts that it's safe to call the function with the current stack
-                let f_actual = &m.types[f.ty.0 as usize];
-
-                if f_actual.params != f_expected.params || f_actual.returns != f_expected.returns {
-                    return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
-                }
-
-                // Call the function
-                state.call_impl_enter_module(WasmRef {
-                    module: *module,
-                    index: *index,
-                })
-            }
-            Some(TableElement::Host { module, index }) => {
-                // Make sure the type matches our expectations (runtime validation)
-                let m = &state.store.host_modules()[module.0 as usize];
-                let f = &m.functions[*index as usize];
-
-                let return_vals: &[ValType] = match f.returns().0 {
-                    Some(v) => &[v],
-                    None => &[],
-                };
-
-                if f.params() != f_expected.params[..] || return_vals != &f_expected.returns[..] {
-                    return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
-                }
-
-                self.call_host(*module, *index, state)
-            }
-            Some(TableElement::Uninitialized) => Err(InterpreterBreak::Trap(
-                TrapReason::UninitializedTableElement,
-            )),
-        }
-    }
-
-    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_room(s, 0, 1) && <Self as IrVisitor>::has_local(s, l)
-        ensures state: Self::State)]
-    fn local_get(&self, l: LocalVariable, state: &mut Self::State) -> Result<(), Self::Error> {
-        let local_addr = l.addr(state.fp);
-        match l.ty {
-            ValType::I32 | ValType::F32 => {
-                // Read/write a single word
-                let val = state.stack.read_u32(local_addr);
-                state.stack.write_u32(state.sp, val);
-                state.sp += 1;
-            }
-            ValType::I64 | ValType::F64 => {
-                // Read/write two words
-                let val = state.stack.read_u64(local_addr);
-                state.stack.write_u64(state.sp, val);
-                state.sp += 2;
-            }
-        }
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as IrVisitor>::has_local(s, l)
-        ensures state: Self::State)]
-    fn local_set(&self, l: LocalVariable, state: &mut Self::State) -> Result<(), Self::Error> {
-        let local_addr = l.addr(state.fp);
-        match l.ty {
-            ValType::I32 | ValType::F32 => {
-                // Read/write a single word
-                state.sp -= 1;
-                let val = state.stack.read_u32(state.sp);
-                state.stack.write_u32(local_addr, val);
-            }
-            ValType::I64 | ValType::F64 => {
-                // Read/write two words
-                state.sp -= 2;
-                let val = state.stack.read_u64(state.sp);
-                state.stack.write_u64(local_addr, val);
-            }
-        }
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, l: LocalVariable, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as IrVisitor>::has_local(s, l)
-        ensures state: Self::State)]
-    fn local_tee(&self, l: LocalVariable, state: &mut Self::State) -> Result<(), Self::Error> {
-        let local_addr = l.addr(state.fp);
-        match l.ty {
-            ValType::I32 | ValType::F32 => {
-                // Read/write a single word
-                let val = state.stack.read_u32(state.sp - 1);
-                state.stack.write_u32(local_addr, val);
-            }
-            ValType::I64 | ValType::F64 => {
-                // Read/write two words
-                let val = state.stack.read_u64(state.sp - 2);
-                state.stack.write_u64(local_addr, val);
-            }
-        }
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn global_get(&self, idx: u16, state: &mut Self::State) -> Result<(), Self::Error> {
-        let m = &state.store.modules()[state.module.0 as usize];
-        let g = &m.globals[idx as usize];
-
-        match g.type_.ty {
-            ValType::I32 | ValType::F32 => {
-                let val = g.value.read_32();
-                state.stack.write_u32(state.sp, val);
-                state.sp += 1;
-            }
-            ValType::I64 | ValType::F64 => {
-                let val = g.value.read_64();
-                state.stack.write_u64(state.sp, val);
-                state.sp += 2;
-            }
-        }
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn global_get_host(
-        &self,
-        module: HostModuleRef,
-        index: u16,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
-        let m = &state.store.host_modules()[module.0 as usize];
-        match m.globals[index as usize]
-            .value
-            .read()
-            .or(Err(InterpreterBreak::Trap(TrapReason::GlobalGetFailed)))?
-        {
-            Value::I32(i) => {
-                state.stack.write_u32(state.sp, i as u32);
-                state.sp += 1;
-            }
-            Value::I64(i) => {
-                state.stack.write_u64(state.sp, i as u64);
-                state.sp += 2;
-            }
-            Value::F32(f) => {
-                state.stack.write_f32(state.sp, f);
-                state.sp += 1;
-            }
-            Value::F64(f) => {
-                state.stack.write_f64(state.sp, f);
-                state.sp += 2;
-            }
-        };
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn global_set(&self, idx: u16, state: &mut Self::State) -> Result<(), Self::Error> {
-        let m = &mut state.store.modules_mut()[state.module.0 as usize];
-        let g = &mut m.globals[idx as usize];
-        match g.type_.ty {
-            ValType::I32 | ValType::F32 => {
-                state.sp -= 1;
-                let val = state.stack.read_u32(state.sp);
-                g.value.write_32(val);
-            }
-            ValType::I64 | ValType::F64 => {
-                state.sp -= 2;
-                let val = state.stack.read_u64(state.sp);
-                g.value.write_64(val);
-            }
-        }
-
-        Ok(())
-    }
-
-    #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn global_set_host(
-        &self,
-        module: HostModuleRef,
-        index: u16,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
-        let m = &state.store.host_modules()[module.0 as usize];
-        let g = &m.globals[index as usize];
-        match g.value.ty() {
-            ValType::I32 => {
-                state.sp -= 1;
-                let val = state.stack.read_u32(state.sp) as i32;
-                g.value.write(Value::I32(val))
-            }
-            ValType::I64 => {
-                state.sp -= 2;
-                let val = state.stack.read_u64(state.sp) as i64;
-                g.value.write(Value::I64(val))
-            }
-            ValType::F32 => {
-                state.sp -= 1;
-                let f = state.stack.read_f32(state.sp);
-                g.value.write(Value::F32(f))
-            }
-            ValType::F64 => {
-                state.sp -= 2;
-                let f = state.stack.read_f64(state.sp);
-                g.value.write(Value::F64(f))
-            }
-        }
-        .or(Err(InterpreterBreak::Trap(TrapReason::GlobalSetFailed)))
-    }
-
-    #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 0) && <Self as BaseVisitor>::has_room(s, 0, 1)
-        ensures state: Self::State)]
-    fn global_get_extern(
-        &self,
-        module: ModuleRef,
-        index: u16,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
-        let current = state.module;
-        state.module = module;
-        let res = self.global_get(index, state);
-        state.module = current;
-        res
-    }
-
-    #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        requires <Self as BaseVisitor>::has_depth(s, 2) && <Self as BaseVisitor>::has_room(s, 2, 0)
-        ensures state: Self::State)]
-    fn global_set_extern(
-        &self,
-        module: ModuleRef,
-        index: u16,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
-        let current = state.module;
-        state.module = module;
-        let res = self.global_set(index, state);
-        state.module = current;
-        res
-    }
 }
 
 #[cfg(test)]

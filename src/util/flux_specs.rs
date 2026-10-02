@@ -125,3 +125,17 @@ flux_rs::defs! {
         (0 <= x && 0 <= y) => (0 <= [&](x, y) && [&](x, y) <= x && [&](x, y) <= y)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Detached specs for `Engine` helpers defined in src/store.rs (wave 2, interpreter
+// worker): they only swap the (unrefined) `memory`/`table` fields, so the engine's
+// `sp`/`fp`/stack indices are preserved. Needed by `Interpreter::memory_grow`.
+use crate::Engine;
+
+#[flux_rs::specs {
+    impl Engine {
+        fn clear_memory(self: &mut Engine[@e]);
+        fn clear_table(self: &mut Engine[@e]);
+    }
+}]
+const _: () = ();
