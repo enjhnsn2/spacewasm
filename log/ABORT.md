@@ -368,3 +368,51 @@ single spec is at fault; the body (Layout::array pow2 bitvector reasoning + `len
 `pad_to_align` existentials) is at the solver's edge and any extra pointer fact tips it. Marked
 `#[flux_rs::trusted(reason = "solver divergence")]` with the user's approval; its spec (pointer validity for
 `len` values) is therefore an assumption. Trusted count 11 -> 12.
+
+## type 102 memory::Memory (src/memory.rs:59) — DONE (wave 2, worker 2): 54 -> 0 errors, type check SAFE
+
+Not an abort; recorded here because the refinement is cross-cutting (Store uid 111, Engine uid 114 and
+the interpreter build on it).
+
+Refinement: `Memory` is `refined_by(base: int, addr: int, bytes: int, size: int, has_alloc: bool, page: int)`
+with fields `ptr: *mut[base, addr, bytes] u8`, `size: usize[size]`, `ty: MemType[page]`,
+`allocator: Option<_>[has_alloc]` and invariants
+`size <= bytes && size + 15 <= isize::MAX`, `addr >= base && bytes >= 0`, `addr == 0 || (addr > 0 && has_alloc)`,
+`size == 0 || addr > 0`, `(page == 1 || page == 65536) && size % page == 0 && size / page <= u32::MAX`.
+
+Public specs (all bounds checks are reflected in the `Result` index, no preconditions):
+- `check_in_bounds(&Self[@m], addr, size) -> Result<(), MemoryError>[addr + size <= m.size]` (private)
+- `store_u8/u16/u32/u64(&Self[@m], addr, i) -> Result<(), MemoryError>[addr + {1,2,4,8} <= m.size]`
+- `load_u8/u16/u32/u64(&Self[@m], addr) -> Result<uN, MemoryError>[addr + {1,2,4,8} <= m.size]`
+- `store(&Self[@m], addr, data: &[u8][@n]) -> Result<(), MemoryError>[addr + n <= m.size]`
+- `load(&Self[@m], addr, len) -> Result<&[u8][len], MemoryError>[addr + len <= m.size]`
+- `effective_address(base: u32, offset: u32) -> Result<usize[base + offset], MemoryError>` (Ok-ness left
+  existential: on 64-bit it is always Ok, but flux does not carry the `u32` upper bounds by default)
+- `zero() -> Memory[0, 0, 0, 0, false, 65536]`; `new(ty: MemType[@t], allocator: _) -> Result<Memory{m: m.has_alloc && m.page == t.page}, AllocError>`
+- `grow(&mut Self, n: u32) -> Result<u32, MemoryError>` (default spec; `&mut` keeps the invariant, so callers
+  going through `Rc::get_mut` need no strong reference)
+- `size(&Self[@m]) -> u32[m.size / m.page]`, `mem_type(&Self[@m]) -> MemType[m.page]`,
+  `is_zero(&Self[@m]) -> bool[m.addr == 0 && !m.has_alloc]`, `get_slice(&Self[@m]) -> &[u8][m.size]`,
+  `as_shared_cells(&Self[@m]) -> &[UnsafeCell<u8>][m.size]`
+- trait `WasmMemoryAllocator::allocate/reallocate(.., layout: Layout[@l]) -> Result<NonNull<u8>{p: p.addr > 0 &&
+  p.base == p.addr && p.size == l.size && p.addr % l.align == 0}, AllocError>` (same contract as
+  `Allocator::alloc`; no in-crate non-test impls, so nothing to restate).
+
+Cross-cutting additions in src/util/flux_specs.rs (append-only):
+- Detached refinements of `types::MemPageSize` (`refined_by(size: int)`, variants `_1 -> [1]`, `_65536 -> [65536]`,
+  invariant `size == 1 || size == 65536`) and `types::MemType` (`refined_by(page: int)`, field
+  `page_size: MemPageSize[page]`, invariant `page == 1 || page == 65536`) plus specs `MemPageSize::size -> usize[p]`,
+  `MemPageSize::alignment -> usize{(p == 1 && v == 1) || (p == 65536 && v == 16)}`, `MemType::zero -> MemType[65536]`,
+  `MemType::page_size -> usize[t.page]`, `MemType::page_alignment` (same as alignment). types.rs itself is untouched;
+  all of types.rs still verifies (`read`, `zero`, `can_hold`, `matches`, `min` re-checked) and the full sweep shows
+  no new errors in module.rs / imports.rs. `MemType` values elsewhere are now `MemType{page}` existentials.
+- `extern_spec impl From<u32> for u64 { fn from(u32[@x]) -> u64[x] }` (flux-core only covers `TryFrom`).
+
+Flux details worth knowing:
+- `dyn Trait` is not accepted in spec syntax; `_` works as a hole for `Option<Rc<dyn ..>>` fields / params.
+- `grow` needs `#[flux_rs::opts(solver = "z3", check_overflow = "lazy")]` (cvc5 times out; `lazy` is what gives
+  the `u32` range of page counts, needed for `size + 15 <= isize::MAX`); `new` uses `check_overflow = "lazy"` too.
+- One semantics-preserving local rewrite in `Drop::drop`: `self.allocator.take().unwrap()` ->
+  `self.allocator.as_ref().unwrap()`. `take()` left the struct with a non-null `ptr` and `allocator == None` at the
+  fold point, violating `addr == 0 || has_alloc`; the `Rc` is dropped by the field drop glue right after the body
+  either way (same order: after `deallocate`).
