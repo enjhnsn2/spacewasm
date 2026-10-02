@@ -1034,12 +1034,22 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     /// This is called when entering an else block.
     /// Walks the linked list to find the tail (false-branch with sentinel), patches it,
     /// and breaks it off from the chain. Returns (result_type, remaining_chain_head).
-    /// Flux: requires a frame to pop (`else` is only reached after a successful
-    /// `write_label_target`, which establishes it).
+    /// Flux: `else` is only reached after a successful `write_label_target(LabelIdx(0))`
+    /// (`Compiler::else_`), which establishes that a frame exists, but that fact does not
+    /// survive the weak `&mut Self::State` between the two calls; the precondition lives
+    /// on [`Self::pop_control_and_patch_if_op`] and this forwarding wrapper carries it.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(ResultType, JumpTarget), ValidationError>
+        ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
+    pub(crate) fn pop_control_and_patch_if(
+        &mut self,
+    ) -> Result<(ResultType, JumpTarget), ValidationError> {
+        self.pop_control_and_patch_if_op()
+    }
+
     #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(ResultType, JumpTarget), ValidationError>
         requires v.frames > 0
         ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
-    pub(crate) fn pop_control_and_patch_if(
+    fn pop_control_and_patch_if_op(
         &mut self,
     ) -> Result<(ResultType, JumpTarget), ValidationError> {
         // Make sure our current frame is an if
