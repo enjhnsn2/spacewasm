@@ -8,6 +8,11 @@ use core::slice;
 /// An allocator for allocating Wasm pages
 pub trait WasmMemoryAllocator {
     /// Allocate a new memory region for linear memory
+    ///
+    /// Refinement (the same contract as `crate::Allocator::alloc`): an `Ok` pointer is the
+    /// start of a block tracked as exactly `layout.size()` bytes, aligned to `layout.align()`.
+    #[flux_rs::spec(fn(&Self, layout: Layout[@l])
+        -> Result<NonNull<u8>{p: p.addr > 0 && p.base == p.addr && p.size == l.size && p.addr % l.align == 0}, AllocError>)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<u8>, AllocError>;
 
     /// Reallocate a memory region, moving data if needed.
@@ -20,6 +25,11 @@ pub trait WasmMemoryAllocator {
     ///
     /// On `Err`, the implementation MUST leave the original allocation
     /// (`ptr` with `old_layout`) valid, unmoved, and still owned by the caller.
+    ///
+    /// Refinement: as for [`allocate`](Self::allocate), the `Ok` pointer is a block of
+    /// `layout.size()` bytes aligned to `layout.align()`.
+    #[flux_rs::spec(fn(&Self, ptr: NonNull<u8>, old_layout: Layout, layout: Layout[@l])
+        -> Result<NonNull<u8>{p: p.addr > 0 && p.base == p.addr && p.size == l.size && p.addr % l.align == 0}, AllocError>)]
     fn reallocate(
         &self,
         ptr: NonNull<u8>,
@@ -56,10 +66,27 @@ impl<T: WasmMemoryAllocator> Rc<T> {
 /// `store_*`, [`Memory::grow`] (which may reallocate), a host callback, or guest
 /// re-entry. Holding one across a write is UB under Stacked Borrows.
 /// [`Memory::as_shared_cells`] is the one aliasing-tolerant accessor.
+///
+/// # Refinement
+///
+/// `ptr` is `*mut[base, addr, bytes] u8` (an allocation of `bytes` bytes starting at
+/// `addr`) and the linear memory is its first `size` bytes, so `size <= bytes`. The
+/// absent-memory sentinel ([`Memory::zero`]) and a zero-page memory have a null `ptr`
+/// and `size == 0`; any non-null `ptr` was handed out by the allocator (`has_alloc`),
+/// so [`Drop`] can always find it again. A byte access `[addr, addr + n)` is in bounds
+/// iff `addr + n <= size`, which is exactly what `check_in_bounds` decides.
+#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, has_alloc: bool)]
+#[flux_rs::invariant(size <= bytes)]
+#[flux_rs::invariant(addr >= base && bytes >= 0)]
+#[flux_rs::invariant(addr == 0 || (addr > 0 && has_alloc))]
+#[flux_rs::invariant(size == 0 || addr > 0)]
 pub struct Memory {
+    #[flux_rs::field(*mut[base, addr, bytes] u8)]
     ptr: *mut u8,
+    #[flux_rs::field(usize[size])]
     size: usize,
     ty: MemType,
+    #[flux_rs::field(Option<_>[has_alloc])]
     allocator: Option<Rc<dyn WasmMemoryAllocator>>,
 }
 
@@ -96,6 +123,7 @@ impl Default for Memory {
 }
 
 impl Memory {
+    #[flux_rs::spec(fn() -> Memory[0, 0, 0, 0, false])]
     pub fn zero() -> Memory {
         Memory {
             ptr: core::ptr::null_mut(),
@@ -105,6 +133,7 @@ impl Memory {
         }
     }
 
+    #[flux_rs::spec(fn(ty: MemType, allocator: _) -> Result<Memory{m: m.has_alloc}, AllocError>)]
     pub fn new(ty: MemType, allocator: Rc<dyn WasmMemoryAllocator>) -> Result<Memory, AllocError> {
         let size = if let Some(size) = (ty.min() as u64).checked_mul(ty.page_size() as u64) {
             if size > usize::MAX as u64 {
@@ -144,7 +173,9 @@ impl Memory {
 }
 
 impl Memory {
+    /// `Ok` iff the byte range `[addr, addr + size)` lies within the linear memory.
     #[inline]
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, size: usize) -> Result<(), MemoryError>[addr + size <= m.size])]
     fn check_in_bounds(&self, addr: usize, size: usize) -> Result<(), MemoryError> {
         if size > self.size || addr > self.size - size {
             Err(MemoryError::OutOfBounds)
@@ -162,10 +193,12 @@ impl Memory {
     /// still bounds-checked against the memory size by the individual load/store
     /// operations.
     #[inline]
+    #[flux_rs::spec(fn(base: u32, offset: u32) -> Result<usize[base + offset], MemoryError>[base + offset <= usize::MAX])]
     pub fn effective_address(base: u32, offset: u32) -> Result<usize, MemoryError> {
         usize::try_from(base as u64 + offset as u64).map_err(|_| MemoryError::OutOfBounds)
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, i: u8) -> Result<(), MemoryError>[addr + 1 <= m.size])]
     pub fn store_u8(&self, addr: usize, i: u8) -> Result<(), MemoryError> {
         self.check_in_bounds(addr, 1)?;
         unsafe {
@@ -174,6 +207,7 @@ impl Memory {
         Ok(())
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, i: u16) -> Result<(), MemoryError>[addr + 2 <= m.size])]
     pub fn store_u16(&self, addr: usize, i: u16) -> Result<(), MemoryError> {
         self.check_in_bounds(addr, 2)?;
         unsafe {
@@ -182,6 +216,7 @@ impl Memory {
         Ok(())
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, i: u32) -> Result<(), MemoryError>[addr + 4 <= m.size])]
     pub fn store_u32(&self, addr: usize, i: u32) -> Result<(), MemoryError> {
         self.check_in_bounds(addr, 4)?;
         unsafe {
@@ -190,6 +225,7 @@ impl Memory {
         Ok(())
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, i: u64) -> Result<(), MemoryError>[addr + 8 <= m.size])]
     pub fn store_u64(&self, addr: usize, i: u64) -> Result<(), MemoryError> {
         self.check_in_bounds(addr, 8)?;
         unsafe {
@@ -198,6 +234,7 @@ impl Memory {
         Ok(())
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, data: &[u8][@n]) -> Result<(), MemoryError>[addr + n <= m.size])]
     pub fn store(&self, addr: usize, data: &[u8]) -> Result<(), MemoryError> {
         self.check_in_bounds(addr, data.len())?;
         if data.is_empty() {
@@ -210,11 +247,13 @@ impl Memory {
         Ok(())
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize) -> Result<u8, MemoryError>[addr + 1 <= m.size])]
     pub fn load_u8(&self, addr: usize) -> Result<u8, MemoryError> {
         self.check_in_bounds(addr, 1)?;
         unsafe { Ok(self.ptr.add(addr).read()) }
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize) -> Result<u16, MemoryError>[addr + 2 <= m.size])]
     pub fn load_u16(&self, addr: usize) -> Result<u16, MemoryError> {
         self.check_in_bounds(addr, 2)?;
         unsafe {
@@ -224,6 +263,7 @@ impl Memory {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize) -> Result<u32, MemoryError>[addr + 4 <= m.size])]
     pub fn load_u32(&self, addr: usize) -> Result<u32, MemoryError> {
         self.check_in_bounds(addr, 4)?;
         unsafe {
@@ -233,6 +273,7 @@ impl Memory {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize) -> Result<u64, MemoryError>[addr + 8 <= m.size])]
     pub fn load_u64(&self, addr: usize) -> Result<u64, MemoryError> {
         self.check_in_bounds(addr, 8)?;
         unsafe {
@@ -242,6 +283,7 @@ impl Memory {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@m], addr: usize, len: usize) -> Result<&[u8][len], MemoryError>[addr + len <= m.size])]
     pub fn load(&self, addr: usize, len: usize) -> Result<&[u8], MemoryError> {
         self.check_in_bounds(addr, len)?;
         if len == 0 {
@@ -304,10 +346,12 @@ impl Memory {
     }
 
     /// Returns whether this is the absent-memory sentinel created by [`Memory::zero`].
+    #[flux_rs::spec(fn(&Self[@m]) -> bool[m.addr == 0 && !m.has_alloc])]
     pub fn is_zero(&self) -> bool {
         self.ptr.is_null() && self.allocator.is_none()
     }
 
+    #[flux_rs::spec(fn(&Self[@m]) -> &[u8][m.size])]
     pub fn get_slice(&self) -> &[u8] {
         if self.ptr.is_null() {
             &[]
@@ -323,6 +367,7 @@ impl Memory {
     /// invalidated by [`Memory::grow`]. Empty for the [`Memory::zero`] sentinel.
     ///
     /// [`get_slice`]: Memory::get_slice
+    #[flux_rs::spec(fn(&Self[@m]) -> &[core::cell::UnsafeCell<u8>][m.size])]
     pub fn as_shared_cells(&self) -> &[core::cell::UnsafeCell<u8>] {
         if self.ptr.is_null() {
             &[]
