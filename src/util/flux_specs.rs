@@ -125,3 +125,50 @@ flux_rs::defs! {
         (0 <= x && 0 <= y) => (0 <= [&](x, y) && [&](x, y) <= x && [&](x, y) <= y)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Detached refinements for `types::MemPageSize` / `types::MemType` (types.rs itself is
+// untouched). `MemPageSize` is indexed by the page size in bytes and `MemType` by its page
+// size (`page`); `memory::Memory` carries the same `page` so that its byte size is always
+// `pages * page` for a `u32` page count, which is what makes `Memory::grow` monotone and
+// `Memory::size` exact. The alignment is 16 for 64 KiB pages and 1 for byte pages, so the
+// page layout `Layout::from_size_align(size, page_alignment)` is valid whenever
+// `size + 15 <= isize::MAX`.
+use crate::{MemPageSize, MemType};
+
+#[flux_rs::specs {
+    #[refined_by(size: int)]
+    #[invariant(size == 1 || size == 65536)]
+    enum MemPageSize {
+        _1 -> MemPageSize[1],
+        _65536 -> MemPageSize[65536],
+    }
+
+    impl MemPageSize {
+        fn size(&MemPageSize[@p]) -> usize[p];
+        fn alignment(&MemPageSize[@p]) -> usize{v: (p == 1 && v == 1) || (p == 65536 && v == 16)};
+    }
+
+    #[refined_by(page: int)]
+    #[invariant(page == 1 || page == 65536)]
+    struct MemType {
+        initial_pages: u32,
+        max_pages: Option<u32>,
+        page_size: MemPageSize[page],
+    }
+
+    impl MemType {
+        fn zero() -> MemType[65536];
+        fn page_size(&MemType[@t]) -> usize[t.page];
+        fn page_alignment(&MemType[@t]) -> usize{v: (t.page == 1 && v == 1) || (t.page == 65536 && v == 16)};
+    }
+}]
+const _: () = ();
+
+// `u64::from(u32)` is a lossless widening (flux-core only covers `TryFrom`); needed by
+// `Memory::grow` to relate the new byte size to the page count.
+#[flux_rs::extern_spec]
+impl From<u32> for u64 {
+    #[flux_rs::spec(fn(value: u32[@x]) -> u64[x])]
+    fn from(value: u32) -> u64;
+}

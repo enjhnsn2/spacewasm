@@ -75,16 +75,23 @@ impl<T: WasmMemoryAllocator> Rc<T> {
 /// and `size == 0`; any non-null `ptr` was handed out by the allocator (`has_alloc`),
 /// so [`Drop`] can always find it again. A byte access `[addr, addr + n)` is in bounds
 /// iff `addr + n <= size`, which is exactly what `check_in_bounds` decides.
-#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, has_alloc: bool)]
-#[flux_rs::invariant(size <= bytes)]
+/// `page` is the page size of `ty` (1 or 65536 bytes, see the detached `MemType` spec in
+/// `util::flux_specs`) and `size` is always a whole number of pages that fits a `u32`
+/// page count: `size % page == 0 && size / page <= u32::MAX`. That keeps `size` far below
+/// `isize::MAX` (`size + 15 <= isize::MAX` is what makes the page layout, whose alignment is
+/// at most 16, valid again in [`Drop`]) and makes [`Memory::grow`] monotone.
+#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, has_alloc: bool, page: int)]
+#[flux_rs::invariant(size <= bytes && size + 15 <= isize::MAX)]
 #[flux_rs::invariant(addr >= base && bytes >= 0)]
 #[flux_rs::invariant(addr == 0 || (addr > 0 && has_alloc))]
 #[flux_rs::invariant(size == 0 || addr > 0)]
+#[flux_rs::invariant((page == 1 || page == 65536) && size % page == 0 && size / page <= u32::MAX)]
 pub struct Memory {
     #[flux_rs::field(*mut[base, addr, bytes] u8)]
     ptr: *mut u8,
     #[flux_rs::field(usize[size])]
     size: usize,
+    #[flux_rs::field(MemType[page])]
     ty: MemType,
     #[flux_rs::field(Option<_>[has_alloc])]
     allocator: Option<Rc<dyn WasmMemoryAllocator>>,
@@ -123,7 +130,7 @@ impl Default for Memory {
 }
 
 impl Memory {
-    #[flux_rs::spec(fn() -> Memory[0, 0, 0, 0, false])]
+    #[flux_rs::spec(fn() -> Memory[0, 0, 0, 0, false, 65536])]
     pub fn zero() -> Memory {
         Memory {
             ptr: core::ptr::null_mut(),
@@ -133,7 +140,10 @@ impl Memory {
         }
     }
 
-    #[flux_rs::spec(fn(ty: MemType, allocator: _) -> Result<Memory{m: m.has_alloc}, AllocError>)]
+    // `check_overflow = "lazy"` makes flux assume the `u32` range of the page count, which is
+    // what bounds `size` (`min * page_size`) for the `size + 15 <= isize::MAX` invariant.
+    #[flux_rs::opts(check_overflow = "lazy")]
+    #[flux_rs::spec(fn(ty: MemType[@t], allocator: _) -> Result<Memory{m: m.has_alloc && m.page == t.page}, AllocError>)]
     pub fn new(ty: MemType, allocator: Rc<dyn WasmMemoryAllocator>) -> Result<Memory, AllocError> {
         let size = if let Some(size) = (ty.min() as u64).checked_mul(ty.page_size() as u64) {
             if size > usize::MAX as u64 {
@@ -193,7 +203,7 @@ impl Memory {
     /// still bounds-checked against the memory size by the individual load/store
     /// operations.
     #[inline]
-    #[flux_rs::spec(fn(base: u32, offset: u32) -> Result<usize[base + offset], MemoryError>[base + offset <= usize::MAX])]
+    #[flux_rs::spec(fn(base: u32, offset: u32) -> Result<usize[base + offset], MemoryError>)]
     pub fn effective_address(base: u32, offset: u32) -> Result<usize, MemoryError> {
         usize::try_from(base as u64 + offset as u64).map_err(|_| MemoryError::OutOfBounds)
     }
@@ -294,6 +304,8 @@ impl Memory {
 
     /// Grow the memory by n pages
     /// If the memory growth succeeds, return the old number of pages
+    // z3: cvc5 does not terminate on this function; `check_overflow = "lazy"` as in `new`.
+    #[flux_rs::opts(solver = "z3", check_overflow = "lazy")]
     pub fn grow(&mut self, n: u32) -> Result<u32, MemoryError> {
         let old_pages = self.size();
         let total_pages = old_pages.checked_add(n).ok_or(MemoryError::OutOfMemory)?;
@@ -337,10 +349,13 @@ impl Memory {
         Ok(old_pages)
     }
 
+    #[flux_rs::spec(fn(&Self[@m]) -> MemType[m.page])]
     pub fn mem_type(&self) -> MemType {
         self.ty
     }
 
+    /// The current size in pages.
+    #[flux_rs::spec(fn(&Self[@m]) -> u32[m.size / m.page])]
     pub fn size(&self) -> u32 {
         (self.size / self.ty.page_size()) as u32
     }
@@ -385,7 +400,10 @@ impl Memory {
 impl Drop for Memory {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
-            let allocator = self.allocator.take().unwrap();
+            // Borrow rather than `take()` the allocator: the `Rc` is dropped by the field
+            // drop glue right after this body either way, and leaving the field in place
+            // keeps the "non-null pointer has an allocator" invariant for the verifier.
+            let allocator = self.allocator.as_ref().unwrap();
             allocator.deallocate(
                 NonNull::new(self.ptr).unwrap(),
                 Layout::from_size_align(self.size, self.ty.page_alignment()).unwrap(),
