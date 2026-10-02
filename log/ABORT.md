@@ -401,3 +401,54 @@ Confirmed fix (tested, then reverted because src/util/vec.rs is outside this wor
 `core::slice::from_raw_parts_mut` mirroring the existing `from_raw_parts` one in src/util/flux_specs.rs. A detached
 `flux_rs::specs { impl DerefMut for Vec .. }` in flux_specs.rs is rejected ("multiple specifications").
 No new errors in `TextBuilder` (uid 113: 18 before and after, same sites).
+
+### type 67 stream::Chunk (src/stream.rs:6) — DONE
+
+`Chunk: refined_by(inner: InnerVec)` with `#[field(InnerVec<u8>[inner])]` (a `refined_by(len: int)` with
+`#[field(InnerVec<u8>{v: v.len == len})]` is rejected: "parameter `len` cannot be determined"), specs
+`From<InnerVec<u8>>::from(value: InnerVec<u8>[@v]) -> Chunk[v]`, `Deref::deref(&Self[@c]) -> &[u8][c.inner.len]`
+(so `chunk.len()`, `chunk.is_empty()` and `chunk[i]` agree) and `return_(self: &strg Self, stream: _) ensures self: Self`
+(`core::mem::replace` has no flux-core spec; the post-state is left unconstrained on purpose — a `&strg` extern spec
+for `replace` would also apply to `code.rs`'s `replace(&mut self.functions[i], ..)` through a weak `&mut`, so it was
+not added). RESULT=SAFE; `CircularBuffer` (uid 0) and `InnerVec` (uid 1) unaffected.
+
+### type 94 reader::Reader (src/reader.rs:37) — wave 2: the 3 `fill_buffer` errors are fixed; 1 pre-existing error left
+
+Refinement is now `refined_by(offset: int, chunk_used: int)` with `#[field(usize[chunk_used])] chunk_used` and
+`#[field(Option<Chunk{c: chunk_used <= c.inner.len}>)] next` (the Reader invariant "the consumed prefix of the pending
+chunk never exceeds its length"). `new -> Self[0, 0]`; `fill_buffer`/`peek_u8` ensure `Self{w: w.offset == v.offset}`
+(`chunk_used` free); every other `read_*`/`skip`/`expect_u8`/`strip_bytes`/`with_limit`/`read_vec*` spec is unchanged
+(`ensures self: Self{w: w.offset >= v.offset}` still names the field, `read_i64` stays unconstrained). `fill_buffer`
+keeps `#[flux_rs::opts(solver = "z3")]` (~13s solver time; cvc5 still diverges).
+
+Semantics-preserving local rewrite (last resort, noted): in `fill_buffer`,
+`.map(|inner| inner.into())` -> `.map(Chunk::from)` (the blanket `impl<T, U: From<T>> Into<U> for T` resolves to
+exactly `Chunk::from`). Bisection: with `Chunk` refined, the first half of `fill_buffer` (copy from the pending chunk)
+verifies in <1s, the second half (fetch a new chunk) diverges with BOTH z3 and cvc5 (>5 min) through the `Into` blanket
+impl: flux instantiates `InnerVec<T>`'s invariant with `T = {u8[b] | $k(b)}` (a kvar-refined `u8` coming from the
+generic `into`), so the constraint contains `addr mod <{u8|$k} as Sized>::align_of()` and `size_of()` of a
+kvar-dependent type, which neither solver handles. With `Chunk::from` the whole function verifies in ~20s (z3).
+Tried before the rewrite: (i) spec — the divergence is independent of `fill_buffer`'s own spec; (ii) refinement —
+same with and without the `chunk_used` refinement; (iii) callee spec — an extern spec for the blanket `Into::into`
+cannot transfer a refinement between two different sorts.
+
+Remaining 1 error (pre-existing since the wave-1 merge, not in this worker's list): `read_vec_in`
+(src/reader.rs:559) `out.push(read_element(self)?)` needs `Vec::push`'s `len < cap`. The loop is `for _ in 0..len`
+with `len: u32`; flux-core only defines `Step::step_forward`/`size` for `usize` and `i32`, so for `u32` the counter
+is uninterpreted and no loop invariant relates `out.inner.len` to it. Fix (tested, needs a file outside this
+worker's set): add `#![cfg_attr(flux, feature(step_trait))]` to src/lib.rs and, in src/util/flux_specs.rs,
+`#[flux_rs::extern_spec(core::iter)] #[flux_rs::assoc(fn step_forward(start: int, count: int) -> int { start + count }
+fn size(lo: int, hi: int) -> int { hi - lo })] impl core::iter::Step for u32 {}` (the spec alone fails with
+E0658 "use of unstable library feature `step_trait`").
+Note: `--check-type=94` through the harness only fits in the 30s budget with a warm flux cache (a cold whole-type run
+is ~47s wall, dominated by `fill_buffer`); it is RESULT=ERROR with exactly this one error.
+
+### type 71 util::string::String (src/util/string.rs:11) — DONE (no invariant; `try_from(&str)` fixed)
+
+`String` wraps `Box<[u8], A>`, whose index is `(base, addr, size)` and carries no slice length (see type 26), so a
+`refined_by(len)` cannot be determined from the field and no length refinement is possible without changing `Box`.
+The `Vec::push` error in `TryFrom<&str>` (`Vec::new(value.len())` then one push per byte of `value.as_bytes()`) is fixed
+by extern specs for `str::len(&str[@s]) -> usize[str_len(s)]` and `str::as_bytes(&str[@s]) -> &[u8][str_len(s)]` in
+src/util/flux_specs.rs (flux refines `str` by its contents and provides the `str_len` theory function; flux-core has no
+`str` specs). RESULT=SAFE. `HostName` (33) / `HostValList` (82), which also call `str::len`/`as_bytes`, are unaffected
+(82 keeps the same 3 errors logged above).
