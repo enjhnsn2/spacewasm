@@ -125,3 +125,18 @@ flux_rs::defs! {
         (0 <= x && 0 <= y) => (0 <= [&](x, y) && [&](x, y) <= x && [&](x, y) <= y)
     }
 }
+
+// ---------------------------------------------------------------------------
+// `str`: flux refines `str` by its contents (sort `str`) and provides the theory
+// function `str_len`. flux-core has no `str` specs, so `len`/`as_bytes` are given
+// here so that `Vec::new(s.len())` followed by a push per byte of `s.as_bytes()`
+// verifies (`util::string::String::try_from(&str)`).
+#[flux_rs::extern_spec]
+impl str {
+    #[flux_rs::spec(fn(&str[@s]) -> usize[str_len(s)])]
+    fn len(&self) -> usize;
+
+    #[flux_rs::spec(fn(&str[@s]) -> &[u8][str_len(s)])]
+    fn as_bytes(&self) -> &[u8];
+}
+
