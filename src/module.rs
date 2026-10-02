@@ -25,11 +25,18 @@ pub enum TableElement {
 }
 
 #[derive(Debug)]
+// Flux: whether the module defines (owns or imports) a table / a linear memory.
+// (The section lengths are *not* exposed: the sections are `Box<[T]>` and the
+// crate's `Box` is refined by its allocation only, so a slice length cannot be
+// tied to a struct index without changing `util::box_`.)
+#[flux_rs::refined_by(has_table: bool, has_memory: bool)]
 pub struct Module {
     pub name: String,
     pub types: Box<[FuncType]>,
     pub functions: Box<[Func]>,
+    #[flux_rs::field(Option<TableKind>[has_table])]
     pub table: Option<TableKind>,
+    #[flux_rs::field(Option<MemoryKind>[has_memory])]
     pub memory: Option<MemoryKind>,
     pub globals: Box<[Global]>,
     pub imports: Box<[Import]>,
@@ -515,10 +522,17 @@ impl TypeSection {
     }
 }
 
+// Flux: every index newtype is refined by the index it wraps (`TypeIdx[idx]` with
+// `.0: u32[idx]`), so bounds checks against a section length can be stated on
+// the newtype (`idx.0 as usize` is a widening cast and keeps the index).
 macro_rules! read_impl_u32 {
     ($type_name:ident) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-        pub struct $type_name(pub u32);
+        #[flux_rs::refined_by(idx: int)]
+        pub struct $type_name(#[flux_rs::field(u32[idx])] pub u32);
+        read_impl_u32!(@impls $type_name);
+    };
+    (@impls $type_name:ident) => {
         impl $type_name {
             pub fn read(wasm: &mut Reader) -> Result<Self, ValidationError> {
                 Ok($type_name(wasm.read_u32()?))
@@ -526,6 +540,7 @@ macro_rules! read_impl_u32 {
         }
 
         impl From<u32> for $type_name {
+            #[flux_rs::spec(fn(v: u32[@n]) -> Self[n])]
             fn from(v: u32) -> Self {
                 $type_name(v)
             }
@@ -944,6 +959,7 @@ impl CodeSection {
 pub struct Data;
 
 impl Module {
+    #[flux_rs::spec(fn(&Self[@m]) -> Result<(), ValidationError>[m.has_memory])]
     pub(crate) fn check_memory_defined(&self) -> Result<(), ValidationError> {
         if self.memory.is_none() {
             Err(ValidationError::MemoryNotDefined)
