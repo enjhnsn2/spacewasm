@@ -182,6 +182,9 @@ impl Store {
 }
 
 impl Engine {
+    #[flux_rs::spec(fn(stack_size: usize{stack_size <= 4294967295}, max_modules: usize, host_modules: Vec<HostModule>[@h])
+        -> Result<Engine{e: e.sp == 0 && e.fp == 0 && e.size == stack_size && e.module.idx == 0
+                            && e.store.modules.len == 0 && e.store.modules.cap == max_modules && e.store.host == h}, MemoryError>)]
     pub fn new(
         stack_size: usize,
         max_modules: usize,
@@ -204,6 +207,7 @@ impl Engine {
         })
     }
 
+    #[flux_rs::spec(fn(self: &strg Engine[@e]) ensures self: Engine[Engine { sp: 0, fp: 0, ..e }])]
     pub fn reset(&mut self) {
         self.pc = JumpTarget::SENTINEL;
         self.sp = 0;
@@ -226,6 +230,11 @@ impl Engine {
     /// Append a module to the store without running its start function.
     /// Note: The start function still needs to be run (if there is one)
     /// Returns the ModuleRef of the new module
+    #[flux_rs::spec(fn(self: &strg Engine[@e], module: Module)
+        -> Result<ModuleRef{r: r.idx == e.store.modules.len}, AllocError>[e.store.modules.len < e.store.modules.cap]
+        ensures self: Engine[Engine { store: Store {
+            modules: InnerVec { len: if e.store.modules.len < e.store.modules.cap { e.store.modules.len + 1 } else { e.store.modules.len }, ..e.store.modules },
+            host: e.store.host }, ..e }])]
     pub fn push_module(&mut self, module: Module) -> Result<ModuleRef, AllocError> {
         self.store.push_module(module)
     }
@@ -238,6 +247,7 @@ impl Engine {
 
     /// Returns `true` if the module at `module_ref` declares a start function
     /// that must be run before the module is used.
+    #[flux_rs::spec(fn(&Engine[@e], module_ref: ModuleRef{r: r.idx < e.store.modules.len}) -> bool)]
     pub fn needs_start(&self, module_ref: ModuleRef) -> bool {
         self.store.modules()[module_ref.0 as usize].start.is_some()
     }
@@ -269,6 +279,10 @@ impl Engine {
         }
     }
 
+    // Flux (trusted, pre-existing): the host closure receives `&mut Engine`; the spec
+    // records the assumption that a host function leaves the engine's stack pointers
+    // and the store's module counts unchanged (`&mut Engine[@e]` keeps every index).
+    #[flux_rs::spec(fn(self: &mut Engine[@e], module: HostModuleRef{r: r.idx < e.store.host.len}, index: u16, args: &[Value]) -> HostFunctionResult)]
     #[flux_rs::trusted(reason = "panicked at crates/flux-infer/src/infer.rs:1022:17")]
     pub fn call_host_fn(
         &mut self,

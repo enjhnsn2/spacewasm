@@ -8,8 +8,13 @@ use crate::{JumpTarget, Memory, ModuleRef, RawValue, Rc, ResultType, Stack, Stor
 /// within the `size`-word stack buffer. Operand-stack depth and headroom
 /// requirements of individual instructions are expressed through the
 /// `has_depth` / `has_room` associated refinements of [`crate::BaseVisitor`].
-#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int)]
-#[flux_rs::invariant(fp <= sp && sp <= size)]
+/// `module` and `store` expose the active [`ModuleRef`] and the [`Store`]
+/// indices so that store lookups can require `module.idx < store.modules.len`
+/// (not an invariant: `Engine::new` starts at `ModuleRef(0)` on an empty store;
+/// it is a precondition of `call_impl`/`invoke` and the store-touching ops).
+/// `size <= u32::MAX` makes `fp = sp as u32` (`call_impl`) lossless.
+#[flux_rs::refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int, module: ModuleRef, store: Store)]
+#[flux_rs::invariant(fp <= sp && sp <= size && size <= 4294967295)]
 pub struct Engine {
     /// Current program counter
     pub pc: JumpTarget,
@@ -36,9 +41,11 @@ pub struct Engine {
     pub table: Rc<[TableElement]>,
 
     /// Current module we are executing code for
+    #[flux_rs::field(ModuleRef[module])]
     pub module: ModuleRef,
 
     /// The WebAssembly Store
+    #[flux_rs::field(Store[store])]
     pub store: Store,
 
     /// A host function requested a pause.

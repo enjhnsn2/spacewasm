@@ -59,7 +59,9 @@ pub enum ResumeError {
 }
 
 impl Engine {
-    #[flux_rs::spec(fn(self: &strg Engine[@e], f_ref: WasmRef) -> Result<(), InterpreterBreak> ensures self: Engine)]
+    #[flux_rs::spec(fn(self: &strg Engine[@e], f_ref: WasmRef) -> Result<(), InterpreterBreak>
+        requires e.module.idx < e.store.modules.len && f_ref.module.idx < e.store.modules.len
+        ensures self: Engine)]
     fn call_impl_enter_module(&mut self, f_ref: WasmRef) -> Result<(), InterpreterBreak> {
         // If we are calling across module we need to swap out the current memory
         let module_delta = if f_ref.module == self.module {
@@ -77,7 +79,9 @@ impl Engine {
     }
 
     /// Call a function within the _current_ module
-    #[flux_rs::spec(fn(self: &strg Engine[@e], module_delta: i8, index: u16) -> Result<(), InterpreterBreak> ensures self: Engine)]
+    #[flux_rs::spec(fn(self: &strg Engine[@e], module_delta: i8, index: u16) -> Result<(), InterpreterBreak>
+        requires e.module.idx < e.store.modules.len
+        ensures self: Engine)]
     fn call_impl(&mut self, module_delta: i8, index: u16) -> Result<(), InterpreterBreak> {
         // Make sure we have enough stack space for the function call
         let m = &self.store.modules()[self.module.0 as usize];
@@ -123,7 +127,9 @@ impl Engine {
     /// Invoke a function with some parameters.
     /// This function can only be used to kick off the interpreter.
     /// It cannot be invoked once the interpreter has started.
-    #[flux_rs::spec(fn(self: &strg Engine[@e], f_ref: WasmRef, params: &[Value]) -> Result<(), InvokeError> ensures self: Engine)]
+    #[flux_rs::spec(fn(self: &strg Engine[@e], f_ref: WasmRef, params: &[Value]) -> Result<(), InvokeError>
+        requires f_ref.module.idx < e.store.modules.len
+        ensures self: Engine)]
     pub fn invoke(&mut self, f_ref: WasmRef, params: &[Value]) -> Result<(), InvokeError> {
         // `invoke` may only kick off execution from a fully idle engine
         // We currently do not have a notion of an interrupt.
@@ -194,7 +200,12 @@ impl Engine {
     /// if `resume_value` does not match the paused host function's declared
     /// result type (in which case the pending pause is left intact so the caller
     /// may retry).
-    #[flux_rs::spec(fn(self: &strg Engine[@e], resume_value: Option<Value>) -> Result<(), ResumeError> ensures self: Engine)]
+    // Flux: the paused `call_host` popped its parameters and the validator reserved the
+    // host result's words in the caller's `stack_usage`, so `sp + words(result) <= size`
+    // holds at the pause; `sp + 2` states it for the widest result.
+    #[flux_rs::spec(fn(self: &strg Engine[@e], resume_value: Option<Value>) -> Result<(), ResumeError>
+        requires e.sp + 2 <= e.size
+        ensures self: Engine)]
     pub fn resume(&mut self, resume_value: Option<Value>) -> Result<(), ResumeError> {
         // `resume` is only valid when a host function has paused the engine and
         // is awaiting a result. If nothing is pending, report it instead of
@@ -862,7 +873,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && s.module.idx < s.store.modules.len
         ensures state: Engine)]
     fn memory_grow_op(&self, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let n = state.stack.read_u32(state.sp - 1);
@@ -1741,7 +1752,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, x: TypeIdx, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_depth(s, 1)
+        requires <Interpreter as BaseVisitor>::has_depth(s, 1) && s.module.idx < s.store.modules.len
         ensures state: Engine)]
     fn call_indirect_op(&self, x: TypeIdx, state: &mut Engine) -> Result<(), InterpreterBreak> {
         // Pop the table pointer off the stack
@@ -1785,7 +1796,7 @@ impl Interpreter {
                     return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
                 }
 
-                self.call_host(*module, *index, state)
+                self.call_host_op(*module, *index, state)
             }
             Some(TableElement::Uninitialized) => Err(InterpreterBreak::Trap(
                 TrapReason::UninitializedTableElement,
@@ -1861,7 +1872,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1) && s.module.idx < s.store.modules.len
         ensures state: Engine)]
     fn global_get_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let m = &state.store.modules()[state.module.0 as usize];
@@ -1884,7 +1895,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1) && module.idx < s.store.host.len
         ensures state: Engine)]
     fn global_get_host_op(
         &self,
@@ -1920,7 +1931,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, idx: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2) && s.module.idx < s.store.modules.len
         ensures state: Engine)]
     fn global_set_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let m = &mut state.store.modules_mut()[state.module.0 as usize];
@@ -1942,7 +1953,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, module: HostModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2) && module.idx < s.store.host.len
         ensures state: Engine)]
     fn global_set_host_op(
         &self,
@@ -1977,8 +1988,95 @@ impl Interpreter {
         .or(Err(InterpreterBreak::Trap(TrapReason::GlobalSetFailed)))
     }
 
+    /// Body of `IrVisitor::call_host`. The words popped (`f.param_size()`) and pushed
+    /// (`f.returns()`) depend on the host function's signature looked up in the store,
+    /// so only the module-index precondition can be stated here.
+    #[flux_rs::spec(fn(&Self, module: HostModuleRef, x: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
+        requires module.idx < s.store.host.len
+        ensures state: Engine)]
+    fn call_host_op(
+        &self,
+        module: HostModuleRef,
+        x: u16,
+        state: &mut Engine,
+    ) -> Result<(), InterpreterBreak> {
+        let mut sv: StaticVec<Value, MAX_HOST_FUNCTION_PARAMS> = StaticVec::new();
+
+        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
+        state.sp -= f.param_size();
+        let mut offset = 0;
+        for p_ty in f.params().iter() {
+            match p_ty {
+                ValType::I32 => {
+                    sv.push(Value::I32(state.stack.read_u32(state.sp + offset) as i32))
+                        .unwrap();
+                    offset += 1;
+                }
+                ValType::I64 => {
+                    sv.push(Value::I64(state.stack.read_u64(state.sp + offset) as i64))
+                        .unwrap();
+                    offset += 2;
+                }
+                ValType::F32 => {
+                    sv.push(Value::F32(state.stack.read_f32(state.sp + offset)))
+                        .unwrap();
+                    offset += 1;
+                }
+                ValType::F64 => {
+                    sv.push(Value::F64(state.stack.read_f64(state.sp + offset)))
+                        .unwrap();
+                    offset += 2;
+                }
+            }
+        }
+
+        let r = state.call_host_fn(module, x, &sv);
+        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
+        match r {
+            ControlFlow::Continue(v) => {
+                match (v, f.returns().0) {
+                    (None, None) => {}
+                    (Some(Value::I32(i)), Some(ValType::I32)) => {
+                        state.stack.write_u32(state.sp, i as u32);
+                        state.sp += 1;
+                    }
+                    (Some(Value::I64(i)), Some(ValType::I64)) => {
+                        state.stack.write_u64(state.sp, i as u64);
+                        state.sp += 2;
+                    }
+                    (Some(Value::F32(f)), Some(ValType::F32)) => {
+                        state.stack.write_f32(state.sp, f);
+                        state.sp += 1;
+                    }
+                    (Some(Value::F64(f)), Some(ValType::F64)) => {
+                        state.stack.write_f64(state.sp, f);
+                        state.sp += 2;
+                    }
+                    (got, expected) => {
+                        panic!(
+                            "host function returned {got:?} while declaration expecting {expected:?}"
+                        )
+                    }
+                }
+
+                Ok(())
+            }
+            ControlFlow::Break(HostFunctionBreak::Pause) => {
+                let other = state.host_pause_result.replace(f.returns());
+                if other.is_some() {
+                    panic!("Unexpected paused engine state");
+                }
+
+                Err(InterpreterBreak::Pause)
+            }
+            ControlFlow::Break(HostFunctionBreak::Trap) => {
+                Err(InterpreterBreak::Trap(TrapReason::Host))
+            }
+        }
+    }
+
     #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1)
+        requires <Interpreter as BaseVisitor>::has_room(s, 0, 1) && module.idx < s.store.modules.len
         ensures state: Engine)]
     fn global_get_extern_op(
         &self,
@@ -1994,7 +2092,7 @@ impl Interpreter {
     }
 
     #[flux_rs::spec(fn(&Self, module: ModuleRef, index: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
-        requires <Interpreter as BaseVisitor>::has_depth(s, 2)
+        requires <Interpreter as BaseVisitor>::has_depth(s, 2) && module.idx < s.store.modules.len
         ensures state: Engine)]
     fn global_set_extern_op(
         &self,
@@ -2236,6 +2334,7 @@ impl IrVisitor for Interpreter {
         br_if(true_address: LabelTarget) => br_if_op;
         return_(return_size: u8) => return_op;
         call_indirect(x: TypeIdx) => call_indirect_op;
+        call_host(module: HostModuleRef, x: u16) => call_host_op;
         local_get(l: LocalVariable) => local_get_op;
         local_set(l: LocalVariable) => local_set_op;
         local_tee(l: LocalVariable) => local_tee_op;
@@ -2262,89 +2361,6 @@ impl IrVisitor for Interpreter {
         ensures state: Self::State)]
     fn call(&self, x: u16, state: &mut Self::State) -> Result<(), Self::Error> {
         state.call_impl(0, x)
-    }
-
-    #[flux_rs::spec(fn(&Self, module: HostModuleRef, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
-        ensures state: Self::State)]
-    fn call_host(
-        &self,
-        module: HostModuleRef,
-        x: u16,
-        state: &mut Self::State,
-    ) -> Result<(), Self::Error> {
-        let mut sv: StaticVec<Value, MAX_HOST_FUNCTION_PARAMS> = StaticVec::new();
-
-        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
-        state.sp -= f.param_size();
-        let mut offset = 0;
-        for p_ty in f.params().iter() {
-            match p_ty {
-                ValType::I32 => {
-                    sv.push(Value::I32(state.stack.read_u32(state.sp + offset) as i32))
-                        .unwrap();
-                    offset += 1;
-                }
-                ValType::I64 => {
-                    sv.push(Value::I64(state.stack.read_u64(state.sp + offset) as i64))
-                        .unwrap();
-                    offset += 2;
-                }
-                ValType::F32 => {
-                    sv.push(Value::F32(state.stack.read_f32(state.sp + offset)))
-                        .unwrap();
-                    offset += 1;
-                }
-                ValType::F64 => {
-                    sv.push(Value::F64(state.stack.read_f64(state.sp + offset)))
-                        .unwrap();
-                    offset += 2;
-                }
-            }
-        }
-
-        let r = state.call_host_fn(module, x, &sv);
-        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
-        match r {
-            ControlFlow::Continue(v) => {
-                match (v, f.returns().0) {
-                    (None, None) => {}
-                    (Some(Value::I32(i)), Some(ValType::I32)) => {
-                        state.stack.write_u32(state.sp, i as u32);
-                        state.sp += 1;
-                    }
-                    (Some(Value::I64(i)), Some(ValType::I64)) => {
-                        state.stack.write_u64(state.sp, i as u64);
-                        state.sp += 2;
-                    }
-                    (Some(Value::F32(f)), Some(ValType::F32)) => {
-                        state.stack.write_f32(state.sp, f);
-                        state.sp += 1;
-                    }
-                    (Some(Value::F64(f)), Some(ValType::F64)) => {
-                        state.stack.write_f64(state.sp, f);
-                        state.sp += 2;
-                    }
-                    (got, expected) => {
-                        panic!(
-                            "host function returned {got:?} while declaration expecting {expected:?}"
-                        )
-                    }
-                }
-
-                Ok(())
-            }
-            ControlFlow::Break(HostFunctionBreak::Pause) => {
-                let other = state.host_pause_result.replace(f.returns());
-                if other.is_some() {
-                    panic!("Unexpected paused engine state");
-                }
-
-                Err(InterpreterBreak::Pause)
-            }
-            ControlFlow::Break(HostFunctionBreak::Trap) => {
-                Err(InterpreterBreak::Trap(TrapReason::Host))
-            }
-        }
     }
 
     #[flux_rs::spec(fn(&Self, module_ref: ModuleRef, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>

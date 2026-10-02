@@ -242,3 +242,46 @@ const _: () = ();
     fn size(lo: int, hi: int) -> int { hi - lo }
 )]
 impl core::iter::Step for u32 {}
+
+// ---------------------------------------------------------------------------
+// Detached refinement for `imports::WasmRef` (wave 4, engine worker): a Wasm function
+// reference carries the `ModuleRef` it points into, so `Engine::invoke` /
+// `call_impl_enter_module` can require `f_ref.module.idx < e.store.modules.len`.
+use crate::WasmRef;
+
+#[flux_rs::specs {
+    #[refined_by(module: ModuleRef, index: int)]
+    struct WasmRef {
+        module: ModuleRef[module],
+        index: u16[index],
+    }
+}]
+const _: () = ();
+
+// Qualifier for the `Engine` invariant `size <= u32::MAX` (wave 4): a loop-head kvar can
+// only express facts shaped like a qualifier, and the default set has no constant upper
+// bound, so without this the invariant is lost across loops over a `&mut Engine`
+// (`InterpreterRunner::run`).
+flux_rs::defs! {
+    qualifier StackSizeFitsU32(x: int) { x <= 4294967295 }
+}
+
+// ---------------------------------------------------------------------------
+// Detached specs for `StaticVec` (wave 4): `push` succeeds exactly when there is room,
+// so `sv.push(..).unwrap()` in `Interpreter::call_host_op` (at most
+// `MAX_HOST_FUNCTION_PARAMS` pushes, one per parameter of a `HostValList`) verifies.
+use crate::StaticVec;
+
+#[flux_rs::specs {
+    impl StaticVec<T, N> {
+        fn new() -> StaticVec<T, N>[0];
+        fn push(self: &strg StaticVec<T, N>[@v], value: T) -> Result<(), AllocError>[v.len < N]
+            ensures self: StaticVec<T, N>[if v.len < N { v.len + 1 } else { v.len }];
+        fn len(&StaticVec<T, N>[@v]) -> usize[v.len];
+    }
+
+    impl core::default::Default for StaticVec<T, N> {
+        fn default() -> StaticVec<T, N>[0];
+    }
+}]
+const _: () = ();
