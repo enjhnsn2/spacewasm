@@ -975,3 +975,16 @@ Remaining 11 errors:
 Cross-cutting: the `StaticVec::push` spec also discharges the 4 `sv.push(..).unwrap()` obligations in
 interpreter.rs 2283/2288/2293/2298 (the `read_*` precondition at each site remains): interpreter.rs 275 -> 271.
 Full sweep 366 -> 355 (text.rs 18 -> 11, interpreter.rs -4, every other file unchanged).
+
+## Rc::get_mut_unchecked / Rc::into_dyn — trusted removed (flux update, allow_raw_deref)
+
+With `#[flux_rs::opts(allow_raw_deref = "ok")]` both functions check instead of ICEing (the ICE is a flux bug
+in the default raw-deref mode, see centrifuge/harness/repro-flux-ice/ISSUES.md #3). Remaining obligations:
+- `get_mut_unchecked`: `&mut (*self.ptr.as_ptr()).value` — "postcondition cannot be proved". Minimal repro shows
+  a `&mut` field projection through a raw pointer never verifies in this flux version while the identical `&`
+  projection does (`repro/` C3 vs C11, C8 vs C13); refinement on the pointer and the spec shape
+  (`&mut Self[@v]`, `&strg ... ensures Self[v]`) make no difference. Flux limitation; left as an error.
+- `into_dyn`: `NonNull::new_unchecked(trait_inner_ptr)` requires `addr != 0`; the pointer is rebuilt through a
+  `union` from (data, vtable) words, which flux cannot see through. `ptr::read(&self.alloc)` is discharged by
+  `requires A::size_of() >= 0`. Left as an error.
+Trusted count 11 -> 9.

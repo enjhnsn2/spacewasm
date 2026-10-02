@@ -210,7 +210,11 @@ impl<T: ?Sized, A: Allocator> Rc<T, A> {
     /// # Safety
     /// The caller must ensure that the coercion is valid and that the resulting
     /// `RcInner<U>` has the same memory layout as `RcInner<T>`.
-    #[flux_rs::trusted(reason = "panicked at crates/flux-refineck/src/type_env/place_ty.rs:496:18")]
+    // Field projection through the raw pointer: flux ICEs in the default raw-deref mode
+    // (flux#1490-style); allowed explicitly here.
+    #[flux_rs::opts(allow_raw_deref = "ok")]
+    // `A::size_of() >= 0` is needed for `ptr::read(&self.alloc)` (no non-negativity axiom in flux).
+    #[flux_rs::spec(fn(self: Self, coerce: _) -> Rc<U, A> requires A::size_of() >= 0)]
     pub unsafe fn into_dyn<U: ?Sized, F>(self, coerce: F) -> Rc<U, A>
     where
         F: FnOnce(&T) -> &U,
@@ -287,7 +291,10 @@ impl<T: ?Sized, A: Allocator> Rc<T, A> {
     /// # Safety
     /// The caller must ensure that no other references to the inner value exist.
     #[inline]
-    #[flux_rs::trusted(reason = "panicked at crates/flux-refineck/src/type_env/place_ty.rs:496:18")]
+    // Field projection through the raw pointer: flux ICEs in the default raw-deref mode
+    // (flux#1490-style); allowed explicitly here.
+    #[flux_rs::opts(allow_raw_deref = "ok")]
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> &mut T ensures self: Self[v])]
     pub unsafe fn get_mut_unchecked(&mut self) -> &mut T {
         // We are careful to *not* create a reference covering the "count" fields, as
         // this would conflict with accesses to the reference counts (e.g. by `Weak`).
