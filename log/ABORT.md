@@ -809,3 +809,94 @@ ABORT for `size_hint` (not re-attempted beyond confirming, per the wave-3 instru
 share one slice length); noted in the checkpoint. Remaining: `into_inner` (2, `?Sized` struct
 cannot carry `T::size_of()` facts), the two `Clone::clone` `expect`s (documented panics), and the
 two `checker.rs:1877` internal errors on `*mut T as *mut dyn Trait` in src/host.rs.
+
+## Wave 4, worker 1: type 114 engine::Engine and type 21 interpreter::Interpreter (after Store/Memory/Func)
+
+### type 114 engine::Engine (src/engine.rs:4) — ABORT (type check 19 -> 9 errors; the 9 are in `invoke`/`call_impl`)
+
+Refinement now: `refined_by(base: int, addr: int, bytes: int, size: int, sp: int, fp: int, module: ModuleRef, store: Store)`,
+`invariant(fp <= sp && sp <= size && size <= 4294967295)`, fields `module: ModuleRef[module]`, `store: Store[store]`
+(plus the wave-2 `fp`/`sp`/`stack` fields). `size <= u32::MAX` makes `self.fp = self.sp as u32` in `call_impl` lossless
+(flux's narrowing cast is exact only under `x <= u32::MAX`); `Engine::new` therefore requires `stack_size <= 4294967295`
+(it documents the latent truncation for stacks of more than 2^32 words). The invariant is lost across loops over a
+`&mut Engine` unless a qualifier with that constant exists (loop-head kvars only take qualifier-shaped facts): 
+`flux_rs::defs! { qualifier StackSizeFitsU32(x: int) { x <= 4294967295 } }` in src/util/flux_specs.rs, which makes
+`InterpreterRunner::run` verify again. `module.idx < store.modules.len` is NOT an invariant (`Engine::new` starts at
+`ModuleRef(0)` on an empty store); it is a precondition:
+- `call_impl_enter_module`: `requires e.module.idx < e.store.modules.len && f_ref.module.idx < e.store.modules.len`
+  (`WasmRef` got the detached refinement `refined_by(module: ModuleRef, index: int)` in flux_specs.rs). Both are needed:
+  the `f_ref.module == self.module` test is a derived `PartialEq`, whose result is unrefined, so the `0` branch
+  cannot learn `self.module == f_ref.module`.
+- `call_impl`: `requires e.module.idx < e.store.modules.len`; `invoke`: `requires f_ref.module.idx < e.store.modules.len`;
+- `resume`: `requires e.sp + 2 <= e.size` — the paused `call_host` popped its parameters and the validator reserved the
+  result words in the caller's `stack_usage`, so `sp + words(result) <= size` holds at the pause; `sp + 2` states it
+  for the widest result (over-strong by 1-2 words for `i32`/`f32`/no result; the exact form would need the paused
+  `ResultType` in the refinement, and `Option<ValType>` is only indexed by `is_some`).
+`impl Engine` (src/store.rs) specs: `new -> Result<Engine{e: e.sp == 0 && e.fp == 0 && e.size == stack_size && e.module.idx == 0 && e.store.modules.len == 0 && e.store.modules.cap == max_modules && e.store.host == h}, _>`,
+`reset(self: &strg Engine[@e]) ensures self: Engine[Engine { sp: 0, fp: 0, ..e }]`,
+`push_module` mirrors `Store::push_module` (`-> Result<ModuleRef{r: r.idx == e.store.modules.len}, _>[len < cap]`, post-state `..e`
+with `modules.len + 1`), `needs_start(&Engine[@e], module_ref: ModuleRef{r: r.idx < e.store.modules.len})`,
+`call_host_fn(self: &mut Engine[@e], module: HostModuleRef{r: r.idx < e.store.host.len}, ..)` (still `trusted`, pre-existing;
+the spec records the assumption that a host closure leaves the stack pointers and module counts unchanged).
+All of `impl Engine` verifies (`needs_start` 242 fixed; store.rs 10 -> 9 errors).
+Remaining 9 (type check): `call_impl` 88 (`m.functions[index]`, Box<[T]> length bridge, deferred); `invoke` 141/143
+(`m.functions[..]`, `m.types[..]`, Box<[T]>), 159/163/167/171 + the fold at 187 (the parameter loop writes at `sp` while
+`sp` advances by 1/2 per `(Value, ValType)` pair; the only bound is `params_words + required <= size` where
+`params_words` is `ty.params.iter().map(..).sum()`, a fold over a `Vec<ValType>` that flux cannot relate to the loop), and
+`expect` at 187 (`call_impl`'s `Result` index would have to mention the callee's `required_stack_words`, looked up inside).
+Strategies: (i) preconditions — added as above; (ii) struct refinement — `module`/`store`/`size <= u32::MAX` added;
+(iii) callee specs — `Func::required_stack_words` (wave 3) is exact; what is missing is a sum over the parameter
+vector, not a callee output.
+
+### type 21 interpreter::Interpreter — ABORT (interpreter.rs 275 -> 265 errors: 209 wrapper assumptions + 56 residual)
+
+New this wave (annotations only, plus two semantics-preserving local rewrites):
+- Store-index preconditions on the ops that index the store: `memory_grow_op`, `call_indirect_op`, `global_get_op`,
+  `global_set_op` (`s.module.idx < s.store.modules.len`), `global_get_extern_op`/`global_set_extern_op`
+  (`module.idx < s.store.modules.len`), `global_get_host_op`/`global_set_host_op`/`call_host_op`
+  (`module.idx < s.store.host.len`). `Store::modules_mut`/`host_modules_mut` now return `&mut [..][len]`
+  (`Vec::deref_mut` is indexed since the wave-3 merge; this is the one edit outside the `impl Engine` block of store.rs,
+  anticipated by the Store worker's note) so `global_set_op`'s and `call_host_op`'s `*_mut()[module]` lookups verify.
+- `IrVisitor::call_host` is now a `forward!` wrapper of the inherent `Interpreter::call_host_op` (pure delegation, same
+  shape as every other op; `call_indirect_op` calls the op directly).
+- `StaticVec::new/push/len` + `Default::default` detached specs (flux_specs.rs; `push -> Result[v.len < N]`,
+  post-state `len + 1`): the four `sv.push(..).unwrap()` in `call_host_op` verify (at most `MAX_HOST_FUNCTION_PARAMS`
+  pushes, one per `HostValListIter` item). Side effect: text.rs 18 -> 15 errors (765 x2, 843) without touching it.
+- `Interpreter::arity_words(LabelArity[@a]) -> u8[a.n]` (a `match`) replaces `addr.arity() as u8` in `br_impl`: an
+  enum-to-integer cast is unconstrained in flux, so `return_op`'s `has_depth(s, return_size + 2)` was unprovable
+  from `can_branch`; `br_impl` now verifies.
+Wrapper assumptions (209, counted from the full sweep; every error at a `forward!`/`br_table`/`call`/`call_extern`
+wrapper is a "precondition cannot be proved" of its single `*_op`/`call_impl*` call, one per conjunct):
+197 are the Wasm validator's stack-typing guarantee — `has_depth` 155, `has_room` 24, `has_local` 12 (4 conjuncts x
+`local_get/set/tee`), `can_branch` 6 (`br` 3 + `br_if` 3) — and 12 are the linker's module-index guarantee
+(`s.module.idx < s.store.modules.len` / `module.idx < s.store.host.len` on the 9 store-touching ops, `call` -> `call_impl`,
+`call_extern` -> `call_impl_enter_module` x2). Nothing else is reported in the wrappers.
+Residual 56 in op bodies and `Engine` methods, by cause:
+- 8 Box<[T]> length bridge (deferred, documented): `call_impl` 1 (`functions`), `invoke` 2 (`functions`, `types`),
+  `call_indirect_op` 3 (`types[x]`, `functions[*index]`, `types[f.ty]`), `global_get_op` 1, `global_set_op` 1 (`globals`).
+- 5 per-element `HostModule` vectors (`hm.functions[x]`, `hm.globals[i]`: a fact about one element of a `Vec<HostModule>`,
+  not expressible): `call_host_op` 2, `call_indirect_op` 1, `global_get_host_op` 1, `global_set_host_op` 1.
+- 2 store-wide reference-validity gap (type 111): `call_indirect_op` `modules()[module]`/`host_modules()[module]` with
+  the ref read out of a `TableElement`.
+- 6 stack contents (`return_op`): `frame_length`/`parameter_size`/`module_delta` are read back from the frame word at
+  `fp` (`CallFrame::from_bits`), so `fp - frame_length`, `fp - parameter_size` (underflow), the two `get_memory/get_table`
+  lookups of the restored module and the two final folds (`fp' <= sp'`) have no refinement to appeal to.
+- 12 host-signature-dependent stack effect (`call_host_op`): `state.sp -= f.param_size()` (underflow), the 4 parameter
+  reads at `sp + offset`, the fold at `call_host_fn` (`fp <= sp` after the pop), the 4 result pushes and the 2 end folds.
+  The validator guarantees `has_depth(s, param_size(f))` / `has_room(s, param_size(f), words(returns(f)))`, but `f` is
+  `host_modules[module].functions[x]`, an element of a `Vec` — the precondition cannot be written (a `HostFunction`
+  refinement would not help: the fact lives in a vector element).
+- 6 `invoke` parameter loop + `expect` (see type 114 above).
+- 9 operand width depends on a `ValType` value: `local_get_op` 2, `local_set_op` 1, `local_tee_op` 1 (`l.ty`:
+  `LocalVariable` in src/visitor.rs is `refined_by(off)` only — not in this worker's files; with `#[flux_rs::reflect]` on
+  `ValType` plus `ty: ValType[ty]` on `LocalVariable`, `has_local`/`has_room` could be stated per width and these 4 would
+  verify), `global_get_op` 2 (`g.type_.ty` of a `Box<[Global]>` element), `global_get_host_op` 3 (`Value` variant returned
+  by the host global). `ValType` was left unreflected: without the `LocalVariable` field it buys nothing.
+- 6 `br_table_op`: the label is `cases(v)` (closure result); `br_impl`'s `can_branch` (3 conjuncts x 2 calls) cannot be
+  stated for it.
+- 2 casts: `LocalVariable::addr` (`u32 as i32` unconstrained) and `i32_div_u_op` (`i32 as u32` loses `b != 0`).
+Cross-check (full sweep 366 -> 352): interpreter.rs 275 -> 265, store.rs 10 -> 9, text.rs 18 -> 15 (StaticVec specs),
+every other file unchanged line-for-line (imports 17, compiler 7, vec 7, module 6, paging 5, alloc 5, box_ 4, host 4,
+code 4, stack 2, rc 1, ir_reader 1; the two `internal flux error` entries at host.rs 162/358 are the pre-existing
+unsize casts). `trusted` count unchanged at 12. Fixpoint/solver: no TIMEOUT, no new CRASH; the Interpreter type check
+needs ~10 minutes (run under `systemd-run --user --scope -p MemoryMax=14G`).

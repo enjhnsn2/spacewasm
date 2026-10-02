@@ -50,8 +50,7 @@ impl Store {
         &self.modules
     }
 
-    // The slice length is not exposed: `Vec::deref_mut` is unindexed.
-    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [Module])]
+    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [Module][s.modules.len])]
     #[inline(always)]
     pub fn modules_mut(&mut self) -> &mut [Module] {
         &mut self.modules
@@ -63,7 +62,7 @@ impl Store {
         &self.host_modules
     }
 
-    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [HostModule])]
+    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [HostModule][s.host.len])]
     #[inline(always)]
     pub fn host_modules_mut(&mut self) -> &mut [HostModule] {
         &mut self.host_modules

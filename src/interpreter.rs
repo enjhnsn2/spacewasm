@@ -304,6 +304,18 @@ pub enum InterpreterResult {
 }
 
 impl Interpreter {
+    /// Number of stack words of a label arity (the value of `arity as u8`).
+    /// Flux: an enum-to-integer cast is unconstrained, so the `match` keeps the
+    /// `LabelArity` index for `return_op`'s `has_depth(s, return_size + 2)`.
+    #[flux_rs::spec(fn(arity: LabelArity[@a]) -> u8[a.n])]
+    fn arity_words(arity: LabelArity) -> u8 {
+        match arity {
+            LabelArity::None => 0,
+            LabelArity::I32 => 1,
+            LabelArity::I64 => 2,
+        }
+    }
+
     /// This function performs an unconditional branch to a resolved label target.
     ///
     /// Label targets use a relative offset from their location in the IR. The program
@@ -329,7 +341,7 @@ impl Interpreter {
         state: &mut Engine,
     ) -> Result<(), InterpreterBreak> {
         if addr.is_sentinel() {
-            return self.return_op(addr.arity() as u8, state);
+            return self.return_op(Self::arity_words(addr.arity()), state);
         }
 
         let depth = addr.depth() as usize;
