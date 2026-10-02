@@ -47,6 +47,14 @@ impl<T> DerefMut for ManuallyDrop<T> {
           && (len == 0 || (p.addr % T::align_of() == 0 && p.addr >= p.base && len * T::size_of() <= p.size)))]
 unsafe fn from_raw_parts<'a, T>(data: *const T, len: usize) -> &'a [T];
 
+// Mutable counterpart of the above (same safety contract); gives
+// `<InnerVec as DerefMut>::deref_mut` (and hence `Vec::deref_mut`) a known length.
+#[flux_rs::extern_spec(core::slice)]
+#[flux_rs::spec(fn(data: *mut[@p] T, len: usize) -> &mut [T][len]
+    requires p.addr != 0
+          && (len == 0 || (p.addr % T::align_of() == 0 && p.addr >= p.base && len * T::size_of() <= p.size)))]
+unsafe fn from_raw_parts_mut<'a, T>(data: *mut T, len: usize) -> &'a mut [T];
+
 // ---------------------------------------------------------------------------
 // Detached specs for the (already verified) `InnerVec` accessors, so wrappers
 // such as `Vec` can state their own specs in terms of `inner.len`/`inner.cap`.
@@ -207,3 +215,14 @@ impl str {
     fn as_bytes(&self) -> &[u8];
 }
 
+
+// `Step for u32`: flux-core only gives `usize`/`i32` the arithmetic `Step` refinement
+// (everything else falls back to the uninterpreted defaults), so `for _ in 0..n` with a
+// `u32` bound (e.g. `Reader::read_vec_in`) had an unknown trip count. Mirrors
+// flux-core's `impl Step for usize {}` (requires `feature(step_trait)`, cfg'd on `flux`).
+#[flux_rs::extern_spec(core::iter)]
+#[flux_rs::assoc(
+    fn step_forward(start: int, count: int) -> int { start + count }
+    fn size(lo: int, hi: int) -> int { hi - lo }
+)]
+impl core::iter::Step for u32 {}

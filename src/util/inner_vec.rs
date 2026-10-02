@@ -135,7 +135,7 @@ impl<T> Deref for InnerVec<T> {
 }
 
 impl<T> DerefMut for InnerVec<T> {
-    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T])]
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T][v.len])]
     fn deref_mut(&mut self) -> &mut [T] {
         if self.ptr.is_null() {
             &mut []

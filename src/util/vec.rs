@@ -343,7 +343,7 @@ impl<T, A: Allocator> Deref for Vec<T, A> {
 }
 
 impl<T, A: Allocator> DerefMut for Vec<T, A> {
-    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T])]
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T][v.inner.len])]
     fn deref_mut(&mut self) -> &mut [T] {
         self.inner.deref_mut()
     }
