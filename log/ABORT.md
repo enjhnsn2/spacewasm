@@ -848,7 +848,7 @@ Strategies: (i) preconditions — added as above; (ii) struct refinement — `mo
 (iii) callee specs — `Func::required_stack_words` (wave 3) is exact; what is missing is a sum over the parameter
 vector, not a callee output.
 
-### type 21 interpreter::Interpreter — ABORT (interpreter.rs 275 -> 265 errors: 209 wrapper assumptions + 56 residual)
+### type 21 interpreter::Interpreter — ABORT (interpreter.rs 275 -> 265 errors: 209 wrapper assumptions [197 validator + 12 linker] + 56 residual)
 
 New this wave (annotations only, plus two semantics-preserving local rewrites):
 - Store-index preconditions on the ops that index the store: `memory_grow_op`, `call_indirect_op`, `global_get_op`,
