@@ -219,12 +219,17 @@ pub enum BlockKind {
 }
 
 /// A control flow frame tracking jump targets for blocks, loops, and if-else statements.
+///
+/// Flux: indexed by `height` (a `u16`, so at most `65535`).
 #[derive(Clone)]
+#[flux_rs::refined_by(height: int)]
+#[flux_rs::invariant(0 <= height && height <= 65535)]
 struct ControlFrame {
     kind: BlockKind,
     label: ResultType,
     out: ResultType,
     /// The operand stack height in _number_ of elements rather than stack word usage
+    #[flux_rs::field(u16[height])]
     height: u16,
     /// For loops: the backward jump target
     /// For blocks/if/else: the head of the linked list of forward jumps
@@ -471,12 +476,21 @@ impl CodeBuilder {
 /// - Managing a stack of control frames for nested blocks
 ///
 /// The `N` generic parameter limits the maximum number of code pages.
+///
+/// Flux: refined by the number of control frames (`frames`) and the operand
+/// stack depth in elements (`stack`). The per-frame fact `frame.height <= stack`
+/// (every frame was pushed at a height the stack has not dropped below) is a
+/// quantified property over the `control_frames` elements, which flux cannot
+/// express, so it is not part of the refinement.
+#[flux_rs::refined_by(frames: int, stack: int)]
 pub struct TextBuilder<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize> {
     code: &'a mut CodeBuilder,
     store: &'a Store,
     module: &'a Module,
     func: &'a Func,
+    #[flux_rs::field(StaticVec<ControlFrame, MAX_CONTROL_FRAMES>[frames])]
     control_frames: StaticVec<ControlFrame, MAX_CONTROL_FRAMES>,
+    #[flux_rs::field(StaticVec<OperandType, MAX_STACK_DEPTH>[stack])]
     value_stack: StaticVec<OperandType, MAX_STACK_DEPTH>,
     stack_highwater: usize,
     br_table_result: Option<ResultType>,
@@ -520,6 +534,10 @@ impl From<OperandType> for u8 {
 impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     TextBuilder<'a, MAX_CONTROL_FRAMES, MAX_STACK_DEPTH>
 {
+    /// Flux: the stack starts empty; the implicit function frame is pushed iff
+    /// there is room for it (`MAX_CONTROL_FRAMES > 0`), its failure is ignored.
+    #[flux_rs::spec(fn(code: &mut CodeBuilder, store: &Store, module: &Module, func: &Func)
+        -> Self{v: v.stack == 0 && v.frames == (if MAX_CONTROL_FRAMES > 0 { 1 } else { 0 })})]
     pub fn new(
         code: &'a mut CodeBuilder,
         store: &'a Store,
@@ -565,6 +583,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         self.stack_highwater
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], r: ResultType) -> Result<(), ValidationError> ensures self: Self[v])]
     pub fn check_br_table_result(&mut self, r: ResultType) -> Result<(), ValidationError> {
         if let Some(other) = self.br_table_result {
             if other != r {
@@ -578,6 +597,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         }
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], def_result: ResultType) -> Result<(), ValidationError> ensures self: Self[v])]
     pub fn check_and_clear_br_table_result(
         &mut self,
         def_result: ResultType,
@@ -713,6 +733,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         self.code.pc()
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v]) ensures self: Self{w: w.frames == v.frames})]
     pub(crate) fn mark_unreachable(&mut self) {
         // With the implicit function frame, there's always a frame
         if let Some(frame) = self.control_frames.last_mut() {
@@ -754,6 +775,9 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     ///
     /// Label targets also encode the arity and stack reset information in the first 10-bits.
     /// The jump address is encoded in the final 22-bits
+    /// Flux: on success the label index was in range, so there is at least one frame.
+    #[flux_rs::spec(fn(self: &strg Self[@v], label: LabelIdx) -> Result<ResultType, ValidationError>{b: b => v.frames > 0}
+        ensures self: Self[v])]
     pub(crate) fn write_label_target(
         &mut self,
         label: LabelIdx,
@@ -836,6 +860,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         size
     }
 
+    #[flux_rs::spec(fn(&Self[@v], truncate_len: usize{truncate_len <= v.stack}) -> usize)]
     pub(crate) fn stack_height_for(&self, truncate_len: usize) -> usize {
         assert!(truncate_len <= self.value_stack.len());
 
@@ -853,6 +878,9 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         size
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], ty: _) -> Result<(), ValidationError>[v.stack < MAX_STACK_DEPTH]
+        ensures self: Self{w: w.frames == v.frames
+            && w.stack == (if v.stack < MAX_STACK_DEPTH { v.stack + 1 } else { v.stack })})]
     pub(crate) fn push_stack(&mut self, ty: impl Into<OperandType>) -> Result<(), ValidationError> {
         self.value_stack.push(ty.into())?;
         let l = self.stack_height();
@@ -863,6 +891,8 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         Ok(())
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<OperandType, ValidationError>
+        ensures self: Self{w: w.frames == v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_stack_t(&mut self) -> Result<OperandType, ValidationError> {
         // func pop_opd() : val_type | Unknown =
         //     if (opds.size() = ctrls[0].height && ctrls[0].unreachable) return Unknown
@@ -881,6 +911,8 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         }
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], result: ResultType) -> Result<(), ValidationError>
+        ensures self: Self{w: w.frames == v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_result_type(&mut self, result: ResultType) -> Result<(), ValidationError> {
         if let Some(result) = result.0 {
             self.pop_stack(result)?;
@@ -890,6 +922,8 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         }
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], result: ResultType) -> Result<(), ValidationError>
+        ensures self: Self{w: w.frames == v.frames && w.stack >= v.stack})]
     pub(crate) fn push_result_type(&mut self, result: ResultType) -> Result<(), ValidationError> {
         if let Some(result) = result.0 {
             self.push_stack(result)
@@ -898,6 +932,8 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         }
     }
 
+    #[flux_rs::spec(fn(self: &strg Self[@v], expect: _) -> Result<OperandType, ValidationError>
+        ensures self: Self{w: w.frames == v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_stack(
         &mut self,
         expect: impl Into<OperandType>,
@@ -926,6 +962,13 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
         }
     }
 
+    // Flux: `check_overflow = "lazy"` gives the narrowing `len as u16` wrapping semantics,
+    // which is what bounds the frame's `height` by `u16::MAX` (the `ControlFrame` invariant).
+    #[flux_rs::opts(check_overflow = "lazy")]
+    #[flux_rs::spec(fn(self: &strg Self[@v], kind: BlockKind, label: ResultType, out: ResultType)
+        -> Result<(), ValidationError>[v.frames < MAX_CONTROL_FRAMES]
+        ensures self: Self{w: w.stack == v.stack
+            && w.frames == (if v.frames < MAX_CONTROL_FRAMES { v.frames + 1 } else { v.frames })})]
     pub(crate) fn push_control(
         &mut self,
         kind: BlockKind,
@@ -951,6 +994,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
 
     /// Set the target (br chain head) of the current control frame.
     /// Used when entering an else block to transfer the br chain from the if block.
+    #[flux_rs::spec(fn(self: &mut Self[@v], target: JumpTarget) -> Result<(), ValidationError>[v.frames > 0])]
     pub(crate) fn set_control_target(&mut self, target: JumpTarget) -> Result<(), ValidationError> {
         let frame = self
             .control_frames
@@ -963,6 +1007,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     /// Write a placeholder label target for an if's false branch (else or end).
     /// This is called immediately after pushing an if control frame.
     /// The placeholder becomes the TAIL of the linked list (any br instructions will be inserted before it).
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> Result<(), ValidationError>)]
     pub(crate) fn write_if_else_target(&mut self) -> Result<(), ValidationError> {
         // Get the result type from the control frame we just pushed
         let out = self
@@ -989,7 +1034,22 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     /// This is called when entering an else block.
     /// Walks the linked list to find the tail (false-branch with sentinel), patches it,
     /// and breaks it off from the chain. Returns (result_type, remaining_chain_head).
+    /// Flux: `else` is only reached after a successful `write_label_target(LabelIdx(0))`
+    /// (`Compiler::else_`), which establishes that a frame exists, but that fact does not
+    /// survive the weak `&mut Self::State` between the two calls; the precondition lives
+    /// on [`Self::pop_control_and_patch_if_op`] and this forwarding wrapper carries it.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(ResultType, JumpTarget), ValidationError>
+        ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_control_and_patch_if(
+        &mut self,
+    ) -> Result<(ResultType, JumpTarget), ValidationError> {
+        self.pop_control_and_patch_if_op()
+    }
+
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(ResultType, JumpTarget), ValidationError>
+        requires v.frames > 0
+        ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
+    fn pop_control_and_patch_if_op(
         &mut self,
     ) -> Result<(ResultType, JumpTarget), ValidationError> {
         // Make sure our current frame is an if
@@ -1055,7 +1115,21 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     /// control_frame.address -> [addr1] -> [addr2] -> ... -> SENTINEL
     /// ```
     /// Each location in brackets holds 2 words encoding the next address.
+    ///
+    /// Flux: the decoder only calls this with a frame to pop (`block_depth` in
+    /// `Reader::read_code` plus the implicit function frame), which is a
+    /// decoder-side invariant this builder cannot see; the precondition lives on
+    /// [`Self::pop_control_op`] and this forwarding wrapper carries the obligation.
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<ResultType, ValidationError>
+        ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_control(&mut self) -> Result<ResultType, ValidationError> {
+        self.pop_control_op()
+    }
+
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<ResultType, ValidationError>
+        requires v.frames > 0
+        ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
+    fn pop_control_op(&mut self) -> Result<ResultType, ValidationError> {
         // func pop_ctrl() : list(val_type) =
         //     error_if(ctrls.is_empty())
         //     let frame = ctrls[0]

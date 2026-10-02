@@ -900,3 +900,78 @@ every other file unchanged line-for-line (imports 17, compiler 7, vec 7, module 
 code 4, stack 2, rc 1, ir_reader 1; the two `internal flux error` entries at host.rs 162/358 are the pre-existing
 unsize casts). `trusted` count unchanged at 12. Fixpoint/solver: no TIMEOUT, no new CRASH; the Interpreter type check
 needs ~10 minutes (run under `systemd-run --user --scope -p MemoryMax=14G`).
+
+## Wave 4, worker 2 (uid 113 `text::TextBuilder`)
+
+### type 113 text::TextBuilder (src/text.rs) — ABORT (18 -> 11 errors; 2 decoder assumptions, 4 stack-shape facts over `StaticVec` elements, 4 Store/Module ref validity, 1 narrowing cast)
+
+Kept (verified, no new errors elsewhere; `CodeBuilder` uid 92 stays SAFE):
+- `TextBuilder: refined_by(frames: int, stack: int)` with
+  `#[field(StaticVec<ControlFrame, MAX_CONTROL_FRAMES>[frames])]` and
+  `#[field(StaticVec<OperandType, MAX_STACK_DEPTH>[stack])]` (number of control frames, operand-stack depth in elements).
+- `ControlFrame: refined_by(height: int)`, `#[field(u16[height])]`, `invariant(0 <= height && height <= 65535)`;
+  `push_control` carries `#[flux_rs::opts(check_overflow = "lazy")]` so the narrowing `value_stack.len() as u16`
+  gets wrapping semantics (without it the cast result is unconstrained and the invariant is unprovable at the
+  `ControlFrame { .. }` construction). An extern spec `Clone for u16` (value-preserving, mirror of the `usize` one)
+  in src/util/flux_specs.rs keeps the derived `Clone` verifiable.
+- Detached specs for `util::StaticVec` (src/util/flux_specs.rs; static_vec.rs untouched):
+  `new/default -> StaticVec[0]`, `len -> usize[v.len]`,
+  `push(self: &strg [@v], T) -> Result<(), AllocError>[v.len < N] ensures Self[if v.len < N { v.len + 1 } else { v.len }]`,
+  `pop(self: &strg [@v]) -> Option<T>[v.len > 0] ensures Self[if v.len > 0 { v.len - 1 } else { v.len }]`.
+- Method specs: `new -> Self{v: v.stack == 0 && v.frames == (if MAX_CONTROL_FRAMES > 0 { 1 } else { 0 })}`
+  (the implicit function frame's push failure is ignored by `new`, so `frames > 0` is NOT a struct invariant);
+  `push_stack -> Result[v.stack < MAX_STACK_DEPTH]` (exact `stack` post-state, `frames` preserved);
+  `pop_stack_t`/`pop_stack`/`pop_result_type` (`frames` preserved, `stack` non-increasing); `push_result_type`
+  (`stack` non-decreasing); `push_control -> Result[v.frames < MAX_CONTROL_FRAMES]` (exact `frames`, `stack` preserved);
+  `set_control_target -> Result[v.frames > 0]`; `write_label_target -> Result{b: b => v.frames > 0}` (`&strg`, index
+  preserved); `stack_height_for(truncate_len <= v.stack)`; `mark_unreachable` (`frames` preserved);
+  `check_br_table_result`/`check_and_clear_br_table_result`/`write_if_else_target` index-preserving.
+  `&mut Self[@v]` was tried first on the methods that assign a field or branch on `&mut self.control_frames[idx]`
+  and gave 2 "assignment might be unsafe" (`br_table_result = ..`) + 1 "error jumping to join point"
+  (`write_label_target`); `&strg Self[@v] .. ensures self: Self[v]` is the working shape.
+- Semantics-preserving split (noted): `pop_control` and `pop_control_and_patch_if` are now forwarding wrappers
+  around the inherent `pop_control_op` / `pop_control_and_patch_if_op`, which carry `requires v.frames > 0`. Their
+  callers are `WasmVisitor` trait methods in compiler.rs (`exit_block`, `finish`, `else_`; trait impls cannot add
+  preconditions and the file belongs to another wave), so the wrappers keep the obligation inside text.rs:
+  4 body errors (996/1011, 1070/1084) -> 2 wrapper errors. For `else_` the `requires` was first put directly on
+  `pop_control_and_patch_if`, expecting `write_label_target(LabelIdx(0))?`'s `Result{b: b => v.frames > 0}` to
+  discharge it; it does not: `state: &mut Self::State` is a weak reference and flux re-generalizes its pointee
+  between the two calls, so the fact about `v` is gone by the second call (compiler.rs 7 -> 8 errors, reverted).
+- Timing: the whole type checks in ~28 s uncached under cvc5 (harness budget 30 s; first run after the
+  flux_specs.rs change recompiles and takes ~70 s).
+
+Remaining 11 errors:
+1. text.rs `pop_control` / `pop_control_and_patch_if` wrappers (precondition `v.frames > 0`, x2): decoder-side
+   invariant. `Reader::read_code` (code.rs) tracks `block_depth`, only calls `exit_block` at depth > 0, `finish` once,
+   and `else_` after a successful `write_label_target(LabelIdx(0))`,
+   so `frames == block_depth + 1` holds whenever `TextBuilder::new`'s implicit push succeeded — a relation between
+   the reader's local and the builder's `frames` that no spec on `TextBuilder` can see (same class as the
+   interpreter's `has_depth` validator assumption). Finding: `new` swallows the push failure (`let _ = ..`), so
+   with `MAX_CONTROL_FRAMES == 0` the final `END` reaches `pop_control` on an empty frame stack and
+   `last().unwrap()` panics (config-level, not reachable for the crate's instantiations).
+2. `mark_unreachable` (`value_stack.truncate(frame.height as usize)`: `new_len <= v.len`),
+   `control_frame_stack_len` (`value_stack.len() - height` underflow), and `write_label_target`
+   (`stack_height_for(self.control_frames[idx].height as usize)`: `truncate_len <= v.stack`): all need
+   `frame.height <= stack` for a frame read out of `control_frames` (`last()`/`[idx]`). The inductive invariant is
+   "frame heights are non-decreasing along `control_frames` and the last one is `<= stack`"; flux has no
+   quantification/ordering over `StaticVec` elements, and the obvious per-element encoding
+   `StaticVec<ControlFrame{f: f.height <= stack}, N>` is not preserved by `pop_stack_t`/`truncate` (shrinking
+   `stack` would need the bound for every frame, which only holds for the last one). (i) a `requires` cannot name an
+   element; (ii) the struct cannot carry a ghost "top height" (`refined_by` params must be bare field indices);
+   (iii) no callee is involved (`last`/index already carry exact lengths).
+3. `write_label_target` (`start_stack_height - end_stack_height` underflow): `stack_height_for(h) <=
+   stack_height()` for `h <= len` is a prefix-sum fact over the stack contents (both loops `break` at the first
+   `OperandType::Unknown`); the refinement only tracks lengths, and flux has no aggregate over elements.
+4. `get_global` 4x `.get(..).unwrap()` (`store.host_modules()[module.0]`, `module.globals[index]`,
+   `store.modules()[module.0]`, `module.globals[index]`): the `Ref::Host`/`Ref::Extern` come from
+   `Module::get_global_ref` and were validated at import resolution: the store-wide ref-validity gap plus the
+   per-element `HostModule.globals.len` / `Box<[T]>` length bridge documented under types 110/111. Deferred.
+5. `get_local` (`x - current_index` underflow, u16): the needed loop invariant `current_index <= x` after the
+   parameter loop relies on `x == i as u16` with the narrowing cast of the `enumerate` index (`usize -> u16`),
+   which flux leaves unconstrained, so `x != i as u16` says nothing about `x` vs `current_index`. (The exact
+   rewrite `x as usize == i` would make it provable but changes behaviour for >= 65536 parameters, so it was not
+   applied.) No spec/invariant/callee can bridge an uninterpreted cast.
+
+Cross-cutting: the `StaticVec::push` spec also discharges the 4 `sv.push(..).unwrap()` obligations in
+interpreter.rs 2283/2288/2293/2298 (the `read_*` precondition at each site remains): interpreter.rs 275 -> 271.
+Full sweep 366 -> 355 (text.rs 18 -> 11, interpreter.rs -4, every other file unchanged).
