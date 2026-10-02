@@ -657,3 +657,53 @@ by extern specs for `str::len(&str[@s]) -> usize[str_len(s)]` and `str::as_bytes
 src/util/flux_specs.rs (flux refines `str` by its contents and provides the `str_len` theory function; flux-core has no
 `str` specs). RESULT=SAFE. `HostName` (33) / `HostValList` (82), which also call `str::len`/`as_bytes`, are unaffected
 (82 keeps the same 3 errors logged above).
+
+## Wave 3, worker 1 (uids 111, 105, 18/43, 52, 110)
+
+### type 111 store::Store (src/store.rs:6) — ABORT (15 -> 11 errors in store.rs; 17 in imports.rs unchanged)
+
+Kept (verified, no new errors in this worker's files):
+- `Store: refined_by(modules: InnerVec, host: InnerVec)` with `#[invariant(modules.cap <= 256)]`, fields
+  `modules: Vec<Module>[modules]`, `host_modules: Vec<HostModule>[host]` (the `refined_by(n_modules: int, ..)` +
+  `Vec<Module>{v: v.inner.len == n_modules}` form was not tried: a `refined_by` param must be a bare index).
+- Detached `ModuleRef(u8[idx])` / `HostModuleRef(u8[idx])` (`refined_by(idx: int)`) in src/util/flux_specs.rs
+  (visitor.rs untouched; tuple-struct detached specs take no trailing `;`). `HostModuleRef::new` is left
+  unspecified (narrowing cast in visitor.rs).
+- Specs: `from_host_modules -> Result<Store{s: s.modules.len == 0 && s.modules.cap == max_modules && s.host == h}, _>`,
+  `modules -> &[Module][s.modules.len]`, `host_modules -> &[HostModule][s.host.len]`, `modules_mut`/`host_modules_mut`
+  unindexed (`Vec::deref_mut` is unindexed in this tree), `pop_module`/`push_module` with `&strg` post-states,
+  `push_module -> Result<ModuleRef{r: r.idx == s.modules.len}, _>[s.modules.len < s.modules.cap]`,
+  `get_memory/get_table/get_memory_mut(.., module_ref: ModuleRef{r: r.idx < s.modules.len})`.
+  `Engine::new` (store.rs) still verifies.
+- Local rewrite in `push_module`: `let index = self.modules.len(); self.modules.try_push(module)?; Ok(ModuleRef(index as u8))`
+  (same value as `len() - 1` after the push; flux cannot couple `try_push`'s `Ok` to its post-state, so the
+  subtraction was an "arithmetic may underflow"). The `as u8` is exact because `len < cap <= 256`.
+
+Remaining 11 errors in store.rs, all the same gap — call it the **store-wide reference validity** gap:
+- `get_memory` 113/120, `get_table` 133/140 (x2), `get_memory_mut` 169/176 (x2): the `ModuleRef` in
+  `MemoryKind::Import` / `TableKind::Import` and the `HostRef` in `*::ImportHost` live inside the `Module` being
+  looked up; they were range-checked by `link_*` (imports.rs) at load time, i.e. the invariant is
+  "for every `i`, every ref stored in `modules[i]` is `< i`" (resp. `< host.len` and `< host_modules[m].memory.len`).
+  Flux has no quantification over `Vec` elements, and the obvious encoding `Vec<Module{m: m.mem_import < modules.len}>`
+  is ruled out because `Vec<T>` is invariant in `T` (`InnerVec` holds `*mut T`), so `push_module` could not
+  re-type the vector when `modules.len` grows. The host arms additionally need `host_modules[m].memory.len`, a
+  per-element fact.
+- `get_memory_mut` 161 (`&mut self.modules[module_ref.0 as usize]`): goes through `Vec::deref_mut`, which is unindexed
+  here; it is discharged by the other wave-3 worker's `DerefMut -> &mut [T][v.inner.len]` once merged (the precondition
+  `r.idx < s.modules.len` is already in place).
+- `Engine::needs_start` 242 (`self.store.modules()[module_ref.0 as usize]`): needs `Engine` to expose its store,
+  `#[field(Store[store])]`, and `requires module_ref.idx < e.store.modules.len` (engine wave).
+imports.rs (17, unchanged): `link_*` only index through refs read out of a module (`Ref::Extern`/`Ref::Host`,
+`*Kind::Import*`: the validity gap above) or through `Box<[T]>` sections (`module.functions/types/globals[..]`:
+the `Box<[T]>` length bridge, see "Module") or `HostModule`'s vectors (per-element fact).
+Strategies: (i) preconditions — added where the ref is a parameter; (ii) struct refinement — done for `Store`,
+`ModuleRef`, `HostModuleRef`; a `Module`-side `refined_by(mem_import, ..)` would not help without the quantified
+`Store` invariant; (iii) callee specs — `Vec`/`InnerVec` already expose `len`; nothing else is involved.
+
+Callers now carrying an obligation (interpreter.rs, not this worker's file: 274 -> 275 errors, +5/-4):
+`call_impl_enter_module` (71/72), `memory_grow_op` (885), `return_op` (1717/1718) call `get_memory`/`get_table`/
+`get_memory_mut(state.module)` and need `state.module.idx < state.store.modules.len`. For the engine wave:
+`Engine` fields `#[field(Store[store])]` + `#[field(ModuleRef[module])]` (both exist as `refined_by` params to add) and
+`requires e.module < e.store.modules.len` on `call_impl*`/`invoke`/`resume` and the `*_op` methods that touch the
+store; it cannot be an `Engine` invariant because `Engine::new` starts with `module: ModuleRef(0)` on an empty store.
+(The -4 are the `required_stack_words` obligations at 104/105/110/120, see type 105 below.)

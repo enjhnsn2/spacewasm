@@ -2,9 +2,19 @@ use crate::*;
 
 /// Holds ownership of all the loaded modules. As new modules are loaded,
 /// imports/exports are referenced through the store.
+///
+/// Flux: refined by the two module vectors (`modules`/`host` are the `InnerVec`
+/// indices of `modules`/`host_modules`), so a [`ModuleRef`] / [`HostModuleRef`]
+/// can be required to be in range (`r.idx < s.modules.len`). The module vector
+/// never holds more than 256 modules (`from_host_modules`), which is what makes
+/// `push_module`'s `ModuleRef(.. as u8)` lossless.
 #[derive(Debug)]
+#[flux_rs::refined_by(modules: InnerVec, host: InnerVec)]
+#[flux_rs::invariant(modules.cap <= 256)]
 pub struct Store {
+    #[flux_rs::field(Vec<Module>[modules])]
     modules: Vec<Module>,
+    #[flux_rs::field(Vec<HostModule>[host])]
     host_modules: Vec<HostModule>,
     zero_memory: Rc<Memory>,
     zero_table: Rc<[TableElement]>,
@@ -16,6 +26,8 @@ impl Store {
     /// layer) that accumulate host modules dynamically. Returns
     /// [`AllocError::OutOfMemory`] if `max_modules` exceeds the 256-module
     /// limit, instead of panicking.
+    #[flux_rs::spec(fn(max_modules: usize, host_modules: Vec<HostModule>[@h])
+        -> Result<Store{s: s.modules.len == 0 && s.modules.cap == max_modules && s.host == h}, AllocError>)]
     pub fn from_host_modules(
         max_modules: usize,
         host_modules: Vec<HostModule>,
@@ -32,21 +44,26 @@ impl Store {
         })
     }
 
+    #[flux_rs::spec(fn(&Self[@s]) -> &[Module][s.modules.len])]
     #[inline(always)]
     pub fn modules(&self) -> &[Module] {
         &self.modules
     }
 
+    // The slice length is not exposed: `Vec::deref_mut` is unindexed.
+    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [Module])]
     #[inline(always)]
     pub fn modules_mut(&mut self) -> &mut [Module] {
         &mut self.modules
     }
 
+    #[flux_rs::spec(fn(&Self[@s]) -> &[HostModule][s.host.len])]
     #[inline(always)]
     pub fn host_modules(&self) -> &[HostModule] {
         &self.host_modules
     }
 
+    #[flux_rs::spec(fn(self: &mut Self[@s]) -> &mut [HostModule])]
     #[inline(always)]
     pub fn host_modules_mut(&mut self) -> &mut [HostModule] {
         &mut self.host_modules
@@ -54,6 +71,11 @@ impl Store {
 
     /// Remove the last module from the store if it exists
     /// Returns the removed module, or None if the store is empty
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<Module>[s.modules.len > 0]
+        ensures self: Self[Store {
+            modules: InnerVec { len: if s.modules.len > 0 { s.modules.len - 1 } else { 0 }, ..s.modules },
+            host: s.host
+        }])]
     #[inline(always)]
     pub fn pop_module(&mut self) -> Option<Module> {
         self.modules.pop()
@@ -65,12 +87,23 @@ impl Store {
     /// Returns [`AllocError::OutOfMemory`] when the store is already at capacity
     /// (the module count configured via [`Store::from_host_modules`] /
     /// [`Engine::new`]) instead of panicking.
+    #[flux_rs::spec(fn(self: &strg Self[@s], module: Module)
+        -> Result<ModuleRef{r: r.idx == s.modules.len}, AllocError>[s.modules.len < s.modules.cap]
+        ensures self: Self[Store {
+            modules: InnerVec { len: if s.modules.len < s.modules.cap { s.modules.len + 1 } else { s.modules.len }, ..s.modules },
+            host: s.host
+        }])]
     #[inline(always)]
     pub fn push_module(&mut self, module: Module) -> Result<ModuleRef, AllocError> {
+        // Flux: the new module's index is the length before the push (same
+        // value as `len() - 1` afterwards; flux cannot relate `try_push`'s
+        // `Ok` to its post-state, so the subtraction cannot be bounded).
+        let index = self.modules.len();
         self.modules.try_push(module)?;
-        Ok(ModuleRef((self.modules.len() - 1) as u8))
+        Ok(ModuleRef(index as u8))
     }
 
+    #[flux_rs::spec(fn(&Self[@s], module_ref: ModuleRef{r: r.idx < s.modules.len}) -> &Rc<Memory>)]
     pub fn get_memory(&self, module_ref: ModuleRef) -> &Rc<Memory> {
         match &self.modules[module_ref.0 as usize].memory {
             None => &self.zero_memory,
@@ -90,6 +123,7 @@ impl Store {
         }
     }
 
+    #[flux_rs::spec(fn(&Self[@s], module_ref: ModuleRef{r: r.idx < s.modules.len}) -> &Rc<[TableElement]>)]
     pub fn get_table(&self, module_ref: ModuleRef) -> &Rc<[TableElement]> {
         match &self.modules[module_ref.0 as usize].table {
             None => &self.zero_table,
@@ -119,6 +153,7 @@ impl Store {
     /// returned reference — the only caller, `interpreter.rs::memory_grow`,
     /// does exactly this. Mutating the sentinel would corrupt global state
     /// shared across all modules.
+    #[flux_rs::spec(fn(self: &mut Self[@s], module_ref: ModuleRef{r: r.idx < s.modules.len}) -> &mut Rc<Memory>)]
     pub fn get_memory_mut(&mut self, module_ref: ModuleRef) -> &mut Rc<Memory> {
         match &self.modules[module_ref.0 as usize].memory {
             None => &mut self.zero_memory,

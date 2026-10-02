@@ -207,3 +207,19 @@ impl str {
     fn as_bytes(&self) -> &[u8];
 }
 
+
+// ---------------------------------------------------------------------------
+// Detached refinements for `visitor::ModuleRef` / `visitor::HostModuleRef` (visitor.rs is
+// untouched): both are indexed by the module index they hold, so that `Store`'s accessors
+// can require `r.idx < s.modules.len` (resp. `s.host.len`). `HostModuleRef::new` performs
+// a narrowing cast, so its result is left unrefined.
+use crate::{HostModuleRef, ModuleRef};
+
+#[flux_rs::specs {
+    #[refined_by(idx: int)]
+    struct ModuleRef(u8[idx])
+
+    #[refined_by(idx: int)]
+    struct HostModuleRef(u8[idx])
+}]
+const _: () = ();
