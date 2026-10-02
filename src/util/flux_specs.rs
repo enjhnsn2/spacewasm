@@ -242,3 +242,35 @@ const _: () = ();
     fn size(lo: int, hi: int) -> int { hi - lo }
 )]
 impl core::iter::Step for u32 {}
+
+// ---------------------------------------------------------------------------
+// Detached specs for `util::StaticVec` (src/util/static_vec.rs is untouched): `len` is
+// exact, `push` succeeds iff there is room (`len < N`) and then grows the length by one,
+// `pop` succeeds iff non-empty and then shrinks it by one; `new`/`default` start empty.
+// Needed by `text::TextBuilder` (control-frame and value-stack lengths).
+use crate::util::StaticVec;
+
+#[flux_rs::specs {
+    impl StaticVec<T, N> {
+        fn new() -> StaticVec<T, N>[0];
+        fn len(&StaticVec<T, N>[@v]) -> usize[v.len];
+        fn push(self: &strg StaticVec<T, N>[@v], value: T) -> Result<(), AllocError>[v.len < N]
+            ensures self: StaticVec<T, N>[if v.len < N { v.len + 1 } else { v.len }];
+        fn pop(self: &strg StaticVec<T, N>[@v]) -> Option<T>[v.len > 0]
+            ensures self: StaticVec<T, N>[if v.len > 0 { v.len - 1 } else { v.len }];
+    }
+
+    impl core::default::Default for StaticVec<T, N> {
+        fn default() -> StaticVec<T, N>[0];
+    }
+}]
+const _: () = ();
+
+// `Clone for u16` preserves the value (same reason as `usize` above): `text::ControlFrame`
+// derives `Clone` and its invariant bounds its `u16` `height` field.
+#[flux_rs::extern_spec]
+#[flux_rs::assoc(fn cloned(old: int, new: int) -> bool { old == new })]
+impl Clone for u16 {
+    #[flux_rs::spec(fn(&u16[@v]) -> u16[v])]
+    fn clone(&self) -> u16;
+}
