@@ -105,6 +105,10 @@ impl<T, A: Allocator + Clone> Rc<[T], A> {
                         && len * T::size_of() <= p.size && p.addr % T::align_of() == 0} T,
                    Rc<[T], A>), AllocError>
         requires T::size_of() >= 0)]
+    // Both z3 and cvc5 diverge on this body once any pointer fact about the allocation is in
+    // scope (Layout::array pow2 bitvectors + nonlinear len*size_of); verified independently in
+    // isolation with 8 unprovable obligations before wave 1. Approved by the user to trust.
+    #[flux_rs::trusted(reason = "solver divergence; see log/ABORT.md type 68")]
     unsafe fn new_uninit_slice_in(
         alloc: A,
         len: usize,

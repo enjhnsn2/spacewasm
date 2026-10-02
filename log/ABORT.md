@@ -358,3 +358,13 @@ Remaining:
   `Iterator::next` ICE (infer.rs:887, `&strg` vs `&mut`): these belong to `HostValListIter` (uid 98, wave 2,
   dep 82) which needs its own `refined_by(index, back)` + `invariant(index <= back <= len)` and the
   `assoc(size/done/step)` + `&strg` `next` spec. Not touched here to stay inside this worker's uids.
+
+## Rc::new_uninit_slice_in — trusted (user-approved, solver divergence)
+
+After wave 1, `Rc::new_uninit_slice_in` makes both z3 and cvc5 diverge. Commit-level bisect: terminates (10s,
+8 unprovable errors) at 27bf062; diverges from e714bb1 (worker 1 merge). File-level forward bisect: applying
+any one of worker 1's `rc.rs`, `alloc.rs`, or `flux_specs.rs` alone on the pre-worker-1 tree triggers it, so no
+single spec is at fault; the body (Layout::array pow2 bitvector reasoning + `len * T::size_of()` + `extend`/
+`pad_to_align` existentials) is at the solver's edge and any extra pointer fact tips it. Marked
+`#[flux_rs::trusted(reason = "solver divergence")]` with the user's approval; its spec (pointer validity for
+`len` values) is therefore an assumption. Trusted count 11 -> 12.
