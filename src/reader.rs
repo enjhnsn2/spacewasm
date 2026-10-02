@@ -35,17 +35,21 @@ const INTEGER_BIT_FLAG: u8 = !CONTINUATION_BIT;
 /// This reader cannot backtrack. The code that calls into the reader must
 /// allocate and copy data that should be retained as it is read.
 ///
-/// Flux: refined by `offset`, the absolute byte position (`full_offset`).
-/// Every `read_*`/`skip`/`with_limit` method is specified to never decrease
-/// it, and `offset()` exposes it, so `wasm.offset() - start` is provable.
-#[flux_rs::refined_by(offset: int)]
+/// Flux: refined by `offset`, the absolute byte position (`full_offset`),
+/// and `chunk_used`, which never exceeds the length of the pending chunk
+/// `next` (when there is one). Every `read_*`/`skip`/`with_limit` method is
+/// specified to never decrease `offset`, and `offset()` exposes it, so
+/// `wasm.offset() - start` is provable.
+#[flux_rs::refined_by(offset: int, chunk_used: int)]
 pub struct Reader<'wasm> {
     stream: &'wasm mut dyn WasmStream,
     /// Number of bytes we've already extracted from the next chunk and
     /// placed in the circular buffer
+    #[flux_rs::field(usize[chunk_used])]
     chunk_used: usize,
     /// A holding pen for the next chunk given to us by the streamer.
     /// We use this to feed the buffer
+    #[flux_rs::field(Option<Chunk{c: chunk_used <= c.inner.len}>)]
     next: Option<Chunk>,
 
     /// A fixed size circular buffer meant to hold as much Wasm data as it can.
@@ -64,7 +68,7 @@ pub struct Reader<'wasm> {
 }
 
 impl<'wasm> Reader<'wasm> {
-    #[flux_rs::spec(fn(stream: _) -> Self[0])]
+    #[flux_rs::spec(fn(stream: _) -> Self[0, 0])]
     pub fn new(stream: &'wasm mut dyn WasmStream) -> Self {
         Self {
             stream,
@@ -120,7 +124,7 @@ impl<'wasm> Reader<'wasm> {
     // cvc5 does not terminate on this function's fixpoint query (repro in centrifuge/harness/repro-cvc5-hang);
     // z3 solves it in ~30s.
     #[flux_rs::opts(solver = "z3")]
-    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(), ValidationError> ensures self: Self[v.offset])]
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(), ValidationError> ensures self: Self{w: w.offset == v.offset})]
     fn fill_buffer(&mut self) -> Result<(), ValidationError> {
         // If buffer already has data, we're done
         if !self.buffer.is_empty() {
@@ -147,11 +151,14 @@ impl<'wasm> Reader<'wasm> {
         }
 
         // Fetch next chunk from stream
+        // Flux: `Chunk::from` is what `|inner| inner.into()` resolves to; naming it
+        // directly keeps the chunk's length index (the `Into` blanket impl loses it
+        // and makes the solver diverge on this function).
         self.next = self
             .stream
             .read()
             .map_err(ValidationError::ReaderError)?
-            .map(|inner| inner.into());
+            .map(Chunk::from);
         self.chunk_used = 0;
 
         // Try to fill buffer from new chunk
@@ -172,7 +179,7 @@ impl<'wasm> Reader<'wasm> {
         }
     }
 
-    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u8, ValidationError> ensures self: Self[v.offset])]
+    #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<u8, ValidationError> ensures self: Self{w: w.offset == v.offset})]
     fn peek_u8(&mut self) -> Result<u8, ValidationError> {
         // Try to get a byte from the buffer
         if let Some(&byte) = self.buffer.front() {
