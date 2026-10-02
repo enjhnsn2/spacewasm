@@ -1,4 +1,6 @@
 #![no_std]
+// `Step for u32` extern spec in util/flux_specs.rs names the unstable `core::iter::Step`.
+#![cfg_attr(flux, feature(step_trait))]
 
 // Pull in the flux extern specs for `core` and `alloc` (pointers, slices, Option, ...).
 extern crate flux_alloc;

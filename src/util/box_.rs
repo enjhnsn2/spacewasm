@@ -156,13 +156,17 @@ impl<T: ?Sized, A: Allocator> Box<T, A> {
 
 impl<T: Clone, A: Allocator + Clone> Box<[T], A> {
     pub fn try_clone(&self) -> Result<Self, AllocError> {
-        let mut n: Vec<T, A> = Vec::new_in(self.alloc.clone(), self.len())?;
+        // Deref once up front: flux gives every `Deref` call on a `Box<[T]>` an
+        // unrelated slice length, so `src.len()` and `src[i]` must come from the
+        // same `&[T]` for the bounds check below to be provable.
+        let src: &[T] = self;
+        let mut n: Vec<T, A> = Vec::new_in(self.alloc.clone(), src.len())?;
 
-        for i in 0..self.len() {
-            // `self.len() <= capacity == n.capacity`, so `push` never overflows.
-            // `self[i].clone()` is evaluated before `push` takes ownership, so a
+        for i in 0..src.len() {
+            // `src.len() <= capacity == n.capacity`, so `push` never overflows.
+            // `src[i].clone()` is evaluated before `push` takes ownership, so a
             // panic there leaves `n` holding only the already-cloned prefix.
-            n.push(self[i].clone());
+            n.push(src[i].clone());
         }
 
         Ok(n.into())

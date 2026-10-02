@@ -343,7 +343,7 @@ impl<T, A: Allocator> Deref for Vec<T, A> {
 }
 
 impl<T, A: Allocator> DerefMut for Vec<T, A> {
-    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T])]
+    #[flux_rs::spec(fn(self: &mut Self[@v]) -> &mut [T][v.inner.len])]
     fn deref_mut(&mut self) -> &mut [T] {
         self.inner.deref_mut()
     }
@@ -366,6 +366,7 @@ impl<T: Sized, A: Allocator> Drop for Vec<T, A> {
 impl<T, A: Allocator> IntoIterator for Vec<T, A> {
     type Item = T;
     type IntoIter = IntoIter<T, A>;
+    #[flux_rs::opts(solver = "z3")]
     fn into_iter(self) -> IntoIter<T, A> {
         // Make sure not to drop Vec since that would free the buffer
         let vec = core::mem::ManuallyDrop::new(self);
@@ -409,16 +410,45 @@ impl<'a, T, A: Allocator> IntoIterator for &'a mut Vec<T, A> {
     }
 }
 
+/// By-value iterator over a [`Vec`]'s elements; owns the buffer (`buf`/`cap`) and
+/// yields `start..end`.
+// `buf` is the `Vec`'s allocation (same facts as `InnerVec`: in bounds, `cap` values of
+// `T`, non-null and aligned when `cap > 0`, valid `Layout::array` for `Drop`). `start`/`end`
+// are the addresses of the unread window, which lies inside the buffer, is a whole number
+// of `T`s, and stays aligned; a `cap == 0` iterator (null buffer) is always empty.
+#[flux_rs::refined_by(base: int, buf: int, size: int, cap: int, start: int, end: int)]
+#[flux_rs::invariant(buf >= base && size >= 0 && cap * T::size_of() <= size)]
+#[flux_rs::invariant(cap == 0 || (buf > 0 && buf % T::align_of() == 0 && T::size_of() >= 0))]
+#[flux_rs::invariant(cap == 0 || T::size_of() == 0 || cap * T::size_of() + T::align_of() - 1 <= isize::MAX)]
+#[flux_rs::invariant(buf <= start && start <= end && end - buf <= size)]
+#[flux_rs::invariant(cap == 0 || T::size_of() == 0 || (end - start) % T::size_of() == 0)]
+#[flux_rs::invariant(cap == 0 || (start % T::align_of() == 0 && end % T::align_of() == 0))]
+#[flux_rs::invariant(cap > 0 || start == end)]
+// The window holds at most `cap` values; for a ZST this forces `start == end`, so a
+// non-empty window implies `T::size_of() > 0` and `size` below is a genuine count.
+#[flux_rs::invariant(end - buf <= cap * T::size_of())]
 pub struct IntoIter<T, A: Allocator = GlobalAllocator> {
+    #[flux_rs::field(*mut[base, buf, size] T)]
     buf: *mut T,
+    #[flux_rs::field(usize[cap])]
     cap: usize,
+    #[flux_rs::field(*const[base, start, size - (start - buf)] T)]
     start: *const T,
+    #[flux_rs::field(*const[base, end, size - (end - buf)] T)]
     end: *const T,
     alloc: A,
 }
 
+#[flux_rs::assoc(
+    fn size(s: IntoIter) -> int { if T::size_of() == 0 { 0 } else { (s.end - s.start) / T::size_of() } }
+    fn done(s: IntoIter) -> bool { s.start >= s.end }
+    fn step(s: IntoIter, t: IntoIter) -> bool { t.end == s.end && s.start <= t.start }
+)]
 impl<T, A: Allocator> Iterator for IntoIter<T, A> {
     type Item = T;
+    #[flux_rs::opts(solver = "z3")]
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<T>[s.start < s.end]
+        ensures self: Self[s.base, s.buf, s.size, s.cap, if s.start < s.end { s.start + T::size_of() } else { s.start }, s.end])]
     fn next(&mut self) -> Option<T> {
         if self.start == self.end {
             None
@@ -438,6 +468,9 @@ impl<T, A: Allocator> Iterator for IntoIter<T, A> {
 }
 
 impl<T, A: Allocator> DoubleEndedIterator for IntoIter<T, A> {
+    #[flux_rs::opts(solver = "z3")]
+    #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<T>[s.start < s.end]
+        ensures self: Self[s.base, s.buf, s.size, s.cap, s.start, if s.start < s.end { s.end - T::size_of() } else { s.end }])]
     fn next_back(&mut self) -> Option<T> {
         if self.start == self.end {
             None
