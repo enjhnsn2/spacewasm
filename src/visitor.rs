@@ -293,13 +293,19 @@ impl HostModuleRef {
 }
 
 /// A reference to a symbol in the Wasm store relative to an implicit 'self' module
+// Flux: `tag` is the variant (0 Module, 1 Host, 2 Extern), `idx` the symbol index,
+// so `Module::get_func_ref` / `get_global_ref` can bound a `Ref::Module` index.
 #[derive(Debug, Clone, Copy)]
+#[flux_rs::refined_by(tag: int, idx: int)]
 pub enum Ref {
     /// A symbol in the current Wasm module
+    #[flux_rs::variant((u16[@i]) -> Ref[0, i])]
     Module(u16),
     /// A symbol in an external host module
+    #[flux_rs::variant({HostModuleRef, u16[@i]} -> Ref[1, i])]
     Host { module: HostModuleRef, index: u16 },
     /// A symbol in another Wasm module
+    #[flux_rs::variant({ModuleRef, u16[@i]} -> Ref[2, i])]
     Extern { module: ModuleRef, index: u16 },
 }
 

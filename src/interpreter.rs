@@ -85,7 +85,7 @@ impl Engine {
     fn call_impl(&mut self, module_delta: i8, index: u16) -> Result<(), InterpreterBreak> {
         // Make sure we have enough stack space for the function call
         let m = &self.store.modules()[self.module.0 as usize];
-        let f = &m.functions[index as usize];
+        let f = &m.functions[m.validated_func_index(index)];
         let required_stack_space = f.required_stack_words();
         if self.stack.len() < self.sp + required_stack_space {
             return Err(InterpreterBreak::Trap(TrapReason::StackOverflow));
@@ -138,9 +138,9 @@ impl Engine {
         }
 
         let m = &self.store.modules()[f_ref.module.0 as usize];
-        let f = &m.functions[f_ref.index as usize];
+        let f = &m.functions[m.validated_func_index(f_ref.index)];
 
-        let ty = &m.types[f.ty.0 as usize];
+        let ty = &m.types[m.validated_type_index(f.ty)];
 
         if ty.params.len() != params.len() {
             return Err(InvokeError::ParamLenMismatch);
@@ -1771,18 +1771,18 @@ impl Interpreter {
         state.sp -= 1;
         let i = state.stack.read_u32(state.sp) as usize;
         let m = &state.store.modules()[state.module.0 as usize];
-        let f_expected = &m.types[x.0 as usize];
+        let f_expected = &m.types[m.validated_type_index(x)];
 
         // Look up the internal or host function
         match state.table.get(i) {
             None => Err(InterpreterBreak::Trap(TrapReason::InvalidTableIndex)),
             Some(TableElement::Func { module, index }) => {
                 let m = &state.store.modules()[module.0 as usize];
-                let f = &m.functions[*index as usize];
+                let f = &m.functions[m.validated_func_index(*index)];
 
                 // Validate the function is the proper type
                 // This asserts that it's safe to call the function with the current stack
-                let f_actual = &m.types[f.ty.0 as usize];
+                let f_actual = &m.types[m.validated_type_index(f.ty)];
 
                 if f_actual.params != f_expected.params || f_actual.returns != f_expected.returns {
                     return Err(InterpreterBreak::Trap(TrapReason::InvalidTableFunctionType));
@@ -1888,7 +1888,7 @@ impl Interpreter {
         ensures state: Engine)]
     fn global_get_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let m = &state.store.modules()[state.module.0 as usize];
-        let g = &m.globals[idx as usize];
+        let g = &m.globals[m.validated_global_index(idx)];
 
         match g.type_.ty {
             ValType::I32 | ValType::F32 => {
@@ -1947,7 +1947,8 @@ impl Interpreter {
         ensures state: Engine)]
     fn global_set_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let m = &mut state.store.modules_mut()[state.module.0 as usize];
-        let g = &mut m.globals[idx as usize];
+        let gi = m.validated_global_index(idx);
+        let g = &mut m.globals[gi];
         match g.type_.ty {
             ValType::I32 | ValType::F32 => {
                 state.sp -= 1;

@@ -1036,3 +1036,37 @@ Effect: full sweep 152 -> 152. Every `section[i]` error moved from "out-of-bound
 precondition `i < v.len`: all 32 sites take the index from another function (`get_func_ref`, a `for i in
 0..len` caller, or `f.ty` of an element), so they need `Module` to expose section lengths (next step).
 Trusted 16 -> 20 (3 bear the fat-pointer assumption, 1 is a trivially sound ghost constructor).
+
+## Section index primitives + `Module` section lengths (2026-10-13)
+
+Builds on the `Box<[T]>` length bridge above.
+- `Module` is now refined by `types / functions / globals: Box` (sort params; `m.functions.len` is the
+  section length), `Func` by `ty: int`, and `visitor::Ref` by `(tag, idx)` (0 Module / 1 Host / 2 Extern).
+  `get_func_ref` / `get_global_ref` get the postcondition `r.tag != 0 || r.idx < m.{functions,globals}.len`.
+  `read_section` fills the sections through an unrefined `&mut self`, so its struct index is existential and
+  no fold obligation arises; `read_function_code` is `self: &strg Module[@m] ... ensures self: Module[m]` with
+  `i < m.functions.len` (its `wasm` had to become `&strg` too, or the `end - start` offset relation across
+  `with_limit` is lost; cvc5 now proves the body in ~25s, so its z3 override is gone).
+- Three TRUSTED, empty-bodied index primitives in `impl Module` (`src/module.rs`), each returning the index it
+  was given plus the fact that it is in range of the named section, so the indexing itself stays verified:
+  `validated_func_index(u16)` (function index carried by the IR `call` or an element segment),
+  `validated_global_index(u16)` (IR `global.get/set`), `validated_type_index(TypeIdx)` (a function's `ty`,
+  checked by `read_func_section`, or `call_indirect`'s immediate). The first two are the decoder-to-interpreter
+  IR round trip (`write_16` -> `IrReader::read`), the same boundary as the stack-depth assumptions; the third is
+  a per-element fact the decoder does establish but flux cannot carry across the section fold.
+  Call sites rewritten from `index as usize` to `m.validated_*_index(..)` (semantics-preserving): interpreter.rs
+  `call_impl`, `invoke`, `call_indirect_op`, `global_get_op`/`global_set_op`; compiler.rs `call` (Extern path;
+  the Module path is proved from `get_func_ref` with one `let m = state.module()` binding); imports.rs and
+  module.rs (Start section) Extern paths.
+- Full sweep 152 -> 131. Trusted 20 -> 23. Tests 284 pass.
+
+Two findings surfaced by the new specs (left as errors, no source change):
+- **`get_func_ref` / `get_global_ref` truncate** (`src/module.rs`, postcondition errors): `Some(Ref::Module(i as u16))`
+  with only `i < functions.len()` checked. A module with more than 65535 local functions (or globals) gets its
+  high indices silently aliased onto low ones (the compiler's `write_16(index)` truncates the same way); nothing
+  bounds the section count to `u16` (`read_vec` only checks `len <= bytes_remaining`). Adding `|| i > 0xFFFF`
+  to the guard makes both verify (tested, reverted). This is a genuine implementation-limit gap in spacewasm:
+  the decoder should reject such modules instead of miscompiling calls.
+- Remaining `section[i]` sites: 8 on `HostModule` sections (`Vec<HostFunction>` / `Vec<HostGlobal>`; needs a
+  `HostModule` refinement and the store-element fact) and the store-level `modules()[r]` / `host_modules()[r]`
+  linker lookups (category B), e.g. module.rs 238-279/331/870-878/1071-1079, imports.rs, store.rs.

@@ -94,8 +94,8 @@ impl Store {
                                 }
                                 Ref::Extern { module, index } => {
                                     let em = &self.modules().get(module.0 as usize).unwrap();
-                                    let f = &em.functions[index as usize];
-                                    let ty = &em.types[f.ty.0 as usize];
+                                    let f = &em.functions[em.validated_func_index(index)];
+                                    let ty = &em.types[em.validated_type_index(f.ty)];
 
                                     if ty != expected_ty {
                                         return Err(ValidationError::FunctionImportTypeMismatch);
@@ -186,7 +186,7 @@ impl Store {
                                 }
                                 Ref::Extern { module, index } => {
                                     let em = self.modules().get(module.0 as usize).unwrap();
-                                    let g = &em.globals[index as usize];
+                                    let g = &em.globals[em.validated_global_index(index)];
                                     if g.type_.ty != expected_ty.ty {
                                         Err(ValidationError::GlobalImportTypeMismatch)
                                     } else if expected_ty.mutable != g.type_.mutable {

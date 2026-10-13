@@ -62,9 +62,10 @@ impl From<Expr> for JumpTarget {
 // headroom check needs. `Module::read_function_code` fills these fields inside
 // its `with_limit` closure; the closure owns the `Func` (moved in, returned
 // out) so that flux can strongly update it.
-#[flux_rs::refined_by(stack_usage: int, local_size: int, parameter_size: int)]
+#[flux_rs::refined_by(stack_usage: int, local_size: int, parameter_size: int, ty: int)]
 pub struct Func {
     /// Function signature.
+    #[flux_rs::field(TypeIdx[ty])]
     pub ty: TypeIdx,
 
     /// Maximum shallow stack usage by this function (not including inner function calls)
@@ -145,8 +146,14 @@ impl Module {
         Ok(f)
     }
 
-    // Flux: at the solver's edge; cvc5 takes ~65s on this body, z3 ~10s.
-    #[flux_rs::opts(solver = "z3")]
+    // Flux: at the solver's edge (cvc5 ~25s on this body; the z3 override was
+    // dropped once the `&strg` specs below made the constraint tractable).
+    // `i` indexes `functions` (the caller, `CodeSection::read`, loops to its length);
+    // the sections (and so the module's index) are unchanged, only `functions[i]`'s
+    // fields are filled in.
+    #[flux_rs::spec(fn(self: &strg Module[@m], wasm: &strg Reader[@r], store: &Store, builder: &mut CodeBuilder,
+            i: usize{i < m.functions.len}) -> Result<(), ValidationError>
+        ensures self: Module[m], wasm: Reader{w: w.offset >= r.offset})]
     pub fn read_function_code<const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>(
         &mut self,
         wasm: &mut Reader,

@@ -200,16 +200,18 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize> WasmVisi
     }
 
     fn call(&self, x: FuncIdx, state: &mut Self::State) -> Result<(), Self::Error> {
-        let f_ref = state
-            .module()
+        // Flux: one binding of the module so `get_func_ref`'s bound applies to the
+        // same value that is indexed below.
+        let m = state.module();
+        let f_ref = m
             .get_func_ref(x)
             .ok_or(ValidationError::FunctionIdxOutOfRange)?;
 
         match f_ref {
             Ref::Module(index) => {
                 // Check the call signature
-                let f = &state.module().functions[index as usize];
-                let ty = &state.module().types[f.ty.0 as usize];
+                let f = &m.functions[index as usize];
+                let ty = &m.types[m.validated_type_index(f.ty)];
 
                 for p in ty.params.iter().rev() {
                     let _ = state.pop_stack(*p)?;
@@ -241,8 +243,8 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize> WasmVisi
             Ref::Extern { module, index } => {
                 // Check the call signature
                 let m = &state.store().modules()[module.0 as usize];
-                let f = &m.functions[index as usize];
-                let ty = &m.types[f.ty.0 as usize];
+                let f = &m.functions[m.validated_func_index(index)];
+                let ty = &m.types[m.validated_type_index(f.ty)];
 
                 for p in ty.params.iter().rev() {
                     let _ = state.pop_stack(p)?;

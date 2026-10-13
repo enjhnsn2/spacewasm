@@ -25,19 +25,23 @@ pub enum TableElement {
 }
 
 #[derive(Debug)]
-// Flux: whether the module defines (owns or imports) a table / a linear memory.
-// (The section lengths are *not* exposed: the sections are `Box<[T]>` and the
-// crate's `Box` is refined by its allocation only, so a slice length cannot be
-// tied to a struct index without changing `util::box_`.)
-#[flux_rs::refined_by(has_table: bool, has_memory: bool)]
+// Flux: whether the module defines (owns or imports) a table / a linear memory,
+// and the `types` / `functions` / `globals` sections (as `Box` indices, so
+// `m.functions.len` etc. are the section lengths; see `util::box_`'s length
+// bridge). `read_section` fills the sections through an unrefined `&mut self`,
+// so the struct index is existential there and no fold obligations arise.
+#[flux_rs::refined_by(has_table: bool, has_memory: bool, types: Box, functions: Box, globals: Box)]
 pub struct Module {
     pub name: String,
+    #[flux_rs::field(Box<[FuncType]>[types])]
     pub types: Box<[FuncType]>,
+    #[flux_rs::field(Box<[Func]>[functions])]
     pub functions: Box<[Func]>,
     #[flux_rs::field(Option<TableKind>[has_table])]
     pub table: Option<TableKind>,
     #[flux_rs::field(Option<MemoryKind>[has_memory])]
     pub memory: Option<MemoryKind>,
+    #[flux_rs::field(Box<[Global]>[globals])]
     pub globals: Box<[Global]>,
     pub imports: Box<[Import]>,
     pub exports: Box<[Export]>,
@@ -313,7 +317,7 @@ impl Module {
                 match r {
                     Ref::Module(index) => {
                         let f = &self.functions[index as usize];
-                        let ty = &self.types[f.ty.0 as usize];
+                        let ty = &self.types[self.validated_type_index(f.ty)];
                         if !ty.params.is_empty() || !ty.returns.is_empty() {
                             return Err(ValidationError::InvalidStartFunctionSignature);
                         }
@@ -325,8 +329,8 @@ impl Module {
                     }
                     Ref::Extern { module, index } => {
                         let m = &store.modules()[module.0 as usize];
-                        let f = &m.functions[index as usize];
-                        let ty = &m.types[f.ty.0 as usize];
+                        let f = &m.functions[m.validated_func_index(index)];
+                        let ty = &m.types[m.validated_type_index(f.ty)];
                         if !ty.params.is_empty() || !ty.returns.is_empty() {
                             return Err(ValidationError::InvalidStartFunctionSignature);
                         }
@@ -355,6 +359,8 @@ impl Module {
         Ok(())
     }
 
+    // Flux: a `Ref::Module` result is a valid index into `functions`.
+    #[flux_rs::spec(fn(&Module[@m], x: FuncIdx) -> Option<Ref{r: r.tag != 0 || r.idx < m.functions.len}>)]
     pub fn get_func_ref(&self, x: FuncIdx) -> Option<Ref> {
         // Check if this function index is a host function or an internal function
         let mut n = 0;
@@ -396,6 +402,8 @@ impl Module {
         }
     }
 
+    // Flux: a `Ref::Module` result is a valid index into `globals`.
+    #[flux_rs::spec(fn(&Module[@m], x: GlobalIdx) -> Option<Ref{r: r.tag != 0 || r.idx < m.globals.len}>)]
     pub fn get_global_ref(&self, x: GlobalIdx) -> Option<Ref> {
         // Check if this global index is a host function or an internal global
         let mut n = 0;
@@ -435,6 +443,39 @@ impl Module {
         } else {
             Some(Ref::Module(i as u16))
         }
+    }
+
+    // Flux: validated-index assumptions. TRUSTED, see log/ABORT.md "Section index
+    // primitives". Each returns the index it was given (`index as usize`) together
+    // with the fact that it is in range of the named section; the indexing itself
+    // stays verified. The fact holds because the decoder range-checks every function
+    // / global / type index (`get_func_ref`, `get_global_ref`, `read_func_section`,
+    // the element section) before it is written into the IR or a table, but the IR
+    // round trip (`TextBuilder::write_16` -> `IrReader::read`) is invisible to flux.
+
+    /// A function index carried by the IR (`call`) or an element segment.
+    #[flux_rs::trusted(reason = "validator assumption: function index was range-checked by the decoder before being written to the IR / a table")]
+    #[flux_rs::spec(fn(&Module[@m], index: u16) -> usize{i: i == index && i < m.functions.len})]
+    #[inline(always)]
+    pub fn validated_func_index(&self, index: u16) -> usize {
+        index as usize
+    }
+
+    /// A global index carried by the IR (`global.get` / `global.set`).
+    #[flux_rs::trusted(reason = "validator assumption: global index was range-checked by the decoder before being written to the IR")]
+    #[flux_rs::spec(fn(&Module[@m], index: u16) -> usize{i: i == index && i < m.globals.len})]
+    #[inline(always)]
+    pub fn validated_global_index(&self, index: u16) -> usize {
+        index as usize
+    }
+
+    /// A type index: a function's `ty` (checked by `Func::read_func_section`) or
+    /// the immediate of `call_indirect` (checked by the compiler).
+    #[flux_rs::trusted(reason = "validator assumption: type index was range-checked by the decoder (per-element fact flux cannot carry across the section fold / IR)")]
+    #[flux_rs::spec(fn(&Module[@m], x: TypeIdx) -> usize{i: i == x.idx && i < m.types.len})]
+    #[inline(always)]
+    pub fn validated_type_index(&self, x: TypeIdx) -> usize {
+        x.0 as usize
     }
 }
 
