@@ -14,12 +14,40 @@ use core::{mem, ptr};
 // empty slice) is a dangling sentinel whose `base` is unknown, otherwise `addr` lies
 // inside its allocation. (`T: ?Sized`, so `T::size_of()`/`T::align_of()` cannot be
 // named here; the pointee-size facts are re-established at each `Sized` use site.)
-#[flux_rs::refined_by(base: int, addr: int, size: int)]
+// `len` is the slice length stored in the fat pointer's metadata when `T = [U]`
+// (meaningless, and unconstrained, for a sized `T`). Flux's raw-pointer sort has no
+// metadata component, so `len` is carried by the zero-sized ghost field `len:
+// SliceLen` and bridged by two trusted functions, `from_raw_parts` (records it) and
+// `as_slice`/`as_mut_slice` (read it back); see log/ABORT.md "Box<[T]> length bridge".
+#[flux_rs::refined_by(base: int, addr: int, size: int, len: int)]
 #[flux_rs::invariant(addr != 0 && size >= 0 && (size == 0 || addr >= base))]
 pub struct Box<T: ?Sized, A: Allocator = GlobalAllocator> {
     #[flux_rs::field(*mut[base, addr, size] T)]
     ptr: *mut T,
     alloc: A,
+    #[flux_rs::field(SliceLen[len])]
+    #[allow(dead_code)] // read only by flux specs
+    len: SliceLen,
+}
+
+/// Zero-sized ghost field of [`Box`]: for flux it is indexed by the slice length of a
+/// `Box<[T]>` (the fat pointer's metadata, which flux cannot otherwise name). It has
+/// no runtime content; `opaque` because a fieldless struct cannot determine its index
+/// (`Box::from_raw_parts`, trusted, is the only place that fixes it).
+#[flux_rs::opaque]
+#[flux_rs::refined_by(n: int)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct SliceLen;
+
+impl SliceLen {
+    /// A ghost length with no constraint (sized `T`, or a `Box<[T]>` whose length flux
+    /// does not need). Trusted only because an opaque struct can only be built in
+    /// trusted code; the result's index is unconstrained, so nothing is assumed.
+    #[flux_rs::trusted(reason = "constructs the opaque ghost field; result index is unconstrained, nothing assumed")]
+    #[flux_rs::spec(fn() -> SliceLen)]
+    fn unknown() -> SliceLen {
+        SliceLen
+    }
 }
 
 impl<A: Allocator, T: ?Sized + core::fmt::Debug> core::fmt::Debug for Box<T, A> {
@@ -95,6 +123,7 @@ impl<T: Sized, A: Allocator> Box<T, A> {
             Ok(Box {
                 ptr: core::ptr::NonNull::<T>::dangling().as_ptr(),
                 alloc,
+                len: SliceLen::unknown(),
             })
         } else {
             let layout = Layout::new::<T>();
@@ -105,7 +134,7 @@ impl<T: Sized, A: Allocator> Box<T, A> {
                 ptr::write(ptr, value);
             }
 
-            Ok(Box { ptr, alloc })
+            Ok(Box { ptr, alloc, len: SliceLen::unknown() })
         }
     }
 }
@@ -135,10 +164,10 @@ impl<T: ?Sized, A: Allocator> Box<T, A> {
     /// `ptr` must have come from a `Box<T, A>` allocated with `alloc`, and must
     /// not be used again after this call. Reconstructing a box twice from the
     /// same pointer is undefined behavior (double free).
-    #[flux_rs::spec(fn(alloc: A, ptr: *mut[@p] T) -> Box<T, A>[p.base, p.addr, p.size]
+    #[flux_rs::spec(fn(alloc: A, ptr: *mut[@p] T) -> Box<T, A>{b: b.base == p.base && b.addr == p.addr && b.size == p.size}
         requires p.addr != 0 && p.size >= 0 && (p.size == 0 || p.addr >= p.base))]
     pub unsafe fn from_raw(alloc: A, ptr: *mut T) -> Box<T, A> {
-        Box { ptr, alloc }
+        Box { ptr, alloc, len: SliceLen::unknown() }
     }
 
     /// Get a raw pointer to the boxed value
@@ -234,7 +263,85 @@ impl<T: Ord, A: Allocator> Ord for Box<T, A> {
     }
 }
 
+impl<T, A: Allocator> Box<[T], A> {
+    /// Build a boxed slice of `len` elements starting at `ptr`.
+    ///
+    /// # Safety
+    /// Same contract as [`Box::from_raw`] for the block `ptr` points at, which must
+    /// hold `len` initialized `T`s (`len == 0` allows a dangling, aligned `ptr`).
+    //
+    // Flux: TRUSTED fat-pointer bridge (1 of 2). The slice metadata written by
+    // `slice_from_raw_parts_mut` is exactly `len`; flux's raw-pointer sort
+    // `(base, addr, size)` has no metadata component, so this is stated as an axiom.
+    #[flux_rs::trusted(reason = "fat-pointer bridge: records the slice metadata `len`, which flux's raw-pointer sort cannot carry")]
+    #[flux_rs::spec(fn(alloc: A, ptr: *mut[@p] T, len: usize) -> Box<[T], A>[p.base, p.addr, p.size, len]
+        requires p.addr != 0 && p.size >= 0 && (p.size == 0 || p.addr >= p.base))]
+    pub unsafe fn from_raw_parts(alloc: A, ptr: *mut T, len: usize) -> Box<[T], A> {
+        let slice_ptr: *mut [T] = core::ptr::slice_from_raw_parts_mut(ptr, len);
+        Box { ptr: slice_ptr, alloc, len: SliceLen }
+    }
+
+    /// The boxed slice, with its length visible to flux.
+    //
+    // Flux: TRUSTED fat-pointer bridge (2 of 2). Reads back the metadata recorded by
+    // `from_raw_parts` (the only constructor of a `Box<[T]>` with a constrained `len`).
+    // The generic `Deref` (`T: ?Sized`) cannot state this, which is why these two
+    // accessors exist; `len`/`Index` below are verified on top of them.
+    #[flux_rs::trusted(reason = "fat-pointer bridge: the slice length is the metadata recorded by `from_raw_parts`")]
+    #[flux_rs::spec(fn(&Self[@v]) -> &[T][v.len])]
+    pub fn as_slice(&self) -> &[T] {
+        unsafe { &*self.ptr }
+    }
+
+    /// Mutable counterpart of [`Box::as_slice`].
+    #[flux_rs::trusted(reason = "fat-pointer bridge: the slice length is the metadata recorded by `from_raw_parts`")]
+    #[flux_rs::spec(fn(&mut Self[@v]) -> &mut [T][v.len])]
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        unsafe { &mut *self.ptr }
+    }
+
+    // Inherent `len`/`iter` and the `Index` impls below take precedence over auto-deref
+    // to `[T]`, so `b.len()` / `b[i]` at existing call sites go through the refined
+    // `as_slice` instead of the unrefined `Deref` (no call-site changes needed).
+    #[flux_rs::spec(fn(&Self[@v]) -> usize[v.len])]
+    pub fn len(&self) -> usize {
+        self.as_slice().len()
+    }
+
+    #[flux_rs::spec(fn(&Self[@v]) -> bool[v.len == 0])]
+    pub fn is_empty(&self) -> bool {
+        self.as_slice().is_empty()
+    }
+
+    pub fn iter(&self) -> core::slice::Iter<'_, T> {
+        self.as_slice().iter()
+    }
+
+    pub fn iter_mut(&mut self) -> core::slice::IterMut<'_, T> {
+        self.as_mut_slice().iter_mut()
+    }
+}
+
+// flux-core's `Index` trait carries the `in_bounds` associated refinement; the impl
+// instantiates it with the ghost length so `b[i]` requires `i < b.len`.
+#[flux_rs::assoc(fn in_bounds(v: Box, idx: int) -> bool { idx < v.len })]
+impl<T, A: Allocator> core::ops::Index<usize> for Box<[T], A> {
+    type Output = T;
+    #[flux_rs::spec(fn(&Self[@v], i: usize{i < v.len}) -> &T)]
+    fn index(&self, i: usize) -> &T {
+        &self.as_slice()[i]
+    }
+}
+
+impl<T, A: Allocator> core::ops::IndexMut<usize> for Box<[T], A> {
+    #[flux_rs::spec(fn(&mut Self[@v], i: usize{i < v.len}) -> &mut T)]
+    fn index_mut(&mut self, i: usize) -> &mut T {
+        &mut self.as_mut_slice()[i]
+    }
+}
+
 impl<T, A: Allocator> From<Vec<T, A>> for Box<[T], A> {
+    #[flux_rs::spec(fn(v: Vec<T, A>[@vec]) -> Box<[T], A>{b: b.len == vec.inner.len})]
     fn from(v: Vec<T, A>) -> Self {
         v.into_boxed_slice()
     }

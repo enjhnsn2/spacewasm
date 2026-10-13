@@ -311,6 +311,7 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
     /// # Panics
     ///
     /// Panics if the vector's length does not equal its capacity.
+    #[flux_rs::spec(fn(self: Vec<T, A>[@v]) -> Box<[T], A>{b: b.len == v.inner.len})]
     pub fn into_boxed_slice(self) -> Box<[T], A> {
         assert_eq!(self.capacity(), self.len());
 
@@ -327,9 +328,7 @@ impl<T: Sized, A: Allocator> Vec<T, A> {
                 ptr
             };
 
-            let slice_ptr: *mut [T] = core::ptr::slice_from_raw_parts_mut(ptr, cap);
-
-            Box::from_raw(alloc, slice_ptr)
+            Box::from_raw_parts(alloc, ptr, cap)
         }
     }
 }

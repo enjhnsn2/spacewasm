@@ -1011,3 +1011,28 @@ Same shape as the validator primitives: `Interpreter::assume_linked(state)` (cur
 argument); all trusted, empty-bodied, `ensures ... < s.store.modules.len` / `s.store.host.len`. Tagged on the 9
 store-touching `forward!` entries and called from the hand-written `call` / `call_extern` wrappers.
 Effect: full sweep 165 -> 153. Trusted 13 -> 16.
+
+## `Box<[T]>` length bridge — 4 new trusted items (2026-10-13)
+
+The crate's `util::Box` is refined by its allocation `(base, addr, size)` only; the slice length of a `Box<[T]>`
+lives in the fat pointer's metadata, which flux's raw-pointer sort cannot carry (`slice_from_raw_parts_mut`'s
+spec drops `len`). `size / T::size_of()` is NOT a sound substitute (`RawVec` only guarantees
+`cap * size_of <= size`). The bridge, all in `src/util/box_.rs`:
+- `Box` gains a 4th refinement index `len: int`, carried by a zero-sized ghost field `len: SliceLen`
+  (`#[flux_rs::opaque] #[refined_by(n: int)] struct SliceLen;` — a fieldless struct cannot determine its index
+  any other way; no runtime content, `Box`'s layout is unchanged).
+- TRUSTED `Box::<[T], A>::from_raw_parts(alloc, ptr, len) -> Box[.., len]`: records the metadata it just wrote.
+  **This is the assumption**: "the slice metadata written by `slice_from_raw_parts_mut(ptr, len)` is `len`".
+  `Vec::into_boxed_slice` now calls it (and gets the spec `b.len == v.inner.len`, as does `From<Vec>`).
+- TRUSTED `Box::<[T], A>::as_slice / as_mut_slice -> &[T][v.len]`: read the metadata back. The generic
+  `Deref` (`T: ?Sized`) cannot state this.
+- TRUSTED `SliceLen::unknown() -> SliceLen`: builds the opaque ghost value with an unconstrained index for
+  `new_in`/`from_raw` (opaque structs can only be constructed in trusted code). Nothing is assumed.
+- VERIFIED on top: inherent `len`/`is_empty`/`iter`/`iter_mut`, and `Index<usize>`/`IndexMut<usize>` impls
+  (`in_bounds(v, i) = i < v.len` via flux-core's `Index` assoc refinement). Inherent methods and the direct
+  `Index` impl take precedence over auto-deref, so existing `b.len()` / `b[i]` call sites use the refined
+  path with no source changes.
+Effect: full sweep 152 -> 152. Every `section[i]` error moved from "out-of-bounds" to the `Index`
+precondition `i < v.len`: all 32 sites take the index from another function (`get_func_ref`, a `for i in
+0..len` caller, or `f.ty` of an element), so they need `Module` to expose section lengths (next step).
+Trusted 16 -> 20 (3 bear the fat-pointer assumption, 1 is a trivially sound ghost constructor).
