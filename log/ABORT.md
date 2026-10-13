@@ -988,3 +988,18 @@ in the default raw-deref mode, see centrifuge/harness/repro-flux-ice/ISSUES.md #
   `union` from (data, vtable) words, which flux cannot see through. `ptr::read(&self.alloc)` is discharged by
   `requires A::size_of() >= 0`. Left as an error.
 Trusted count 11 -> 9.
+
+## Validator assumption primitive (2026-10-13)
+
+The Wasm validator's per-instruction operand-stack guarantee is now an explicit, trusted, empty-bodied
+assumption instead of 197 unprovable wrapper obligations. In `src/interpreter.rs`:
+- `Interpreter::assume_validated(state, pops, pushes)` — trusted; `ensures has_depth(s, pops) && has_room(s, pops, pushes)`.
+- `Interpreter::assume_local(state, &l)`, `assume_branch(state, &addr)`, `assume_branch_after_pop(state, &addr)` — the
+  `has_local` / `can_branch` / `can_branch_after_pop` conjuncts for local and branch instructions.
+- The `forward!` macro takes the stack effect per entry (`name(args) => name_op [pops, pushes] (, assume_x(arg))?;`) and
+  emits the assume call(s) before the `*_op` call. The 165 entries were generated from the `*_op` preconditions
+  (script in the session scratchpad; the numbers must stay equal to the `requires` on the op — a mismatch silently
+  weakens the proof, so regenerate rather than hand-edit).
+Not covered (left as errors): the 9 linker conjuncts (`module.idx < store.modules.len` etc.) on the store-touching
+ops and the `call`/`call_extern` wrappers; `br_table`'s closure-provided labels (inside `br_table_op`).
+Effect: interpreter type check 265 -> 60 errors (14s instead of ~10 min); full sweep 360 -> 165. Trusted 9 -> 13.

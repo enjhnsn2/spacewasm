@@ -2126,10 +2126,14 @@ impl Interpreter {
 /// as unprovable here: that is the point where the Wasm validator's guarantee is
 /// assumed (see log/ABORT.md, "type 21").
 macro_rules! forward {
-    ($($name:ident($($p:ident: $t:ty),*) => $op:ident;)*) => { $(
+    ($($name:ident($($p:ident: $t:ty),*) => $op:ident [$pops:expr, $pushes:expr] $(, $extra:ident($arg:ident))?;)*) => { $(
         #[flux_rs::spec(fn(&Self, $($p: _,)* state: &strg Self::State[@s]) -> Result<(), Self::Error>
             ensures state: Self::State)]
         fn $name(&self, $($p: $t,)* state: &mut Self::State) -> Result<(), Self::Error> {
+            // The validator's per-instruction guarantee, assumed here (not checked at
+            // runtime): `$op` requires exactly these facts.
+            Interpreter::assume_validated(state, $pops, $pushes);
+            $( Interpreter::$extra(state, &$arg); )?
             self.$op($($p,)* state)
         }
     )* };
@@ -2138,6 +2142,52 @@ macro_rules! forward {
 /// Operand-stack preconditions of the interpreter (see `BaseVisitor`'s associated
 /// refinements): an instruction that pops `n` words needs `sp >= fp + n`, and one
 /// that pops `pops` and pushes `pushes` words needs `sp - pops + pushes <= size`.
+/// The Wasm validator's guarantee, taken as an assumption at each instruction
+/// (README: "bounds on those raw accesses are established by the up-front verifier"):
+/// at this instruction the operand stack holds `pops` words above the frame base and has
+/// room to push `pushes` words after popping them. The body is empty; the spec is trusted.
+impl Interpreter {
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module passed Wasm validation (operand-stack typing)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], pops: usize, pushes: usize)
+        ensures state: Engine[s],
+                <Interpreter as BaseVisitor>::has_depth(s, pops)
+             && <Interpreter as BaseVisitor>::has_room(s, pops, pushes))]
+    fn assume_validated(state: &mut Engine, pops: usize, pushes: usize) {
+        let _ = (state, pops, pushes);
+    }
+
+    /// Validator guarantee for local-variable instructions: `l` addresses a local of the
+    /// current frame (see `IrVisitor::has_local`).
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module passed Wasm validation (local index in frame)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], l: &LocalVariable[@lv])
+        ensures state: Engine[s], <Interpreter as IrVisitor>::has_local(s, lv))]
+    fn assume_local(state: &mut Engine, l: &LocalVariable) {
+        let _ = (state, l);
+    }
+
+    /// Validator guarantee for `br`: the operand stack holds the label's arity words
+    /// above the label's depth (see `IrVisitor::can_branch`).
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module passed Wasm validation (branch label)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], addr: &LabelTarget[@a])
+        ensures state: Engine[s], <Interpreter as IrVisitor>::can_branch(s, a))]
+    fn assume_branch(state: &mut Engine, addr: &LabelTarget) {
+        let _ = (state, addr);
+    }
+
+    /// Validator guarantee for `br_if`: as `assume_branch`, after the condition is popped
+    /// (see `IrVisitor::can_branch_after_pop`).
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module passed Wasm validation (branch label)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], addr: &LabelTarget[@a])
+        ensures state: Engine[s], <Interpreter as IrVisitor>::can_branch_after_pop(s, a))]
+    fn assume_branch_after_pop(state: &mut Engine, addr: &LabelTarget) {
+        let _ = (state, addr);
+    }
+}
+
 #[flux_rs::assoc(
     fn has_depth(s: Engine, n: int) -> bool { s.sp >= s.fp + n }
     fn has_room(s: Engine, pops: int, pushes: int) -> bool { s.sp - pops + pushes <= s.size }
@@ -2147,154 +2197,154 @@ impl BaseVisitor for Interpreter {
     type State = Engine;
 
     forward! {
-        i32_load(m: MemArg) => i32_load_op;
-        i64_load(m: MemArg) => i64_load_op;
-        f32_load(m: MemArg) => f32_load_op;
-        f64_load(m: MemArg) => f64_load_op;
-        i32_load8_s(m: MemArg) => i32_load8_s_op;
-        i32_load8_u(m: MemArg) => i32_load8_u_op;
-        i32_load16_s(m: MemArg) => i32_load16_s_op;
-        i32_load16_u(m: MemArg) => i32_load16_u_op;
-        i64_load8_s(m: MemArg) => i64_load8_s_op;
-        i64_load8_u(m: MemArg) => i64_load8_u_op;
-        i64_load16_s(m: MemArg) => i64_load16_s_op;
-        i64_load16_u(m: MemArg) => i64_load16_u_op;
-        i64_load32_s(m: MemArg) => i64_load32_s_op;
-        i64_load32_u(m: MemArg) => i64_load32_u_op;
-        i32_store(m: MemArg) => i32_store_op;
-        i64_store(m: MemArg) => i64_store_op;
-        f32_store(m: MemArg) => f32_store_op;
-        f64_store(m: MemArg) => f64_store_op;
-        i32_store8(m: MemArg) => i32_store8_op;
-        i32_store16(m: MemArg) => i32_store16_op;
-        i64_store8(m: MemArg) => i64_store8_op;
-        i64_store16(m: MemArg) => i64_store16_op;
-        i64_store32(m: MemArg) => i64_store32_op;
-        memory_size() => memory_size_op;
-        memory_grow() => memory_grow_op;
-        i32_const(n: i32) => i32_const_op;
-        i64_const(n: i64) => i64_const_op;
-        f32_const(z: f32) => f32_const_op;
-        f64_const(z: f64) => f64_const_op;
-        i32_eqz() => i32_eqz_op;
-        i32_eq() => i32_eq_op;
-        i32_ne() => i32_ne_op;
-        i32_lt_s() => i32_lt_s_op;
-        i32_lt_u() => i32_lt_u_op;
-        i32_gt_s() => i32_gt_s_op;
-        i32_gt_u() => i32_gt_u_op;
-        i32_le_s() => i32_le_s_op;
-        i32_le_u() => i32_le_u_op;
-        i32_ge_s() => i32_ge_s_op;
-        i32_ge_u() => i32_ge_u_op;
-        i64_eqz() => i64_eqz_op;
-        i64_eq() => i64_eq_op;
-        i64_ne() => i64_ne_op;
-        i64_lt_s() => i64_lt_s_op;
-        i64_lt_u() => i64_lt_u_op;
-        i64_gt_s() => i64_gt_s_op;
-        i64_gt_u() => i64_gt_u_op;
-        i64_le_s() => i64_le_s_op;
-        i64_le_u() => i64_le_u_op;
-        i64_ge_s() => i64_ge_s_op;
-        i64_ge_u() => i64_ge_u_op;
-        f32_eq() => f32_eq_op;
-        f32_ne() => f32_ne_op;
-        f32_lt() => f32_lt_op;
-        f32_gt() => f32_gt_op;
-        f32_le() => f32_le_op;
-        f32_ge() => f32_ge_op;
-        f64_eq() => f64_eq_op;
-        f64_ne() => f64_ne_op;
-        f64_lt() => f64_lt_op;
-        f64_gt() => f64_gt_op;
-        f64_le() => f64_le_op;
-        f64_ge() => f64_ge_op;
-        i32_clz() => i32_clz_op;
-        i32_ctz() => i32_ctz_op;
-        i32_popcnt() => i32_popcnt_op;
-        i32_add() => i32_add_op;
-        i32_sub() => i32_sub_op;
-        i32_mul() => i32_mul_op;
-        i32_div_s() => i32_div_s_op;
-        i32_div_u() => i32_div_u_op;
-        i32_rem_s() => i32_rem_s_op;
-        i32_rem_u() => i32_rem_u_op;
-        i32_and() => i32_and_op;
-        i32_or() => i32_or_op;
-        i32_xor() => i32_xor_op;
-        i32_shl() => i32_shl_op;
-        i32_shr_s() => i32_shr_s_op;
-        i32_shr_u() => i32_shr_u_op;
-        i32_rotl() => i32_rotl_op;
-        i32_rotr() => i32_rotr_op;
-        i64_clz() => i64_clz_op;
-        i64_ctz() => i64_ctz_op;
-        i64_popcnt() => i64_popcnt_op;
-        i64_add() => i64_add_op;
-        i64_sub() => i64_sub_op;
-        i64_mul() => i64_mul_op;
-        i64_div_s() => i64_div_s_op;
-        i64_div_u() => i64_div_u_op;
-        i64_rem_s() => i64_rem_s_op;
-        i64_rem_u() => i64_rem_u_op;
-        i64_and() => i64_and_op;
-        i64_or() => i64_or_op;
-        i64_xor() => i64_xor_op;
-        i64_shl() => i64_shl_op;
-        i64_shr_s() => i64_shr_s_op;
-        i64_shr_u() => i64_shr_u_op;
-        i64_rotl() => i64_rotl_op;
-        i64_rotr() => i64_rotr_op;
-        f32_abs() => f32_abs_op;
-        f32_neg() => f32_neg_op;
-        f32_ceil() => f32_ceil_op;
-        f32_floor() => f32_floor_op;
-        f32_trunc() => f32_trunc_op;
-        f32_nearest() => f32_nearest_op;
-        f32_sqrt() => f32_sqrt_op;
-        f32_add() => f32_add_op;
-        f32_sub() => f32_sub_op;
-        f32_mul() => f32_mul_op;
-        f32_div() => f32_div_op;
-        f32_min() => f32_min_op;
-        f32_max() => f32_max_op;
-        f32_copysign() => f32_copysign_op;
-        f64_abs() => f64_abs_op;
-        f64_neg() => f64_neg_op;
-        f64_ceil() => f64_ceil_op;
-        f64_floor() => f64_floor_op;
-        f64_trunc() => f64_trunc_op;
-        f64_nearest() => f64_nearest_op;
-        f64_sqrt() => f64_sqrt_op;
-        f64_add() => f64_add_op;
-        f64_sub() => f64_sub_op;
-        f64_mul() => f64_mul_op;
-        f64_div() => f64_div_op;
-        f64_min() => f64_min_op;
-        f64_max() => f64_max_op;
-        f64_copysign() => f64_copysign_op;
-        i32_wrap_i64() => i32_wrap_i64_op;
-        i32_trunc_f32_s() => i32_trunc_f32_s_op;
-        i32_trunc_f32_u() => i32_trunc_f32_u_op;
-        i32_trunc_f64_s() => i32_trunc_f64_s_op;
-        i32_trunc_f64_u() => i32_trunc_f64_u_op;
-        i64_extend_i32_s() => i64_extend_i32_s_op;
-        i64_extend_i32_u() => i64_extend_i32_u_op;
-        i64_trunc_f32_s() => i64_trunc_f32_s_op;
-        i64_trunc_f32_u() => i64_trunc_f32_u_op;
-        i64_trunc_f64_s() => i64_trunc_f64_s_op;
-        i64_trunc_f64_u() => i64_trunc_f64_u_op;
-        f32_convert_i32_s() => f32_convert_i32_s_op;
-        f32_convert_i32_u() => f32_convert_i32_u_op;
-        f32_convert_i64_s() => f32_convert_i64_s_op;
-        f32_convert_i64_u() => f32_convert_i64_u_op;
-        f32_demote_f64() => f32_demote_f64_op;
-        f64_convert_i32_s() => f64_convert_i32_s_op;
-        f64_convert_i32_u() => f64_convert_i32_u_op;
-        f64_convert_i64_s() => f64_convert_i64_s_op;
-        f64_convert_i64_u() => f64_convert_i64_u_op;
-        f64_promote_f32() => f64_promote_f32_op;
+        i32_load(m: MemArg) => i32_load_op [1, 0];
+        i64_load(m: MemArg) => i64_load_op [1, 2];
+        f32_load(m: MemArg) => f32_load_op [1, 0];
+        f64_load(m: MemArg) => f64_load_op [1, 2];
+        i32_load8_s(m: MemArg) => i32_load8_s_op [1, 0];
+        i32_load8_u(m: MemArg) => i32_load8_u_op [1, 0];
+        i32_load16_s(m: MemArg) => i32_load16_s_op [1, 0];
+        i32_load16_u(m: MemArg) => i32_load16_u_op [1, 0];
+        i64_load8_s(m: MemArg) => i64_load8_s_op [1, 2];
+        i64_load8_u(m: MemArg) => i64_load8_u_op [1, 2];
+        i64_load16_s(m: MemArg) => i64_load16_s_op [1, 2];
+        i64_load16_u(m: MemArg) => i64_load16_u_op [1, 2];
+        i64_load32_s(m: MemArg) => i64_load32_s_op [1, 2];
+        i64_load32_u(m: MemArg) => i64_load32_u_op [1, 2];
+        i32_store(m: MemArg) => i32_store_op [2, 0];
+        i64_store(m: MemArg) => i64_store_op [3, 0];
+        f32_store(m: MemArg) => f32_store_op [2, 0];
+        f64_store(m: MemArg) => f64_store_op [3, 0];
+        i32_store8(m: MemArg) => i32_store8_op [2, 0];
+        i32_store16(m: MemArg) => i32_store16_op [2, 0];
+        i64_store8(m: MemArg) => i64_store8_op [3, 0];
+        i64_store16(m: MemArg) => i64_store16_op [3, 0];
+        i64_store32(m: MemArg) => i64_store32_op [3, 0];
+        memory_size() => memory_size_op [0, 1];
+        memory_grow() => memory_grow_op [1, 0];
+        i32_const(n: i32) => i32_const_op [0, 1];
+        i64_const(n: i64) => i64_const_op [0, 2];
+        f32_const(z: f32) => f32_const_op [0, 1];
+        f64_const(z: f64) => f64_const_op [0, 2];
+        i32_eqz() => i32_eqz_op [1, 0];
+        i32_eq() => i32_eq_op [2, 0];
+        i32_ne() => i32_ne_op [2, 0];
+        i32_lt_s() => i32_lt_s_op [2, 0];
+        i32_lt_u() => i32_lt_u_op [2, 0];
+        i32_gt_s() => i32_gt_s_op [2, 0];
+        i32_gt_u() => i32_gt_u_op [2, 0];
+        i32_le_s() => i32_le_s_op [2, 0];
+        i32_le_u() => i32_le_u_op [2, 0];
+        i32_ge_s() => i32_ge_s_op [2, 0];
+        i32_ge_u() => i32_ge_u_op [2, 0];
+        i64_eqz() => i64_eqz_op [2, 0];
+        i64_eq() => i64_eq_op [4, 0];
+        i64_ne() => i64_ne_op [4, 0];
+        i64_lt_s() => i64_lt_s_op [4, 0];
+        i64_lt_u() => i64_lt_u_op [4, 0];
+        i64_gt_s() => i64_gt_s_op [4, 0];
+        i64_gt_u() => i64_gt_u_op [4, 0];
+        i64_le_s() => i64_le_s_op [4, 0];
+        i64_le_u() => i64_le_u_op [4, 0];
+        i64_ge_s() => i64_ge_s_op [4, 0];
+        i64_ge_u() => i64_ge_u_op [4, 0];
+        f32_eq() => f32_eq_op [2, 0];
+        f32_ne() => f32_ne_op [2, 0];
+        f32_lt() => f32_lt_op [2, 0];
+        f32_gt() => f32_gt_op [2, 0];
+        f32_le() => f32_le_op [2, 0];
+        f32_ge() => f32_ge_op [2, 0];
+        f64_eq() => f64_eq_op [4, 0];
+        f64_ne() => f64_ne_op [4, 0];
+        f64_lt() => f64_lt_op [4, 0];
+        f64_gt() => f64_gt_op [4, 0];
+        f64_le() => f64_le_op [4, 0];
+        f64_ge() => f64_ge_op [4, 0];
+        i32_clz() => i32_clz_op [1, 0];
+        i32_ctz() => i32_ctz_op [1, 0];
+        i32_popcnt() => i32_popcnt_op [1, 0];
+        i32_add() => i32_add_op [2, 0];
+        i32_sub() => i32_sub_op [2, 0];
+        i32_mul() => i32_mul_op [2, 0];
+        i32_div_s() => i32_div_s_op [2, 0];
+        i32_div_u() => i32_div_u_op [2, 0];
+        i32_rem_s() => i32_rem_s_op [2, 0];
+        i32_rem_u() => i32_rem_u_op [2, 0];
+        i32_and() => i32_and_op [2, 0];
+        i32_or() => i32_or_op [2, 0];
+        i32_xor() => i32_xor_op [2, 0];
+        i32_shl() => i32_shl_op [2, 0];
+        i32_shr_s() => i32_shr_s_op [2, 0];
+        i32_shr_u() => i32_shr_u_op [2, 0];
+        i32_rotl() => i32_rotl_op [2, 0];
+        i32_rotr() => i32_rotr_op [2, 0];
+        i64_clz() => i64_clz_op [2, 0];
+        i64_ctz() => i64_ctz_op [2, 0];
+        i64_popcnt() => i64_popcnt_op [2, 0];
+        i64_add() => i64_add_op [4, 0];
+        i64_sub() => i64_sub_op [4, 0];
+        i64_mul() => i64_mul_op [4, 0];
+        i64_div_s() => i64_div_s_op [4, 0];
+        i64_div_u() => i64_div_u_op [4, 0];
+        i64_rem_s() => i64_rem_s_op [4, 0];
+        i64_rem_u() => i64_rem_u_op [4, 0];
+        i64_and() => i64_and_op [4, 0];
+        i64_or() => i64_or_op [4, 0];
+        i64_xor() => i64_xor_op [4, 0];
+        i64_shl() => i64_shl_op [4, 0];
+        i64_shr_s() => i64_shr_s_op [4, 0];
+        i64_shr_u() => i64_shr_u_op [4, 0];
+        i64_rotl() => i64_rotl_op [4, 0];
+        i64_rotr() => i64_rotr_op [4, 0];
+        f32_abs() => f32_abs_op [1, 0];
+        f32_neg() => f32_neg_op [1, 0];
+        f32_ceil() => f32_ceil_op [1, 0];
+        f32_floor() => f32_floor_op [1, 0];
+        f32_trunc() => f32_trunc_op [1, 0];
+        f32_nearest() => f32_nearest_op [1, 0];
+        f32_sqrt() => f32_sqrt_op [1, 0];
+        f32_add() => f32_add_op [2, 0];
+        f32_sub() => f32_sub_op [2, 0];
+        f32_mul() => f32_mul_op [2, 0];
+        f32_div() => f32_div_op [2, 0];
+        f32_min() => f32_min_op [2, 0];
+        f32_max() => f32_max_op [2, 0];
+        f32_copysign() => f32_copysign_op [2, 0];
+        f64_abs() => f64_abs_op [2, 0];
+        f64_neg() => f64_neg_op [2, 0];
+        f64_ceil() => f64_ceil_op [2, 0];
+        f64_floor() => f64_floor_op [2, 0];
+        f64_trunc() => f64_trunc_op [2, 0];
+        f64_nearest() => f64_nearest_op [2, 0];
+        f64_sqrt() => f64_sqrt_op [2, 0];
+        f64_add() => f64_add_op [4, 0];
+        f64_sub() => f64_sub_op [4, 0];
+        f64_mul() => f64_mul_op [4, 0];
+        f64_div() => f64_div_op [4, 0];
+        f64_min() => f64_min_op [4, 0];
+        f64_max() => f64_max_op [4, 0];
+        f64_copysign() => f64_copysign_op [4, 0];
+        i32_wrap_i64() => i32_wrap_i64_op [2, 0];
+        i32_trunc_f32_s() => i32_trunc_f32_s_op [1, 0];
+        i32_trunc_f32_u() => i32_trunc_f32_u_op [1, 0];
+        i32_trunc_f64_s() => i32_trunc_f64_s_op [2, 0];
+        i32_trunc_f64_u() => i32_trunc_f64_u_op [2, 0];
+        i64_extend_i32_s() => i64_extend_i32_s_op [1, 2];
+        i64_extend_i32_u() => i64_extend_i32_u_op [1, 2];
+        i64_trunc_f32_s() => i64_trunc_f32_s_op [1, 2];
+        i64_trunc_f32_u() => i64_trunc_f32_u_op [1, 2];
+        i64_trunc_f64_s() => i64_trunc_f64_s_op [2, 0];
+        i64_trunc_f64_u() => i64_trunc_f64_u_op [2, 0];
+        f32_convert_i32_s() => f32_convert_i32_s_op [1, 0];
+        f32_convert_i32_u() => f32_convert_i32_u_op [1, 0];
+        f32_convert_i64_s() => f32_convert_i64_s_op [2, 0];
+        f32_convert_i64_u() => f32_convert_i64_u_op [2, 0];
+        f32_demote_f64() => f32_demote_f64_op [2, 0];
+        f64_convert_i32_s() => f64_convert_i32_s_op [1, 2];
+        f64_convert_i32_u() => f64_convert_i32_u_op [1, 2];
+        f64_convert_i64_s() => f64_convert_i64_s_op [2, 0];
+        f64_convert_i64_u() => f64_convert_i64_u_op [2, 0];
+        f64_promote_f32() => f64_promote_f32_op [1, 2];
     }
 
     #[flux_rs::spec(fn(&Self, state: &strg Self::State[@s]) -> Result<(), Self::Error>
@@ -2339,23 +2389,23 @@ impl BaseVisitor for Interpreter {
 )]
 impl IrVisitor for Interpreter {
     forward! {
-        drop(ty: ValType) => drop_op;
-        select(ty: ValType) => select_op;
-        if_(false_address: LabelTarget) => if_op;
-        br(addr: LabelTarget) => br_op;
-        br_if(true_address: LabelTarget) => br_if_op;
-        return_(return_size: u8) => return_op;
-        call_indirect(x: TypeIdx) => call_indirect_op;
-        call_host(module: HostModuleRef, x: u16) => call_host_op;
-        local_get(l: LocalVariable) => local_get_op;
-        local_set(l: LocalVariable) => local_set_op;
-        local_tee(l: LocalVariable) => local_tee_op;
-        global_get(idx: u16) => global_get_op;
-        global_get_host(module: HostModuleRef, index: u16) => global_get_host_op;
-        global_set(idx: u16) => global_set_op;
-        global_set_host(module: HostModuleRef, index: u16) => global_set_host_op;
-        global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op;
-        global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op;
+        drop(ty: ValType) => drop_op [2, 0];
+        select(ty: ValType) => select_op [5, 0];
+        if_(false_address: LabelTarget) => if_op [1, 0];
+        br(addr: LabelTarget) => br_op [0, 0], assume_branch(addr);
+        br_if(true_address: LabelTarget) => br_if_op [1, 0], assume_branch_after_pop(true_address);
+        return_(return_size: u8) => return_op [0, 0];
+        call_indirect(x: TypeIdx) => call_indirect_op [1, 0];
+        call_host(module: HostModuleRef, x: u16) => call_host_op [0, 0];
+        local_get(l: LocalVariable) => local_get_op [0, 1], assume_local(l);
+        local_set(l: LocalVariable) => local_set_op [2, 0], assume_local(l);
+        local_tee(l: LocalVariable) => local_tee_op [2, 0], assume_local(l);
+        global_get(idx: u16) => global_get_op [0, 1];
+        global_get_host(module: HostModuleRef, index: u16) => global_get_host_op [0, 1];
+        global_set(idx: u16) => global_set_op [2, 0];
+        global_set_host(module: HostModuleRef, index: u16) => global_set_host_op [2, 0];
+        global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op [0, 1];
+        global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op [2, 0];
     }
 
     #[flux_rs::spec(fn(&Self, n: u32, cases: _, state: &strg Self::State[@s]) -> Result<(), Self::Error>

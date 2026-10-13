@@ -1,0 +1,23 @@
+ops: 166  entries: 164  arms: 14
+no-spec ops: []
+missing ops: []
+histogram: [((0, 0), 3), ((0, 1), 7), ((0, 2), 2), ((1, 0), 26), ((1, 2), 15), ((2, 0), 69), ((3, 0), 5), ((4, 0), 38), ((5, 0), 1)]
+extras: Counter({'LINKER': 9, 'local': 3, 'branch': 1, 'branch_after_pop': 1})
+  i32_load(m: MemArg) => i32_load_op [1,0] []  :: <Interpreter as BaseVisitor>::has_depth(s, 1)
+  i64_store(m: MemArg) => i64_store_op [3,0] []  :: <Interpreter as BaseVisitor>::has_depth(s, 3)
+  memory_grow() => memory_grow_op [1,0] ['LINKER']  :: <Interpreter as BaseVisitor>::has_depth(s, 1) && s.module.idx < s.stor
+  drop(ty: ValType) => drop_op [2,0] []  :: <Interpreter as BaseVisitor>::has_depth(s, 2)
+  select(ty: ValType) => select_op [5,0] []  :: <Interpreter as BaseVisitor>::has_depth(s, 5)
+  br(addr: LabelTarget) => br_op [0,0] ['branch']  :: <Interpreter as IrVisitor>::can_branch(s, addr)
+  br_if(true_address: LabelTarget) => br_if_op [1,0] ['branch_after_pop']  :: <Interpreter as BaseVisitor>::has_depth(s, 1) && <Interpreter as IrVis
+  call_indirect(x: TypeIdx) => call_indirect_op [1,0] ['LINKER']  :: <Interpreter as BaseVisitor>::has_depth(s, 1) && s.module.idx < s.stor
+  call_host(module: HostModuleRef, x: u16) => call_host_op [0,0] ['LINKER']  :: module.idx < s.store.host.len
+  local_get(l: LocalVariable) => local_get_op [0,1] ['local']  :: <Interpreter as BaseVisitor>::has_room(s, 0, 1) && <Interpreter as IrV
+  local_set(l: LocalVariable) => local_set_op [2,0] ['local']  :: <Interpreter as BaseVisitor>::has_depth(s, 2) && <Interpreter as IrVis
+  local_tee(l: LocalVariable) => local_tee_op [2,0] ['local']  :: <Interpreter as BaseVisitor>::has_depth(s, 2) && <Interpreter as IrVis
+  global_get(idx: u16) => global_get_op [0,1] ['LINKER']  :: <Interpreter as BaseVisitor>::has_room(s, 0, 1) && s.module.idx < s.st
+  global_get_host(module: HostModuleRef, index: u16) => global_get_host_op [0,1] ['LINKER']  :: <Interpreter as BaseVisitor>::has_room(s, 0, 1) && module.idx < s.stor
+  global_set(idx: u16) => global_set_op [2,0] ['LINKER']  :: <Interpreter as BaseVisitor>::has_depth(s, 2) && s.module.idx < s.stor
+  global_set_host(module: HostModuleRef, index: u16) => global_set_host_op [2,0] ['LINKER']  :: <Interpreter as BaseVisitor>::has_depth(s, 2) && module.idx < s.store.
+  global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op [0,1] ['LINKER']  :: <Interpreter as BaseVisitor>::has_room(s, 0, 1) && module.idx < s.stor
+  global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op [2,0] ['LINKER']  :: <Interpreter as BaseVisitor>::has_depth(s, 2) && module.idx < s.store.
