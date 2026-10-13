@@ -2422,7 +2422,7 @@ impl IrVisitor for Interpreter {
         if_(false_address: LabelTarget) => if_op [1, 0];
         br(addr: LabelTarget) => br_op [0, 0], assume_branch(addr);
         br_if(true_address: LabelTarget) => br_if_op [1, 0], assume_branch_after_pop(true_address);
-        return_(return_size: u8) => return_op [0, 0];
+        return_(return_size: u8) => return_op [return_size as usize + 2, 0];
         call_indirect(x: TypeIdx) => call_indirect_op [1, 0], assume_linked();
         call_host(module: HostModuleRef, x: u16) => call_host_op [0, 0], assume_linked_host(module);
         local_get(l: LocalVariable) => local_get_op [0, 1], assume_local(l);
