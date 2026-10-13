@@ -1003,3 +1003,11 @@ assumption instead of 197 unprovable wrapper obligations. In `src/interpreter.rs
 Not covered (left as errors): the 9 linker conjuncts (`module.idx < store.modules.len` etc.) on the store-touching
 ops and the `call`/`call_extern` wrappers; `br_table`'s closure-provided labels (inside `br_table_op`).
 Effect: interpreter type check 265 -> 60 errors (14s instead of ~10 min); full sweep 360 -> 165. Trusted 9 -> 13.
+
+## Linker assumption primitives (2026-10-13)
+
+Same shape as the validator primitives: `Interpreter::assume_linked(state)` (current module index is in the store),
+`assume_linked_module(state, &m)` (a `ModuleRef` argument), `assume_linked_host(state, &h)` (a `HostModuleRef`
+argument); all trusted, empty-bodied, `ensures ... < s.store.modules.len` / `s.store.host.len`. Tagged on the 9
+store-touching `forward!` entries and called from the hand-written `call` / `call_extern` wrappers.
+Effect: full sweep 165 -> 153. Trusted 13 -> 16.

@@ -2126,14 +2126,14 @@ impl Interpreter {
 /// as unprovable here: that is the point where the Wasm validator's guarantee is
 /// assumed (see log/ABORT.md, "type 21").
 macro_rules! forward {
-    ($($name:ident($($p:ident: $t:ty),*) => $op:ident [$pops:expr, $pushes:expr] $(, $extra:ident($arg:ident))?;)*) => { $(
+    ($($name:ident($($p:ident: $t:ty),*) => $op:ident [$pops:expr, $pushes:expr] $(, $extra:ident($($arg:ident)?))*;)*) => { $(
         #[flux_rs::spec(fn(&Self, $($p: _,)* state: &strg Self::State[@s]) -> Result<(), Self::Error>
             ensures state: Self::State)]
         fn $name(&self, $($p: $t,)* state: &mut Self::State) -> Result<(), Self::Error> {
             // The validator's per-instruction guarantee, assumed here (not checked at
             // runtime): `$op` requires exactly these facts.
             Interpreter::assume_validated(state, $pops, $pushes);
-            $( Interpreter::$extra(state, &$arg); )?
+            $( Interpreter::$extra(state $(, &$arg)?); )*
             self.$op($($p,)* state)
         }
     )* };
@@ -2186,6 +2186,34 @@ impl Interpreter {
     fn assume_branch_after_pop(state: &mut Engine, addr: &LabelTarget) {
         let _ = (state, addr);
     }
+
+    /// The linker's guarantee: the engine's current module is in the store
+    /// (`Store::link_*` range-checks every reference at load time).
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module was linked into the store (current module index)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s])
+        ensures state: Engine[s], s.module.idx < s.store.modules.len)]
+    fn assume_linked(state: &mut Engine) {
+        let _ = state;
+    }
+
+    /// Linker guarantee for a module reference carried by the instruction.
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module was linked into the store (module reference)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], m: &ModuleRef[@mr])
+        ensures state: Engine[s], mr.idx < s.store.modules.len)]
+    fn assume_linked_module(state: &mut Engine, m: &ModuleRef) {
+        let _ = (state, m);
+    }
+
+    /// Linker guarantee for a host-module reference carried by the instruction.
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "external assumption: the module was linked into the store (host module reference)")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], h: &HostModuleRef[@hr])
+        ensures state: Engine[s], hr.idx < s.store.host.len)]
+    fn assume_linked_host(state: &mut Engine, h: &HostModuleRef) {
+        let _ = (state, h);
+    }
 }
 
 #[flux_rs::assoc(
@@ -2221,7 +2249,7 @@ impl BaseVisitor for Interpreter {
         i64_store16(m: MemArg) => i64_store16_op [3, 0];
         i64_store32(m: MemArg) => i64_store32_op [3, 0];
         memory_size() => memory_size_op [0, 1];
-        memory_grow() => memory_grow_op [1, 0];
+        memory_grow() => memory_grow_op [1, 0], assume_linked();
         i32_const(n: i32) => i32_const_op [0, 1];
         i64_const(n: i64) => i64_const_op [0, 2];
         f32_const(z: f32) => f32_const_op [0, 1];
@@ -2395,17 +2423,17 @@ impl IrVisitor for Interpreter {
         br(addr: LabelTarget) => br_op [0, 0], assume_branch(addr);
         br_if(true_address: LabelTarget) => br_if_op [1, 0], assume_branch_after_pop(true_address);
         return_(return_size: u8) => return_op [0, 0];
-        call_indirect(x: TypeIdx) => call_indirect_op [1, 0];
-        call_host(module: HostModuleRef, x: u16) => call_host_op [0, 0];
+        call_indirect(x: TypeIdx) => call_indirect_op [1, 0], assume_linked();
+        call_host(module: HostModuleRef, x: u16) => call_host_op [0, 0], assume_linked_host(module);
         local_get(l: LocalVariable) => local_get_op [0, 1], assume_local(l);
         local_set(l: LocalVariable) => local_set_op [2, 0], assume_local(l);
         local_tee(l: LocalVariable) => local_tee_op [2, 0], assume_local(l);
-        global_get(idx: u16) => global_get_op [0, 1];
-        global_get_host(module: HostModuleRef, index: u16) => global_get_host_op [0, 1];
-        global_set(idx: u16) => global_set_op [2, 0];
-        global_set_host(module: HostModuleRef, index: u16) => global_set_host_op [2, 0];
-        global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op [0, 1];
-        global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op [2, 0];
+        global_get(idx: u16) => global_get_op [0, 1], assume_linked();
+        global_get_host(module: HostModuleRef, index: u16) => global_get_host_op [0, 1], assume_linked_host(module);
+        global_set(idx: u16) => global_set_op [2, 0], assume_linked();
+        global_set_host(module: HostModuleRef, index: u16) => global_set_host_op [2, 0], assume_linked_host(module);
+        global_get_extern(module: ModuleRef, index: u16) => global_get_extern_op [0, 1], assume_linked_module(module);
+        global_set_extern(module: ModuleRef, index: u16) => global_set_extern_op [2, 0], assume_linked_module(module);
     }
 
     #[flux_rs::spec(fn(&Self, n: u32, cases: _, state: &strg Self::State[@s]) -> Result<(), Self::Error>
@@ -2422,6 +2450,7 @@ impl IrVisitor for Interpreter {
     #[flux_rs::spec(fn(&Self, x: u16, state: &strg Self::State[@s]) -> Result<(), Self::Error>
         ensures state: Self::State)]
     fn call(&self, x: u16, state: &mut Self::State) -> Result<(), Self::Error> {
+        Interpreter::assume_linked(state);
         state.call_impl(0, x)
     }
 
@@ -2433,6 +2462,8 @@ impl IrVisitor for Interpreter {
         x: u16,
         state: &mut Self::State,
     ) -> Result<(), Self::Error> {
+        Interpreter::assume_linked(state);
+        Interpreter::assume_linked_module(state, &module_ref);
         state.call_impl_enter_module(WasmRef {
             module: module_ref,
             index: x,
