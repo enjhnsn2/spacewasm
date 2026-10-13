@@ -93,7 +93,7 @@ impl Store {
                                     }
                                 }
                                 Ref::Extern { module, index } => {
-                                    let em = &self.modules().get(module.0 as usize).unwrap();
+                                    let em = &self.modules()[self.validated_module_index(module)];
                                     let f = &em.functions[em.validated_func_index(index)];
                                     let ty = &em.types[em.validated_type_index(f.ty)];
 
@@ -104,8 +104,8 @@ impl Store {
                                     Ok(Import::Func { module, index })
                                 }
                                 Ref::Host { module, index } => {
-                                    let hm = &self.host_modules()[module.0 as usize];
-                                    let f = &hm.functions[index as usize];
+                                    let hm = &self.host_modules()[self.validated_host_module_index(module)];
+                                    let f = &hm.functions[hm.validated_function_index(index)];
 
                                     let return_vals: &[ValType] = match f.returns().0 {
                                         Some(v) => &[v],
@@ -185,7 +185,7 @@ impl Store {
                                     }
                                 }
                                 Ref::Extern { module, index } => {
-                                    let em = self.modules().get(module.0 as usize).unwrap();
+                                    let em = &self.modules()[self.validated_module_index(module)];
                                     let g = &em.globals[em.validated_global_index(index)];
                                     if g.type_.ty != expected_ty.ty {
                                         Err(ValidationError::GlobalImportTypeMismatch)
@@ -196,8 +196,8 @@ impl Store {
                                     }
                                 }
                                 Ref::Host { module, index } => {
-                                    let hm = &self.host_modules()[module.0 as usize];
-                                    let g = &hm.globals[index as usize];
+                                    let hm = &self.host_modules()[self.validated_host_module_index(module)];
+                                    let g = &hm.globals[hm.validated_global_index(index)];
                                     if g.value.ty() != expected_ty.ty {
                                         Err(ValidationError::GlobalImportTypeMismatch)
                                     } else if expected_ty.mutable != g.value.mutable() {
@@ -264,7 +264,7 @@ impl Store {
                                     },
                                 ),
                                 Some(TableKind::Import(import_module_ref)) => {
-                                    let r = import_module_ref.0 as usize;
+                                    let r = self.validated_module_index(*import_module_ref);
                                     let Some(TableKind::Owned(table)) = &self.modules()[r].table
                                     else {
                                         unreachable!()
@@ -279,8 +279,8 @@ impl Store {
                                     )
                                 }
                                 Some(TableKind::ImportHost(host_import)) => {
-                                    let l = self.host_modules()[host_import.module.0 as usize]
-                                        .table[host_import.index as usize]
+                                    let hm = &self.host_modules()[self.validated_host_module_index(host_import.module)];
+                                    let l = hm.table[hm.validated_table_index(host_import.index)]
                                         .value
                                         .1;
 
@@ -367,7 +367,7 @@ impl Store {
                                     // This import should already be resolved to a module with
                                     // an owned memory.
                                     let Some(MemoryKind::Owned(memory)) =
-                                        &self.modules()[i.0 as usize].memory
+                                        &self.modules()[self.validated_module_index(*i)].memory
                                     else {
                                         unreachable!()
                                     };
@@ -382,8 +382,8 @@ impl Store {
                                     })
                                 }
                                 Some(MemoryKind::ImportHost(i)) => {
-                                    let symbol = &self.host_modules()[i.module.0 as usize].memory
-                                        [i.index as usize];
+                                    let hm = &self.host_modules()[self.validated_host_module_index(i.module)];
+                                    let symbol = &hm.memory[hm.validated_memory_index(i.index)];
 
                                     let memory = &symbol.value;
                                     if !memory.mem_type().matches(&expected_ty) {

@@ -226,8 +226,10 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize> WasmVisi
                 Ok(())
             }
             Ref::Host { module, index } => {
-                let hm = &state.store().host_modules()[module.0 as usize];
-                let f = &hm.functions[index as usize];
+                let st = state.store();
+                let hmi = st.validated_host_module_index(module);
+                let hm = &st.host_modules()[hmi];
+                let f = &hm.functions[hm.validated_function_index(index)];
                 for p in f.params().iter().rev() {
                     let _ = state.pop_stack(p)?;
                 }
@@ -242,7 +244,9 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize> WasmVisi
             }
             Ref::Extern { module, index } => {
                 // Check the call signature
-                let m = &state.store().modules()[module.0 as usize];
+                let st = state.store();
+                let mi = st.validated_module_index(module);
+                let m = &st.modules()[mi];
                 let f = &m.functions[m.validated_func_index(index)];
                 let ty = &m.types[m.validated_type_index(f.ty)];
 

@@ -1777,7 +1777,8 @@ impl Interpreter {
         match state.table.get(i) {
             None => Err(InterpreterBreak::Trap(TrapReason::InvalidTableIndex)),
             Some(TableElement::Func { module, index }) => {
-                let m = &state.store.modules()[module.0 as usize];
+                let mi = state.store.validated_module_index(*module);
+                let m = &state.store.modules()[mi];
                 let f = &m.functions[m.validated_func_index(*index)];
 
                 // Validate the function is the proper type
@@ -1796,8 +1797,9 @@ impl Interpreter {
             }
             Some(TableElement::Host { module, index }) => {
                 // Make sure the type matches our expectations (runtime validation)
-                let m = &state.store.host_modules()[module.0 as usize];
-                let f = &m.functions[*index as usize];
+                let hmi = state.store.validated_host_module_index(*module);
+                let m = &state.store.host_modules()[hmi];
+                let f = &m.functions[m.validated_function_index(*index)];
 
                 let return_vals: &[ValType] = match f.returns().0 {
                     Some(v) => &[v],
@@ -1916,7 +1918,7 @@ impl Interpreter {
         state: &mut Engine,
     ) -> Result<(), InterpreterBreak> {
         let m = &state.store.host_modules()[module.0 as usize];
-        match m.globals[index as usize]
+        match m.globals[m.validated_global_index(index)]
             .value
             .read()
             .or(Err(InterpreterBreak::Trap(TrapReason::GlobalGetFailed)))?
@@ -1975,7 +1977,7 @@ impl Interpreter {
         state: &mut Engine,
     ) -> Result<(), InterpreterBreak> {
         let m = &state.store.host_modules()[module.0 as usize];
-        let g = &m.globals[index as usize];
+        let g = &m.globals[m.validated_global_index(index)];
         match g.value.ty() {
             ValType::I32 => {
                 state.sp -= 1;
@@ -2015,7 +2017,9 @@ impl Interpreter {
     ) -> Result<(), InterpreterBreak> {
         let mut sv: StaticVec<Value, MAX_HOST_FUNCTION_PARAMS> = StaticVec::new();
 
-        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
+        let hm = &mut state.store.host_modules_mut()[module.0 as usize];
+        let fi = hm.validated_function_index(x);
+        let f = &hm.functions[fi];
         state.sp -= f.param_size();
         let mut offset = 0;
         for p_ty in f.params().iter() {
@@ -2044,7 +2048,9 @@ impl Interpreter {
         }
 
         let r = state.call_host_fn(module, x, &sv);
-        let f = &state.store.host_modules_mut()[module.0 as usize].functions[x as usize];
+        let hm = &mut state.store.host_modules_mut()[module.0 as usize];
+        let fi = hm.validated_function_index(x);
+        let f = &hm.functions[fi];
         match r {
             ControlFlow::Continue(v) => {
                 match (v, f.returns().0) {

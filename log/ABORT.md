@@ -1070,3 +1070,45 @@ Two findings surfaced by the new specs (left as errors, no source change):
 - Remaining `section[i]` sites: 8 on `HostModule` sections (`Vec<HostFunction>` / `Vec<HostGlobal>`; needs a
   `HostModule` refinement and the store-element fact) and the store-level `modules()[r]` / `host_modules()[r]`
   linker lookups (category B), e.g. module.rs 238-279/331/870-878/1071-1079, imports.rs, store.rs.
+
+## Store / host-element ref validity assumptions (2026-10-13)
+
+The store/host reference-validity cluster (category A/B, ~59 errors). A `ModuleRef` /
+`HostModuleRef` / `HostRef` / `TableElement` read back out of a linked module indexes the
+store or a host module, but its in-range-ness is a CROSS-OBJECT fact (the reference lives
+inside `self.modules`/a module; the bound is `self.modules.len` / a host module's section
+length). Flux invariants are per-type predicates over refinement indices and cannot quantify
+over the elements of a length-refined `Vec`/`Box`, so this well-formedness property (which
+the linker does establish) cannot be written as a checked invariant without either threading
+a store-size ghost through `Module`/`MemoryKind`/`HostRef` (viral) or inserting runtime bounds
+checks (defeats the zero-cost goal). **User decision (2026-10-13): bake in the zero-cost
+assumption.** Same spirit as the interpreter's `assume_linked` family.
+
+New TRUSTED items (trusted count 23 -> 33, +10):
+- `HostModule` is now refined by its four section lengths (`globals/functions/memory/table`
+  as `InnerVec` indices), mirroring `module::Module`; host modules are built only by embedders
+  outside the verified crate, so there is no in-crate constructor to re-prove. (This refinement
+  itself is NOT trusted.)
+- `HostModule::validated_{function,global,memory,table}_index(&self, u16) -> usize` (4): return
+  the index with the fact `< m.<section>.len`. Host section element indices from a `HostRef` /
+  table element, range-checked at link time.
+- `HostModule::{memory_value_mut,table_value_mut}(&mut self, u16)` (2): `&mut` accessors for the
+  imported-host arms of `Store::get_memory_mut` / `Module::get_table`, where a plain index + bound
+  does not re-prove across flux's `&mut` reborrow, so the bounded access is bundled.
+- `Store::validated_{module,host_module}_index(&self, Ref) -> usize` (2): a stored `ModuleRef` /
+  `HostModuleRef` import target is in range of the store.
+- `Store::{module_mut_assumed,host_module_mut_assumed}(&mut self, Ref) -> &mut Module/HostModule`
+  (2): `&mut` counterparts for the stored-ref module accesses in `Module::get_table` (outside the
+  `Store` impl, so the verified direct-field form used by `get_memory_mut` is unavailable).
+
+Applied at: `store::Store::{get_memory,get_table,get_memory_mut}` (verified clean);
+`module::{read_section import resolution, Start Extern arm, get_table, DataSection::read}`;
+`interpreter::{global_get_host_op,global_set_host_op,call_host_op,call_indirect_op}`;
+`compiler::Compiler::call` (`Ref::Host`/`Ref::Extern`; also had to bind `state.store()` once —
+each call returns a fresh `&Store` existential, so a bound from one call does not transfer to the
+next); `imports::Store::{link_function,link_global,link_table,link_memory}` (the `Ref::Extern`
+`.get(..).unwrap()` was replaced by a validated direct index, which also removes the unwrap panic).
+
+Effect: full sweep 131 -> 90. Tests 284 pass. Remaining in these files: `module.rs` get_func_ref /
+get_global_ref postconditions (2) are the u16-truncation bug, being fixed upstream (see
+[[project-spacewasm-funcidx-truncation]]); not an assumption.

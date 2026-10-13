@@ -235,7 +235,7 @@ impl Module {
                             // The import should have already validated with linkage
                             // We can make the assertion here
                             let Some(MemoryKind::Owned(_)) =
-                                &store.modules()[module.0 as usize].memory
+                                &store.modules()[store.validated_module_index(*module)].memory
                             else {
                                 unreachable!()
                             };
@@ -248,9 +248,8 @@ impl Module {
                             }
 
                             // Make sure this module actually defines a memory
-                            let _ = &store.host_modules()[module.0 as usize].memory
-                                [*index as usize]
-                                .value;
+                            let hm = &store.host_modules()[store.validated_host_module_index(*module)];
+                            let _ = &hm.memory[hm.validated_memory_index(*index)].value;
 
                             self.memory = Some(MemoryKind::ImportHost(HostRef {
                                 module: *module,
@@ -262,8 +261,9 @@ impl Module {
                                 return Err(ValidationError::MultipleTables);
                             }
 
+                            let mi = store.validated_module_index(*module);
                             let Some(TableKind::Owned(_)) =
-                                &mut store.modules_mut()[module.0 as usize].table
+                                &mut store.modules_mut()[mi].table
                             else {
                                 unreachable!()
                             };
@@ -276,8 +276,8 @@ impl Module {
                             }
 
                             // Make sure this module actually defines a table
-                            let _ = &store.host_modules()[module.0 as usize].table[*index as usize]
-                                .value;
+                            let hm = &store.host_modules()[store.validated_host_module_index(*module)];
+                            let _ = &hm.table[hm.validated_table_index(*index)].value;
 
                             self.table = Some(TableKind::ImportHost(HostRef {
                                 module: *module,
@@ -328,7 +328,8 @@ impl Module {
                         return Err(ValidationError::InvalidHostStartFunction);
                     }
                     Ref::Extern { module, index } => {
-                        let m = &store.modules()[module.0 as usize];
+                        let mi = store.validated_module_index(module);
+                        let m = &store.modules()[mi];
                         let f = &m.functions[m.validated_func_index(index)];
                         let ty = &m.types[m.validated_type_index(f.ty)];
                         if !ty.params.is_empty() || !ty.returns.is_empty() {
@@ -866,8 +867,7 @@ impl Module {
             let table = match table {
                 TableKind::Owned(table) => &mut table.0,
                 TableKind::Import(i) => {
-                    let Some(TableKind::Owned(table)) =
-                        &mut store.modules_mut()[i.0 as usize].table
+                    let Some(TableKind::Owned(table)) = &mut store.module_mut_assumed(*i).table
                     else {
                         unreachable!()
                     };
@@ -875,9 +875,8 @@ impl Module {
                     &mut table.0
                 }
                 TableKind::ImportHost(i) => {
-                    &mut store.host_modules_mut()[i.module.0 as usize].table[i.index as usize]
-                        .value
-                        .0
+                    let hi = i.index;
+                    &mut store.host_module_mut_assumed(i.module).table_value_mut(hi).0
                 }
             };
 
@@ -1068,7 +1067,8 @@ impl DataSection {
             let memory = match memory {
                 MemoryKind::Owned(memory) => memory,
                 MemoryKind::Import(i) => {
-                    let Some(MemoryKind::Owned(memory)) = &store.modules()[i.0 as usize].memory
+                    let Some(MemoryKind::Owned(memory)) =
+                        &store.modules()[store.validated_module_index(*i)].memory
                     else {
                         unreachable!()
                     };
@@ -1076,7 +1076,8 @@ impl DataSection {
                     memory
                 }
                 MemoryKind::ImportHost(i) => {
-                    &store.host_modules()[i.module.0 as usize].memory[i.index as usize].value
+                    let hm = &store.host_modules()[store.validated_host_module_index(i.module)];
+                    &hm.memory[hm.validated_memory_index(i.index)].value
                 }
             };
 

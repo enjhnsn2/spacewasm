@@ -102,13 +102,51 @@ impl Store {
         Ok(ModuleRef(index as u8))
     }
 
+    // Flux: stored-reference validity assumptions. TRUSTED, see log/ABORT.md
+    // "Store / host-element ref validity assumptions". A `ModuleRef` / `HostModuleRef`
+    // read back out of a linked module (a `MemoryKind::Import`, a `TableElement`, an
+    // import entry, ...) indexes the store, but its in-range-ness is a cross-object
+    // fact (the reference lives inside `self.modules`, the bound is `self.modules.len`)
+    // that cannot be stated as a local invariant. It was range-checked when the module
+    // was linked; these assume that and return the index with the bound attached.
+    #[flux_rs::trusted(reason = "link-time assumption: a stored ModuleRef was range-checked against the store at link time")]
+    #[flux_rs::spec(fn(&Self[@s], r: ModuleRef) -> usize{i: i == r.idx && i < s.modules.len})]
+    #[inline(always)]
+    pub fn validated_module_index(&self, r: ModuleRef) -> usize {
+        r.0 as usize
+    }
+
+    #[flux_rs::trusted(reason = "link-time assumption: a stored HostModuleRef was range-checked against the store at link time")]
+    #[flux_rs::spec(fn(&Self[@s], r: HostModuleRef) -> usize{i: i == r.idx && i < s.host.len})]
+    #[inline(always)]
+    pub fn validated_host_module_index(&self, r: HostModuleRef) -> usize {
+        r.0 as usize
+    }
+
+    // `&mut` accessors for a stored module reference. Trusted for the same link-time
+    // reason; unlike the immutable path, the bound does not survive flux's `&mut`
+    // reborrow of the store, so the bounded access is bundled here. See log/ABORT.md.
+    #[flux_rs::trusted(reason = "link-time assumption: a stored ModuleRef was range-checked against the store at link time (&mut access)")]
+    #[flux_rs::spec(fn(&mut Self, r: ModuleRef) -> &mut Module)]
+    #[inline(always)]
+    pub fn module_mut_assumed(&mut self, r: ModuleRef) -> &mut Module {
+        &mut self.modules[r.0 as usize]
+    }
+
+    #[flux_rs::trusted(reason = "link-time assumption: a stored HostModuleRef was range-checked against the store at link time (&mut access)")]
+    #[flux_rs::spec(fn(&mut Self, r: HostModuleRef) -> &mut HostModule)]
+    #[inline(always)]
+    pub fn host_module_mut_assumed(&mut self, r: HostModuleRef) -> &mut HostModule {
+        &mut self.host_modules[r.0 as usize]
+    }
+
     #[flux_rs::spec(fn(&Self[@s], module_ref: ModuleRef{r: r.idx < s.modules.len}) -> &Rc<Memory>)]
     pub fn get_memory(&self, module_ref: ModuleRef) -> &Rc<Memory> {
         match &self.modules[module_ref.0 as usize].memory {
             None => &self.zero_memory,
             Some(MemoryKind::Owned(mem)) => mem,
             Some(MemoryKind::Import(import_module_ref)) => {
-                let r = import_module_ref.0 as usize;
+                let r = self.validated_module_index(*import_module_ref);
                 let Some(MemoryKind::Owned(mem)) = &self.modules[r].memory else {
                     unreachable!()
                 };
@@ -116,8 +154,9 @@ impl Store {
                 mem
             }
             Some(MemoryKind::ImportHost(host_import)) => {
-                &self.host_modules[host_import.module.0 as usize].memory[host_import.index as usize]
-                    .value
+                let mr = self.validated_host_module_index(host_import.module);
+                let hm = &self.host_modules[mr];
+                &hm.memory[hm.validated_memory_index(host_import.index)].value
             }
         }
     }
@@ -128,7 +167,7 @@ impl Store {
             None => &self.zero_table,
             Some(TableKind::Owned(table)) => &table.0,
             Some(TableKind::Import(import_module_ref)) => {
-                let r = import_module_ref.0 as usize;
+                let r = self.validated_module_index(*import_module_ref);
                 let Some(TableKind::Owned(table)) = &self.modules[r].table else {
                     unreachable!()
                 };
@@ -136,9 +175,9 @@ impl Store {
                 &table.0
             }
             Some(TableKind::ImportHost(host_import)) => {
-                &self.host_modules[host_import.module.0 as usize].table[host_import.index as usize]
-                    .value
-                    .0
+                let mr = self.validated_host_module_index(host_import.module);
+                let hm = &self.host_modules[mr];
+                &hm.table[hm.validated_table_index(host_import.index)].value.0
             }
         }
     }
@@ -164,7 +203,8 @@ impl Store {
                 mem
             }
             Some(MemoryKind::Import(import_module_ref)) => {
-                let r = import_module_ref.0 as usize;
+                let imr = *import_module_ref;
+                let r = self.validated_module_index(imr);
                 let Some(MemoryKind::Owned(mem)) = &mut self.modules[r].memory else {
                     unreachable!()
                 };
@@ -172,9 +212,10 @@ impl Store {
                 mem
             }
             Some(MemoryKind::ImportHost(host_import)) => {
-                &mut self.host_modules[host_import.module.0 as usize].memory
-                    [host_import.index as usize]
-                    .value
+                let hr = host_import.module;
+                let hi = host_import.index;
+                let mr = self.validated_host_module_index(hr);
+                self.host_modules[mr].memory_value_mut(hi)
             }
         }
     }

@@ -391,14 +391,80 @@ pub const HOST_MODULE_NAME_CAP: usize = 31;
 /// Name capacity for host-provided memory and table symbols.
 pub const HOST_SYMBOL_NAME_CAP: usize = 15;
 
+// Flux: refined by the lengths of the four host sections (as `InnerVec` indices, so
+// `m.functions.len` etc. are the section lengths), mirroring `module::Module`. Lets the
+// store bound a host-section index (`host_modules()[r].functions[i]`). Host modules are
+// built by embedders outside the verified crate, so there is no in-crate constructor to
+// re-prove.
 #[derive(Debug)]
+#[flux_rs::refined_by(globals: InnerVec, functions: InnerVec, memory: InnerVec, table: InnerVec)]
 pub struct HostModule {
     /// Module name
     pub name: HostName<HOST_MODULE_NAME_CAP>,
+    #[flux_rs::field(Vec<HostGlobal>[globals])]
     pub globals: Vec<HostGlobal>,
+    #[flux_rs::field(Vec<HostFunction>[functions])]
     pub functions: Vec<HostFunction>,
+    #[flux_rs::field(Vec<HostSymbol<_, Rc<Memory>>>[memory])]
     pub memory: Vec<HostSymbol<HOST_SYMBOL_NAME_CAP, Rc<Memory>>>,
+    #[flux_rs::field(Vec<HostSymbol<_, (Rc<[TableElement]>, Limit)>>[table])]
     pub table: Vec<HostSymbol<HOST_SYMBOL_NAME_CAP, (Rc<[TableElement]>, Limit)>>,
+}
+
+impl HostModule {
+    // Flux: validated host-section index assumptions. TRUSTED, see log/ABORT.md
+    // "Store / host-element ref validity assumptions". Each returns the index it was
+    // given together with the fact that it is in range of the named host section; the
+    // indexing itself stays verified. The fact holds because a `HostRef` / table
+    // element was range-checked against the host module when the module was linked,
+    // but that is a stored cross-object reference flux cannot bound locally.
+    #[flux_rs::trusted(reason = "link-time assumption: host function index was range-checked against the host module at link time")]
+    #[flux_rs::spec(fn(&HostModule[@m], i: u16) -> usize{j: j == i && j < m.functions.len})]
+    #[inline(always)]
+    pub fn validated_function_index(&self, i: u16) -> usize {
+        i as usize
+    }
+
+    #[flux_rs::trusted(reason = "link-time assumption: host global index was range-checked against the host module at link time")]
+    #[flux_rs::spec(fn(&HostModule[@m], i: u16) -> usize{j: j == i && j < m.globals.len})]
+    #[inline(always)]
+    pub fn validated_global_index(&self, i: u16) -> usize {
+        i as usize
+    }
+
+    #[flux_rs::trusted(reason = "link-time assumption: host memory index was range-checked against the host module at link time")]
+    #[flux_rs::spec(fn(&HostModule[@m], i: u16) -> usize{j: j == i && j < m.memory.len})]
+    #[inline(always)]
+    pub fn validated_memory_index(&self, i: u16) -> usize {
+        i as usize
+    }
+
+    #[flux_rs::trusted(reason = "link-time assumption: host table index was range-checked against the host module at link time")]
+    #[flux_rs::spec(fn(&HostModule[@m], i: u16) -> usize{j: j == i && j < m.table.len})]
+    #[inline(always)]
+    pub fn validated_table_index(&self, i: u16) -> usize {
+        i as usize
+    }
+
+    // `&mut` counterpart used by `Store::get_memory_mut`'s imported-host arm. Trusted
+    // for the same link-time reason as `validated_memory_index`; a plain index + the
+    // bound does not re-prove across flux's `&mut` reborrow of the host module, so the
+    // bounded access is bundled here. See log/ABORT.md.
+    #[flux_rs::trusted(reason = "link-time assumption: host memory index range-checked at link time (&mut access)")]
+    #[flux_rs::spec(fn(&mut HostModule, i: u16) -> &mut Rc<Memory>)]
+    #[inline(always)]
+    pub fn memory_value_mut(&mut self, i: u16) -> &mut Rc<Memory> {
+        &mut self.memory[i as usize].value
+    }
+
+    /// `&mut` counterpart for a host table symbol's value; trusted for the same
+    /// link-time reason as `validated_table_index`. See log/ABORT.md.
+    #[flux_rs::trusted(reason = "link-time assumption: host table index range-checked at link time (&mut access)")]
+    #[flux_rs::spec(fn(&mut HostModule, i: u16) -> &mut (Rc<[TableElement]>, Limit))]
+    #[inline(always)]
+    pub fn table_value_mut(&mut self, i: u16) -> &mut (Rc<[TableElement]>, Limit) {
+        &mut self.table[i as usize].value
+    }
 }
 
 impl HostFunction {
