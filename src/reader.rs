@@ -121,9 +121,6 @@ impl<'wasm> Reader<'wasm> {
     /// `capacity()`, so clamping `to_copy` to `capacity()` never overfills and
     /// `CircularBuffer::push` (which overwrites the oldest element when full)
     /// never actually overwrites live data.
-    // cvc5 does not terminate on this function's fixpoint query (repro in centrifuge/harness/repro-cvc5-hang);
-    // z3 solves it in ~30s.
-    #[flux_rs::opts(solver = "z3")]
     #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<(), ValidationError> ensures self: Self{w: w.offset == v.offset})]
     fn fill_buffer(&mut self) -> Result<(), ValidationError> {
         // If buffer already has data, we're done
@@ -136,7 +133,11 @@ impl<'wasm> Reader<'wasm> {
             let remaining = chunk.len() - self.chunk_used;
             if remaining > 0 {
                 // Copy bytes from chunk into buffer
-                let to_copy = remaining.min(self.buffer.capacity());
+                // Written as a conditional rather than `remaining.min(cap)`: flux (fbf2a4d6e0+)
+                // encodes `min` as an SMT `define-fun`, and the loop invariant below no longer
+                // picks up `to_copy <= remaining` through it (see centrifuge ISSUES.md #4).
+                let cap = self.buffer.capacity();
+                let to_copy = if remaining < cap { remaining } else { cap };
                 for i in 0..to_copy {
                     self.buffer.push(chunk[self.chunk_used + i]);
                 }
