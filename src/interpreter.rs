@@ -11,13 +11,23 @@ impl LocalVariable {
 }
 
 #[repr(C)]
+// Flux: refined by its three decoded fields so `return_op` can state the frame
+// well-formedness the validator guarantees (see `assume_frame`).
+#[flux_rs::refined_by(frame_length: int, module_delta: int, parameter_size: int)]
 struct CallFrame {
+    #[flux_rs::field(u16[frame_length])]
     frame_length: u16,
+    #[flux_rs::field(i8[module_delta])]
     module_delta: i8,
+    #[flux_rs::field(u8[parameter_size])]
     parameter_size: u8,
 }
 
 impl CallFrame {
+    // Flux: a transmute from a raw word; the decoded fields are unconstrained here
+    // (their well-formedness relative to the frame is asserted by `assume_frame`).
+    #[flux_rs::trusted(reason = "transmute from a raw stack word; fields are decoded bit-reinterpretations")]
+    #[flux_rs::spec(fn(bits: u32) -> CallFrame)]
     pub fn from_bits(bits: u32) -> CallFrame {
         // SAFETY: `CallFrame` and `u32` have identical size (asserted at compile
         // time) and every 32-bit pattern is a valid `CallFrame`.
@@ -1724,6 +1734,7 @@ impl Interpreter {
 
         // The frame pointer on the stack actually encodes ((sp - fp) << 16) | prm_size
         let call_frame = CallFrame::from_bits(state.stack.read_u32(state.fp as usize));
+        Interpreter::assume_frame(state, &call_frame);
         let return_fp = (fp as u32) - (call_frame.frame_length as u32);
         let parameter_start = fp - (call_frame.parameter_size as usize);
 
@@ -1740,6 +1751,8 @@ impl Interpreter {
             // Restore the old module context outside this frame
             let restore_module = state.module.0.wrapping_sub(call_frame.module_delta as u8);
             state.module = ModuleRef(restore_module);
+            // Linker guarantee: the restored (caller) module index is in the store.
+            Interpreter::assume_linked(state);
             state.memory = state.store.get_memory(state.module).clone();
             state.table = state.store.get_table(state.module).clone();
         }
@@ -2223,6 +2236,19 @@ impl Interpreter {
         ensures state: Engine[s], hr.idx < s.store.host.len)]
     fn assume_linked_host(state: &mut Engine, h: &HostModuleRef) {
         let _ = (state, h);
+    }
+
+    /// Validator guarantee for a call frame read back off the stack in `return_op`:
+    /// the frame written at call setup fits within the current frame base (`fp`),
+    /// and the saved parameter region is no larger than the whole frame. Trusted,
+    /// empty body (see log/ABORT.md "Phase 2 return_op frame assumption").
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "validator assumption: the call frame written at frame setup is well-formed for the current frame")]
+    #[flux_rs::spec(fn(state: &strg Engine[@s], cf: &CallFrame[@f])
+        ensures state: Engine[s],
+                f.frame_length <= s.fp && f.parameter_size <= s.fp && f.parameter_size <= f.frame_length)]
+    fn assume_frame(state: &mut Engine, cf: &CallFrame) {
+        let _ = (state, cf);
     }
 }
 
