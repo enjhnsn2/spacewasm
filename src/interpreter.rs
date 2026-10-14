@@ -1693,6 +1693,9 @@ impl Interpreter {
         state.sp -= 1;
         let v = state.stack.read_u32(state.sp);
         let label = cases(v);
+        // Validator assumption: the label produced by the decoder-built `cases`
+        // closure is a valid branch target for the current frame.
+        Interpreter::assume_branch(state, &label);
 
         // If the count is greater than 255, the br_table was encoded as a 16-bit extended immediate.
         // We need to offset the jump by an additional word if this is the case.
@@ -2017,7 +2020,7 @@ impl Interpreter {
     ) -> Result<(), InterpreterBreak> {
         let mut sv: StaticVec<Value, MAX_HOST_FUNCTION_PARAMS> = StaticVec::new();
 
-        let hm = &mut state.store.host_modules_mut()[module.0 as usize];
+        let hm = &state.store.host_modules()[module.0 as usize];
         let fi = hm.validated_function_index(x);
         let f = &hm.functions[fi];
         state.sp -= f.param_size();
@@ -2048,7 +2051,7 @@ impl Interpreter {
         }
 
         let r = state.call_host_fn(module, x, &sv);
-        let hm = &mut state.store.host_modules_mut()[module.0 as usize];
+        let hm = &state.store.host_modules()[module.0 as usize];
         let fi = hm.validated_function_index(x);
         let f = &hm.functions[fi];
         match r {
@@ -2451,6 +2454,8 @@ impl IrVisitor for Interpreter {
         cases: impl FnOnce(u32) -> LabelTarget,
         state: &mut Self::State,
     ) -> Result<(), Self::Error> {
+        // Validator assumption: br_table pops one operand (the table index).
+        Interpreter::assume_validated(state, 1, 0);
         self.br_table_op(n, cases, state)
     }
 
