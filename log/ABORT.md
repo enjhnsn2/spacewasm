@@ -1112,3 +1112,43 @@ next); `imports::Store::{link_function,link_global,link_table,link_memory}` (the
 Effect: full sweep 131 -> 90. Tests 284 pass. Remaining in these files: `module.rs` get_func_ref /
 get_global_ref postconditions (2) are the u16-truncation bug, being fixed upstream (see
 [[project-spacewasm-funcidx-truncation]]); not an assumption.
+
+## Phase 2 pass (2026-10-13): interpreter op families
+
+Approach: a 4-worker parallel run (git worktrees) was attempted first; all four ABORTed because they
+were told annotations-only (no body edits), and this crate discharges validator/frame obligations by
+CALLING trusted `assume_*` primitives in function bodies. The workers produced precise per-error analysis
+(logged by each). User then clarified: inserting the established `assume_*`/`validated_*` primitive CALLS
+into bodies IS allowed (no logic rewrites, no new struct fields). Work finished serially in the main
+checkout. (Note: Agent `isolation:"worktree"` created worktrees off `main`, not `flux-agent`; each worker
+recovered by merging/resetting to flux-agent. Their branches held only ABORT.md docs and were not merged.)
+
+Closed (89 -> 74; trusted 33 -> 35):
+- `br_table_op` SAFE: `assume_branch(state, &label)` after the decoder-built `cases(v)` closure (the label
+  is a validated branch target). `br_table` (IrVisitor method) SAFE: `assume_validated(state, 1, 0)` to
+  establish `has_depth(s,1)` for br_table_op (trait methods can't carry `requires`). +7.
+- `return_op` SAFE: `CallFrame` refined by `(frame_length, module_delta, parameter_size)`; `from_bits`
+  trusted (transmute from a raw word); new trusted `Interpreter::assume_frame(state, &cf)` ensuring
+  `cf.frame_length <= fp && cf.parameter_size <= fp && cf.parameter_size <= cf.frame_length`; and
+  `assume_linked(state)` after the module-delta restore. +6. (trusted +2: from_bits, assume_frame)
+- `call_host_op` 14 -> 12: the two read-only host-function lookups switched from `host_modules_mut()` to
+  the shared `host_modules()` accessor (fixes the `&mut` element-refinement loss, as `global_set_host_op`
+  already does). +2.
+- `invoke`: already SAFE from the store/host wave (the "~6" estimate was stale).
+
+Remaining / NOT closed (documented floor + deferred bespoke):
+- `call_host_op` 12: the dynamic host-signature param loop (`for p_ty in f.params()` with `offset += width`)
+  needs the width-sum/loop invariant related to `f.param_size()`, unmodeled. Only annotation-only shortcut is
+  whole-fn `trusted`, rejected (would mask the StaticVec `push().unwrap()` and offset arithmetic, which are
+  genuine obligations). Left documented.
+- local-width arms (`local_get/set/tee_op`, 4): closing needs `LocalVariable` refined by word-width (via the
+  existing `ty` field) AND the `forward!` wrapper to supply `has_room(s,0,l.w)`, but the macro arm passes a
+  compile-time literal `pushes`, which cannot be the runtime width. Deferred (needs a width-aware assume or a
+  forward!-table change).
+- global-width arms (5): width is a runtime `Box<[Global]>` element / host `Value` variant; not nameable in a
+  precondition. Not closeable by refinement.
+- TextBuilder (11): control-frame-height <= stack (relational over StaticVec contents), write_label prefix-sum,
+  get_local u16 cast, get_global `.get().unwrap()` store-ref (TextBuilder's `store` field unrefined), pop_control
+  decoder `frames>0`. Mostly inexpressible or need body work beyond assume calls.
+- allocator FFI postconditions (10), flux `dyn`-cast ICEs (2), get_func_ref/get_global_ref u16 postconditions
+  (2, upstream fix), `global_set_op` Box `&mut` index (1): unchanged floor.
