@@ -78,3 +78,6 @@ nm-artifact_*.txt
 /log/checker
 /log/*.smt2
 /log/*.fluxc
+
+# Claude Code agent worktrees and local state
+.claude/
