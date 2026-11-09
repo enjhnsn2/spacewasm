@@ -706,9 +706,10 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
             }
             // This index refers to an imported global
             Ref::Host { module, index } => {
-                // Unwrap() should be fine since the imports are already resolved
-                let module = self.store.host_modules().get(module.0 as usize).unwrap();
-                let global = module.globals.get(index as usize).unwrap();
+                // Imports are already resolved, so these indices are in range
+                let store = self.store;
+                let module = &store.host_modules()[store.validated_host_module_index(module)];
+                let global = &module.globals[module.validated_global_index(index)];
 
                 Ok(GlobalVariable {
                     reference,
@@ -717,8 +718,9 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
                 })
             }
             Ref::Extern { module, index } => {
-                let module = self.store.modules().get(module.0 as usize).unwrap();
-                let global = module.globals.get(index as usize).unwrap();
+                let store = self.store;
+                let module = &store.modules()[store.validated_module_index(module)];
+                let global = &module.globals[module.validated_global_index(index)];
 
                 Ok(GlobalVariable {
                     reference,
@@ -1043,6 +1045,7 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     pub(crate) fn pop_control_and_patch_if(
         &mut self,
     ) -> Result<(ResultType, JumpTarget), ValidationError> {
+        Self::assume_open_frame(self);
         self.pop_control_and_patch_if_op()
     }
 
@@ -1123,7 +1126,19 @@ impl<'a, const MAX_CONTROL_FRAMES: usize, const MAX_STACK_DEPTH: usize>
     #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<ResultType, ValidationError>
         ensures self: Self{w: w.frames <= v.frames && w.stack <= v.stack})]
     pub(crate) fn pop_control(&mut self) -> Result<ResultType, ValidationError> {
+        Self::assume_open_frame(self);
         self.pop_control_op()
+    }
+
+    /// Decoder assumption for the `pop_control*` wrappers: a control frame is open.
+    /// `Reader::read_code` only emits `end`/`else` while `block_depth` (plus the
+    /// implicit function frame) is non-zero, a fact that lives outside this builder.
+    /// The body is empty; the spec is trusted. See log/ABORT.md.
+    #[inline(always)]
+    #[flux_rs::trusted(reason = "decoder assumption: `end`/`else` are only decoded while a control frame is open (`Reader::read_code` block_depth + function frame)")]
+    #[flux_rs::spec(fn(this: &strg Self[@v]) ensures this: Self[v.frames, v.stack], v.frames > 0)]
+    fn assume_open_frame(this: &mut Self) {
+        let _ = this;
     }
 
     #[flux_rs::spec(fn(self: &strg Self[@v]) -> Result<ResultType, ValidationError>

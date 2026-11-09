@@ -29,7 +29,6 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)', 'cfg(flux)'] }
 
 [package.metadata.flux]
 enabled = true
-cache = true
 solver = "cvc5"
 
 [lib]
@@ -49,9 +48,9 @@ miri-soft-floats = ["libm/force-soft-floats"]
 
 [dependencies]
 libm = "=0.2.16"
-flux-rs = { git = "https://github.com/flux-rs/flux", rev = "fbf2a4d6e0" }
-flux-core = { git = "https://github.com/flux-rs/flux", rev = "fbf2a4d6e0" }
-flux-alloc = { git = "https://github.com/flux-rs/flux", rev = "fbf2a4d6e0" }
+flux-rs = { git = "https://github.com/flux-rs/flux", rev = "9fe62fab12" }
+flux-core = { git = "https://github.com/flux-rs/flux", rev = "9fe62fab12" }
+flux-alloc = { git = "https://github.com/flux-rs/flux", rev = "9fe62fab12" }
 
 [dev-dependencies]
 serde = { version = "=1.0.228", features = ["derive"] }

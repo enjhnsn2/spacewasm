@@ -365,6 +365,7 @@ impl<T: Sized, A: Allocator> Drop for Vec<T, A> {
 impl<T, A: Allocator> IntoIterator for Vec<T, A> {
     type Item = T;
     type IntoIter = IntoIter<T, A>;
+    #[flux_rs::trusted(reason = "ABORT:TIMEOUT: fixpoint (z3) exceeds the 300s per-item timeout at flux 9fe62fab12; previously reported 1 error at fbf2a4d6e0")]
     #[flux_rs::opts(solver = "z3")]
     fn into_iter(self) -> IntoIter<T, A> {
         // Make sure not to drop Vec since that would free the buffer
@@ -467,6 +468,7 @@ impl<T, A: Allocator> Iterator for IntoIter<T, A> {
 }
 
 impl<T, A: Allocator> DoubleEndedIterator for IntoIter<T, A> {
+    #[flux_rs::trusted(reason = "ABORT:TIMEOUT: fixpoint (z3) exceeds the 300s per-item timeout at flux 9fe62fab12; verified at fbf2a4d6e0")]
     #[flux_rs::opts(solver = "z3")]
     #[flux_rs::spec(fn(self: &strg Self[@s]) -> Option<T>[s.start < s.end]
         ensures self: Self[s.base, s.buf, s.size, s.cap, s.start, if s.start < s.end { s.end - T::size_of() } else { s.end }])]

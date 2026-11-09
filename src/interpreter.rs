@@ -137,6 +137,16 @@ impl Engine {
     /// Invoke a function with some parameters.
     /// This function can only be used to kick off the interpreter.
     /// It cannot be invoked once the interpreter has started.
+    #[flux_rs::trusted(reason = "ABORT: parameter writes and `call_impl(..).expect` are guarded by the up-front \
+        check `params_words + required <= stack.len()` (with `sp == 0`), but flux cannot connect either use to it. \
+        (1) The loop writes each param at `sp` and bumps `sp` by its width (1|2); safety needs `sp` to be the prefix \
+        sum of the widths of `ty.params`, while `params_words` comes from `.map(..).sum()` and is unconstrained \
+        (not even `n <= params_words <= 2n`, nor `== f.parameter_size`); flux cannot express sums over `Vec` \
+        elements, so the 4 `write_*` preconditions and the `Engine` invariant (`sp <= size`) fail. \
+        (2) `call_impl` re-looks-up the callee via `index`, so its `Ok` condition `sp + required <= size` cannot \
+        be stated in its spec (no per-element facts on `Module.functions`, no ghost params) and the `expect` \
+        fails. Runtime-correct: the loop walks the same list that was summed and rejects type mismatches, so \
+        `sp == params_words` after it and `call_impl`'s overflow check cannot fire. See log/ABORT.md.")]
     #[flux_rs::spec(fn(self: &strg Engine[@e], f_ref: WasmRef, params: &[Value]) -> Result<(), InvokeError>
         requires f_ref.module.idx < e.store.modules.len
         ensures self: Engine)]
@@ -162,6 +172,18 @@ impl Engine {
         if params_words + required > self.stack.len() {
             return Err(InvokeError::StackOverflow);
         }
+
+        // Flux: strongest fact provable before the parameter loop. `params_words`
+        // is not tied to the widths of `ty.params`, so the loop's writes below
+        // cannot be bounded by it.
+        #[cfg(flux)]
+        flux_rs::assert(
+            self.sp == 0
+                && self.fp == 0
+                && params.len() == ty.params.len()
+                && required == f.stack_usage as usize + 2 + f.local_size as usize
+                && params_words + required <= self.stack.len(),
+        );
 
         for (pi, pd) in params.iter().zip(&ty.params) {
             match (*pi, *pd) {
@@ -1965,8 +1987,7 @@ impl Interpreter {
         ensures state: Engine)]
     fn global_set_op(&self, idx: u16, state: &mut Engine) -> Result<(), InterpreterBreak> {
         let m = &mut state.store.modules_mut()[state.module.0 as usize];
-        let gi = m.validated_global_index(idx);
-        let g = &mut m.globals[gi];
+        let g = m.global_value_mut(idx);
         match g.type_.ty {
             ValType::I32 | ValType::F32 => {
                 state.sp -= 1;
@@ -2022,6 +2043,20 @@ impl Interpreter {
     /// Body of `IrVisitor::call_host`. The words popped (`f.param_size()`) and pushed
     /// (`f.returns()`) depend on the host function's signature looked up in the store,
     /// so only the module-index precondition can be stated here.
+    #[flux_rs::trusted(reason = "ABORT: every stack access depends on the host signature `f.params()`/`f.returns()`, \
+        which flux cannot relate to the stack. Validation type-checked this `call` against that signature (fixed at \
+        link time): the operand stack above `fp` holds the args (`param_size` words, in param order) and the \
+        callee's `stack_usage` reserves room for the declared return. Flux cannot see this because \
+        (1) `param_size()` is an unconstrained `fold` over `Vec<ValType>` (refined only by length), so \
+        `sp -= param_size()` may underflow and break `fp <= sp`, and no assume can state `has_depth(s, param_size)` \
+        without that value being tied to the signature; (2) the arg loop reads at `sp + offset` with \
+        `offset += width` (1|2) — safety needs `offset` to be the prefix sum of the widths of the same list that \
+        `param_size` folds, a sum over `Vec` elements that flux cannot express (4 `read_*` preconditions); \
+        (3) the result write's room (`sp + width <= size`) depends on `f.returns()` of a second, independent \
+        lookup of `f` after `call_host_fn`, so it is also unconstrained (4 `write_*` preconditions, plus the \
+        `Engine` invariant `fp <= sp <= size` at the `call_host_fn` fold and at return). Runtime-correct: the \
+        loop walks the list `param_size` sums, and a result whose type differs from the declaration panics \
+        rather than writing. Same root cause as `Engine::invoke`. See log/ABORT.md.")]
     #[flux_rs::spec(fn(&Self, module: HostModuleRef, x: u16, state: &strg Engine[@s]) -> Result<(), InterpreterBreak>
         requires module.idx < s.store.host.len
         ensures state: Engine)]

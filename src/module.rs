@@ -470,6 +470,16 @@ impl Module {
         index as usize
     }
 
+    /// `&mut` counterpart of `validated_global_index` for `global.set`. Trusted for the
+    /// same validator reason; the bound does not survive flux's `&mut` reborrow of the
+    /// module, so the bounded access is bundled here. See log/ABORT.md.
+    #[flux_rs::trusted(reason = "validator assumption: global index was range-checked by the decoder before being written to the IR (&mut access)")]
+    #[flux_rs::spec(fn(&mut Module, index: u16) -> &mut Global)]
+    #[inline(always)]
+    pub fn global_value_mut(&mut self, index: u16) -> &mut Global {
+        &mut self.globals[index as usize]
+    }
+
     /// A type index: a function's `ty` (checked by `Func::read_func_section`) or
     /// the immediate of `call_indirect` (checked by the compiler).
     #[flux_rs::trusted(reason = "validator assumption: type index was range-checked by the decoder (per-element fact flux cannot carry across the section fold / IR)")]
@@ -666,7 +676,14 @@ impl Func {
 struct FunctionSection;
 impl FunctionSection {
     pub fn read(wasm: &mut Reader, module: &Module) -> Result<Vec<Func>, ValidationError> {
-        wasm.read_vec(|w| Func::read_func_section(w, module))
+        let functions = wasm.read_vec(|w| Func::read_func_section(w, module))?;
+
+        // Module functions are referenced by a 16-bit index (`Ref::Module`)
+        if functions.len() > u16::MAX as usize {
+            return Err(ValidationError::IdxTooLarge);
+        }
+
+        Ok(functions)
     }
 }
 
@@ -772,7 +789,14 @@ impl GlobalSection {
         store: &Store,
         module: &Module,
     ) -> Result<Vec<Global>, ValidationError> {
-        wasm.read_vec(|wasm| Global::read(wasm, store, module))
+        let globals = wasm.read_vec(|wasm| Global::read(wasm, store, module))?;
+
+        // Module globals are referenced by a 16-bit index (`Ref::Module`)
+        if globals.len() > u16::MAX as usize {
+            return Err(ValidationError::IdxTooLarge);
+        }
+
+        Ok(globals)
     }
 }
 
